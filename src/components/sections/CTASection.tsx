@@ -2,11 +2,13 @@ import { Card } from '@/components/ui/card';
 import { LeadForm } from '@/components/forms/LeadForm';
 import { FileText, Phone, Shield } from 'lucide-react';
 
-interface CTASectionProps {
+export interface CTASectionProps {
   title?: string;
   subtitle?: string;
   cityId?: string;
   serviceId?: string;
+  cityName?: string;
+  serviceName?: string;
 }
 
 export function CTASection({
