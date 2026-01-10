@@ -57,8 +57,25 @@ export function generateBreadcrumbs(
   };
 }
 
+export function generateBreadcrumbSchema(
+  items: Array<{ label: string; href?: string }>
+): object {
+  const baseUrl = window.location.origin;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.label,
+      item: item.href ? `${baseUrl}${item.href}` : undefined,
+    })),
+  };
+}
+
 export function generateLocalBusinessSchema(business: {
   name: string;
+  description?: string;
   address?: string;
   phone?: string;
   website?: string;
@@ -67,7 +84,7 @@ export function generateLocalBusinessSchema(business: {
   lat?: number;
   lng?: number;
   openingHours?: Record<string, string>;
-  images?: string[];
+  image?: string;
 }): object {
   const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -108,8 +125,8 @@ export function generateLocalBusinessSchema(business: {
     };
   }
 
-  if (business.images && business.images.length > 0) {
-    schema.image = business.images;
+  if (business.image) {
+    schema.image = business.image;
   }
 
   return schema;

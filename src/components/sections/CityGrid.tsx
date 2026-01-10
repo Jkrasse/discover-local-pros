@@ -1,15 +1,20 @@
 import { Link } from 'react-router-dom';
 import { MapPin, ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { useCities } from '@/hooks/useCity';
 import type { City } from '@/types/database';
 
-interface CityGridProps {
-  cities: City[];
+export interface CityGridProps {
+  cities?: City[];
   serviceSlug: string;
   serviceName: string;
+  excludeCitySlug?: string;
 }
 
-export function CityGrid({ cities, serviceSlug, serviceName }: CityGridProps) {
+export function CityGrid({ cities: propCities, serviceSlug, serviceName, excludeCitySlug }: CityGridProps) {
+  const { data: fetchedCities } = useCities();
+  const cities = propCities || fetchedCities || [];
+  const filteredCities = excludeCitySlug ? cities.filter(c => c.slug !== excludeCitySlug) : cities;
   return (
     <section className="py-12 lg:py-16">
       <div className="container">
@@ -21,7 +26,7 @@ export function CityGrid({ cities, serviceSlug, serviceName }: CityGridProps) {
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {cities.map((city) => (
+          {filteredCities.map((city) => (
             <Link key={city.id} to={`/${serviceSlug}/${city.slug}`}>
               <Card className="p-4 h-full hover:border-accent/50 hover:shadow-card transition-all group">
                 <div className="flex items-center gap-3">
