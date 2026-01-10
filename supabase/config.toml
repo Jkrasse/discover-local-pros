@@ -1,1 +1,4 @@
 project_id = "vwahjxekulgmgdkpctgc"
+
+[functions.import-businesses]
+verify_jwt = false

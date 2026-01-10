@@ -195,6 +195,7 @@ export type Database = {
           created_at: string | null
           end_date: string | null
           id: string
+          is_placeholder: boolean | null
           plan: string | null
           price_monthly: number | null
           service_id: string
@@ -208,6 +209,7 @@ export type Database = {
           created_at?: string | null
           end_date?: string | null
           id?: string
+          is_placeholder?: boolean | null
           plan?: string | null
           price_monthly?: number | null
           service_id: string
@@ -221,6 +223,7 @@ export type Database = {
           created_at?: string | null
           end_date?: string | null
           id?: string
+          is_placeholder?: boolean | null
           plan?: string | null
           price_monthly?: number | null
           service_id?: string
