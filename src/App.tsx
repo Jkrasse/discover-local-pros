@@ -13,6 +13,8 @@ import AboutPage from "./pages/AboutPage";
 import HowWeRankPage from "./pages/HowWeRankPage";
 import ContactPage from "./pages/ContactPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import ImportPage from "./pages/admin/ImportPage";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,10 @@ const App = () => (
             <Route path="/hur-vi-rankar" element={<HowWeRankPage />} />
             <Route path="/kontakt" element={<ContactPage />} />
             <Route path="/integritetspolicy" element={<PrivacyPolicyPage />} />
+            
+            {/* Admin routes */}
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/import" element={<ImportPage />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
