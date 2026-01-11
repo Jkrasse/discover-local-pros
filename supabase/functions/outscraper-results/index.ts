@@ -24,7 +24,7 @@ interface OutscraperBusiness {
   about?: string;
   photos?: string[];
   logo?: string;
-  // Enrichment: Emails And Contacts
+  // Enrichment: Emails And Contacts (nested structure)
   emails_and_contacts?: {
     emails?: string[];
     phones?: string[];
@@ -34,7 +34,7 @@ interface OutscraperBusiness {
     twitter?: string;
     youtube?: string;
   };
-  // Enrichment: Company Insights
+  // Enrichment: Company Insights (nested structure)
   company_insights?: {
     employees_range?: string;
     founded_year?: number;
@@ -45,6 +45,18 @@ interface OutscraperBusiness {
     email: string;
     is_valid: boolean;
   }>;
+  // Alternative flat field names from Outscraper
+  emails?: string[];
+  email?: string;
+  facebook?: string;
+  instagram?: string;
+  linkedin?: string;
+  twitter?: string;
+  youtube?: string;
+  employees?: string;
+  employees_range?: string;
+  founded_year?: number;
+  industry?: string;
 }
 
 interface ImportResult {
@@ -201,6 +213,26 @@ serve(async (req) => {
       if (!Array.isArray(queryResults)) continue;
 
       for (const business of queryResults as OutscraperBusiness[]) {
+        // Debug: Log first business to see actual data structure
+        if (results.length === 0) {
+          console.log("=== SAMPLE BUSINESS DATA (first) ===");
+          console.log(JSON.stringify(business, null, 2));
+          console.log("=== ENRICHMENT FIELDS CHECK ===");
+          console.log({
+            emails_and_contacts: business.emails_and_contacts,
+            company_insights: business.company_insights,
+            emails_validator: business.emails_validator,
+            flat_emails: business.emails,
+            flat_email: business.email,
+            flat_facebook: business.facebook,
+            flat_linkedin: business.linkedin,
+            flat_employees: business.employees,
+            flat_employees_range: business.employees_range,
+            flat_founded_year: business.founded_year,
+            flat_industry: business.industry,
+          });
+        }
+
         if (!business.name || !business.place_id) {
           results.push({
             name: business.name || "Unknown",
@@ -234,10 +266,35 @@ serve(async (req) => {
         if (business.category) categories.push(business.category);
         if (business.subtypes) categories.push(...business.subtypes);
 
-        // Extract enrichment data
-        const enrichedEmails = business.emails_and_contacts?.emails || [];
+        // Extract enrichment data - handle both nested and flat structures
+        const enrichedEmails: string[] = 
+          business.emails_and_contacts?.emails || 
+          business.emails || 
+          (business.email ? [business.email] : []);
         const primaryEmail = enrichedEmails[0] || null;
         const emailValidated = business.emails_validator?.some(e => e.is_valid) || false;
+
+        // Social media - check both nested and flat structure
+        const facebook = business.emails_and_contacts?.facebook || business.facebook || null;
+        const instagram = business.emails_and_contacts?.instagram || business.instagram || null;
+        const linkedin = business.emails_and_contacts?.linkedin || business.linkedin || null;
+        const twitter = business.emails_and_contacts?.twitter || business.twitter || null;
+        const youtube = business.emails_and_contacts?.youtube || business.youtube || null;
+
+        // Company insights - check both nested and flat structure
+        const employeeCount = 
+          business.company_insights?.employees_range || 
+          business.employees_range || 
+          business.employees || 
+          null;
+        const foundedYear = 
+          business.company_insights?.founded_year || 
+          business.founded_year || 
+          null;
+        const industry = 
+          business.company_insights?.industry || 
+          business.industry || 
+          null;
 
         // Prepare business data with enrichments
         const businessData = {
@@ -258,18 +315,19 @@ serve(async (req) => {
           images: business.photos?.slice(0, 5) || null,
           is_active: true,
           verified: false,
-          // Enrichment: Emails And Contacts
+          // Enrichment: Emails
           email: primaryEmail,
           emails: enrichedEmails.length > 0 ? enrichedEmails : null,
-          facebook: business.emails_and_contacts?.facebook || null,
-          instagram: business.emails_and_contacts?.instagram || null,
-          linkedin: business.emails_and_contacts?.linkedin || null,
-          twitter: business.emails_and_contacts?.twitter || null,
-          youtube: business.emails_and_contacts?.youtube || null,
+          // Enrichment: Social Media
+          facebook,
+          instagram,
+          linkedin,
+          twitter,
+          youtube,
           // Enrichment: Company Insights
-          employee_count: business.company_insights?.employees_range || null,
-          founded_year: business.company_insights?.founded_year || null,
-          industry: business.company_insights?.industry || null,
+          employee_count: employeeCount,
+          founded_year: foundedYear,
+          industry,
           // Enrichment: Emails Validator
           email_verified: emailValidated,
         };
