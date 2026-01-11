@@ -11,6 +11,7 @@ interface OutscraperBusiness {
   name?: string;
   phone?: string;
   site?: string;
+  website?: string; // Outscraper returns website in this field
   full_address?: string;
   city?: string;
   rating?: number;
@@ -257,11 +258,37 @@ serve(async (req) => {
           });
         }
 
-        if (!business.name || !business.place_id) {
+        // Generate synthetic gbp_id if missing but we have enough data
+        let gbpId = business.place_id;
+        if (!gbpId && business.name && (business.phone || business.city)) {
+          gbpId = `synthetic_${generateSlug(business.name)}_${generateSlug(business.city || '')}_${(business.phone || '').replace(/\D/g, '')}`;
+          console.log(`Generated synthetic ID for "${business.name}": ${gbpId}`);
+        }
+
+        if (!business.name) {
+          console.log(`SKIPPED: No name provided`, {
+            hasPlaceId: !!business.place_id,
+            hasCity: !!business.city,
+            hasPhone: !!business.phone,
+          });
           results.push({
-            name: business.name || "Unknown",
+            name: "Unknown",
             status: "skipped",
-            message: "Missing required fields (name or place_id)",
+            message: "Missing business name",
+          });
+          continue;
+        }
+
+        if (!gbpId) {
+          console.log(`SKIPPED: "${business.name}" - No place_id and insufficient data to generate ID`, {
+            hasCity: !!business.city,
+            hasPhone: !!business.phone,
+            hasWebsite: !!business.website,
+          });
+          results.push({
+            name: business.name,
+            status: "skipped",
+            message: "Missing place_id and insufficient data for synthetic ID",
           });
           continue;
         }
@@ -341,11 +368,11 @@ serve(async (req) => {
 
         // Prepare business data with enrichments
         const businessData = {
-          gbp_id: business.place_id,
+          gbp_id: gbpId,
           name: business.name,
           slug: generateSlug(business.name),
           phone: business.phone || null,
-          website: business.site || null,
+          website: business.website || business.site || null,
           address: business.full_address || null,
           city_id: matchedCity.id,
           rating: business.rating || null,
@@ -380,7 +407,7 @@ serve(async (req) => {
           const { data: existing } = await supabase
             .from("businesses")
             .select("id, city_id")
-            .eq("gbp_id", business.place_id)
+            .eq("gbp_id", gbpId)
             .maybeSingle();
 
           let businessId: string;
