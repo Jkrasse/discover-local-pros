@@ -52,6 +52,17 @@ export interface Business {
   created_at: string;
   updated_at: string;
   city?: City;
+  // Enrichment fields
+  facebook: string | null;
+  instagram: string | null;
+  linkedin: string | null;
+  twitter: string | null;
+  youtube: string | null;
+  emails: string[] | null;
+  email_verified: boolean;
+  employee_count: string | null;
+  founded_year: number | null;
+  industry: string | null;
 }
 
 export interface OpeningHours {

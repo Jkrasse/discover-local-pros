@@ -71,11 +71,19 @@ export type Database = {
           created_at: string | null
           description: string | null
           email: string | null
+          email_verified: boolean | null
+          emails: string[] | null
+          employee_count: string | null
+          facebook: string | null
+          founded_year: number | null
           gbp_id: string | null
           id: string
           images: string[] | null
+          industry: string | null
+          instagram: string | null
           is_active: boolean | null
           lat: number | null
+          linkedin: string | null
           lng: number | null
           name: string
           opening_hours: Json | null
@@ -84,9 +92,11 @@ export type Database = {
           rating: number | null
           review_count: number | null
           slug: string
+          twitter: string | null
           updated_at: string | null
           verified: boolean | null
           website: string | null
+          youtube: string | null
         }
         Insert: {
           address?: string | null
@@ -95,11 +105,19 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           email?: string | null
+          email_verified?: boolean | null
+          emails?: string[] | null
+          employee_count?: string | null
+          facebook?: string | null
+          founded_year?: number | null
           gbp_id?: string | null
           id?: string
           images?: string[] | null
+          industry?: string | null
+          instagram?: string | null
           is_active?: boolean | null
           lat?: number | null
+          linkedin?: string | null
           lng?: number | null
           name: string
           opening_hours?: Json | null
@@ -108,9 +126,11 @@ export type Database = {
           rating?: number | null
           review_count?: number | null
           slug: string
+          twitter?: string | null
           updated_at?: string | null
           verified?: boolean | null
           website?: string | null
+          youtube?: string | null
         }
         Update: {
           address?: string | null
@@ -119,11 +139,19 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           email?: string | null
+          email_verified?: boolean | null
+          emails?: string[] | null
+          employee_count?: string | null
+          facebook?: string | null
+          founded_year?: number | null
           gbp_id?: string | null
           id?: string
           images?: string[] | null
+          industry?: string | null
+          instagram?: string | null
           is_active?: boolean | null
           lat?: number | null
+          linkedin?: string | null
           lng?: number | null
           name?: string
           opening_hours?: Json | null
@@ -132,9 +160,11 @@ export type Database = {
           rating?: number | null
           review_count?: number | null
           slug?: string
+          twitter?: string | null
           updated_at?: string | null
           verified?: boolean | null
           website?: string | null
+          youtube?: string | null
         }
         Relationships: [
           {

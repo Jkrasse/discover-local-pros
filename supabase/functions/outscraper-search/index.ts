@@ -45,7 +45,7 @@ serve(async (req) => {
 
     console.log(`Starting Outscraper search with ${queries.length} queries:`, queries);
 
-    // Send request to Outscraper API
+    // Send request to Outscraper API with enrichments
     const response = await fetch("https://api.app.outscraper.com/maps/search-v3", {
       method: "POST",
       headers: {
@@ -58,6 +58,11 @@ serve(async (req) => {
         language: "sv",
         region: "SE",
         async: true,
+        enrichments: [
+          "domains_service",           // Emails And Contacts
+          "company_insights_service",  // Company Insights
+          "emails_validator_service",  // Email Validator
+        ],
       }),
     });
 

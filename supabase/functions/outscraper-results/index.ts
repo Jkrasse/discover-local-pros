@@ -24,6 +24,27 @@ interface OutscraperBusiness {
   about?: string;
   photos?: string[];
   logo?: string;
+  // Enrichment: Emails And Contacts
+  emails_and_contacts?: {
+    emails?: string[];
+    phones?: string[];
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+    twitter?: string;
+    youtube?: string;
+  };
+  // Enrichment: Company Insights
+  company_insights?: {
+    employees_range?: string;
+    founded_year?: number;
+    industry?: string;
+  };
+  // Enrichment: Emails Validator
+  emails_validator?: Array<{
+    email: string;
+    is_valid: boolean;
+  }>;
 }
 
 interface ImportResult {
@@ -169,7 +190,12 @@ serve(async (req) => {
         if (business.category) categories.push(business.category);
         if (business.subtypes) categories.push(...business.subtypes);
 
-        // Prepare business data
+        // Extract enrichment data
+        const enrichedEmails = business.emails_and_contacts?.emails || [];
+        const primaryEmail = enrichedEmails[0] || null;
+        const emailValidated = business.emails_validator?.some(e => e.is_valid) || false;
+
+        // Prepare business data with enrichments
         const businessData = {
           gbp_id: business.place_id,
           name: business.name,
@@ -188,6 +214,20 @@ serve(async (req) => {
           images: business.photos?.slice(0, 5) || null,
           is_active: true,
           verified: false,
+          // Enrichment: Emails And Contacts
+          email: primaryEmail,
+          emails: enrichedEmails.length > 0 ? enrichedEmails : null,
+          facebook: business.emails_and_contacts?.facebook || null,
+          instagram: business.emails_and_contacts?.instagram || null,
+          linkedin: business.emails_and_contacts?.linkedin || null,
+          twitter: business.emails_and_contacts?.twitter || null,
+          youtube: business.emails_and_contacts?.youtube || null,
+          // Enrichment: Company Insights
+          employee_count: business.company_insights?.employees_range || null,
+          founded_year: business.company_insights?.founded_year || null,
+          industry: business.company_insights?.industry || null,
+          // Enrichment: Emails Validator
+          email_verified: emailValidated,
         };
 
         try {
