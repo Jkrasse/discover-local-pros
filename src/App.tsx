@@ -16,6 +16,12 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ImportPage from "./pages/admin/ImportPage";
 import ScrapePage from "./pages/admin/ScrapePage";
+import BusinessesPage from "./pages/admin/BusinessesPage";
+import AdminCitiesPage from "./pages/admin/CitiesPage";
+import LeadsPage from "./pages/admin/LeadsPage";
+import ServicesPage from "./pages/admin/ServicesPage";
+import FeaturedPage from "./pages/admin/FeaturedPage";
+import SettingsPage from "./pages/admin/SettingsPage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import { ProtectedRoute } from "./components/admin/ProtectedRoute";
 
@@ -49,6 +55,12 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/import" element={<ProtectedRoute><ImportPage /></ProtectedRoute>} />
             <Route path="/admin/scrape" element={<ProtectedRoute><ScrapePage /></ProtectedRoute>} />
+            <Route path="/admin/businesses" element={<ProtectedRoute><BusinessesPage /></ProtectedRoute>} />
+            <Route path="/admin/cities" element={<ProtectedRoute><AdminCitiesPage /></ProtectedRoute>} />
+            <Route path="/admin/leads" element={<ProtectedRoute><LeadsPage /></ProtectedRoute>} />
+            <Route path="/admin/services" element={<ProtectedRoute><ServicesPage /></ProtectedRoute>} />
+            <Route path="/admin/featured" element={<ProtectedRoute><FeaturedPage /></ProtectedRoute>} />
+            <Route path="/admin/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
