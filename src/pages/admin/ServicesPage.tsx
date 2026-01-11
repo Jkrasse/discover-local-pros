@@ -39,7 +39,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Briefcase, Plus, Pencil, Trash2 } from "lucide-react";
+import { Briefcase, Plus, Pencil, Trash2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 const categoryLabels: Record<string, string> = {
@@ -73,6 +73,7 @@ interface ServiceForm {
   description: string;
   seo_title_template: string;
   seo_description_template: string;
+  parent_service_id: string | null;
 }
 
 const emptyForm: ServiceForm = {
@@ -83,6 +84,7 @@ const emptyForm: ServiceForm = {
   description: "",
   seo_title_template: "",
   seo_description_template: "",
+  parent_service_id: null,
 };
 
 export default function ServicesPage() {
@@ -104,6 +106,9 @@ export default function ServicesPage() {
     },
   });
 
+  // Get parent services (those without a parent)
+  const parentServices = services?.filter((s) => !s.parent_service_id) || [];
+
   const createMutation = useMutation({
     mutationFn: async (data: ServiceForm) => {
       const { error } = await supabase.from("services").insert({
@@ -114,6 +119,7 @@ export default function ServicesPage() {
         description: data.description || null,
         seo_title_template: data.seo_title_template || null,
         seo_description_template: data.seo_description_template || null,
+        parent_service_id: data.parent_service_id || null,
       });
       if (error) throw error;
     },
@@ -140,6 +146,7 @@ export default function ServicesPage() {
           description: data.description || null,
           seo_title_template: data.seo_title_template || null,
           seo_description_template: data.seo_description_template || null,
+          parent_service_id: data.parent_service_id || null,
         })
         .eq("id", id);
       if (error) throw error;
@@ -179,6 +186,7 @@ export default function ServicesPage() {
       description: service.description || "",
       seo_title_template: service.seo_title_template || "",
       seo_description_template: service.seo_description_template || "",
+      parent_service_id: service.parent_service_id || null,
     });
     setEditingService(service);
   };
@@ -195,20 +203,31 @@ export default function ServicesPage() {
     }
   };
 
-  const ServiceFormFields = () => (
+  // Group services by parent
+  const groupedServices = () => {
+    const parents = services?.filter((s) => !s.parent_service_id) || [];
+    return parents.map((parent) => ({
+      ...parent,
+      children: services?.filter((s) => s.parent_service_id === parent.id) || [],
+    }));
+  };
+
+  const renderFormFields = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Namn *</Label>
+          <Label htmlFor="service-name">Namn *</Label>
           <Input
+            id="service-name"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="Flyttfirmor"
           />
         </div>
         <div>
-          <Label>Slug</Label>
+          <Label htmlFor="service-slug">Slug</Label>
           <Input
+            id="service-slug"
             value={form.slug}
             onChange={(e) => setForm({ ...form, slug: e.target.value })}
             placeholder={form.name ? generateSlug(form.name) : "flyttfirmor"}
@@ -232,8 +251,9 @@ export default function ServicesPage() {
           </Select>
         </div>
         <div>
-          <Label>Ikon (emoji)</Label>
+          <Label htmlFor="service-icon">Ikon (emoji)</Label>
           <Input
+            id="service-icon"
             value={form.icon}
             onChange={(e) => setForm({ ...form, icon: e.target.value })}
             placeholder="🚚"
@@ -241,8 +261,33 @@ export default function ServicesPage() {
         </div>
       </div>
       <div>
-        <Label>Beskrivning</Label>
+        <Label>Överordnad tjänst (för undertjänster)</Label>
+        <Select 
+          value={form.parent_service_id || "none"} 
+          onValueChange={(v) => setForm({ ...form, parent_service_id: v === "none" ? null : v })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Ingen (huvudtjänst)" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Ingen (huvudtjänst)</SelectItem>
+            {parentServices
+              .filter((s) => s.id !== editingService?.id)
+              .map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.icon} {s.name}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground mt-1">
+          Välj en överordnad tjänst för att skapa en undertjänst (t.ex. Kontorsflytt under Flyttfirmor)
+        </p>
+      </div>
+      <div>
+        <Label htmlFor="service-description">Beskrivning</Label>
         <Textarea
+          id="service-description"
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
           placeholder="Kort beskrivning av tjänsten..."
@@ -250,8 +295,9 @@ export default function ServicesPage() {
         />
       </div>
       <div>
-        <Label>SEO Titelmall</Label>
+        <Label htmlFor="service-seo-title">SEO Titelmall</Label>
         <Input
+          id="service-seo-title"
           value={form.seo_title_template}
           onChange={(e) => setForm({ ...form, seo_title_template: e.target.value })}
           placeholder="Bästa {service} i {city} | Jämför & Hitta"
@@ -261,8 +307,9 @@ export default function ServicesPage() {
         </p>
       </div>
       <div>
-        <Label>SEO Beskrivningsmall</Label>
+        <Label htmlFor="service-seo-desc">SEO Beskrivningsmall</Label>
         <Textarea
+          id="service-seo-desc"
           value={form.seo_description_template}
           onChange={(e) => setForm({ ...form, seo_description_template: e.target.value })}
           placeholder="Hitta och jämför {service} i {city}. Läs omdömen..."
@@ -282,7 +329,7 @@ export default function ServicesPage() {
               Tjänster
             </h1>
             <p className="text-muted-foreground">
-              Hantera tjänster som erbjuds i katalogen
+              Hantera tjänster och undertjänster i katalogen
             </p>
           </div>
           <div className="flex gap-2">
@@ -303,7 +350,7 @@ export default function ServicesPage() {
                 <DialogHeader>
                   <DialogTitle>Lägg till ny tjänst</DialogTitle>
                 </DialogHeader>
-                <ServiceFormFields />
+                {renderFormFields()}
                 <Button onClick={handleSubmit} disabled={createMutation.isPending}>
                   {createMutation.isPending ? "Skapar..." : "Skapa tjänst"}
                 </Button>
@@ -324,7 +371,7 @@ export default function ServicesPage() {
                   <TableHead>Namn</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Kategori</TableHead>
-                  <TableHead>Beskrivning</TableHead>
+                  <TableHead>Typ</TableHead>
                   <TableHead className="text-right">Åtgärder</TableHead>
                 </TableRow>
               </TableHeader>
@@ -336,42 +383,82 @@ export default function ServicesPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  services?.map((service) => (
-                    <TableRow key={service.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {service.icon && <span>{service.icon}</span>}
-                          {service.name}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{service.slug}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {categoryLabels[service.category] || service.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {service.description || "-"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEditDialog(service)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setDeleteService(service)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                  groupedServices().map((parent) => (
+                    <>
+                      <TableRow key={parent.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {parent.icon && <span>{parent.icon}</span>}
+                            {parent.name}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{parent.slug}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {categoryLabels[parent.category] || parent.category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge>Huvudtjänst</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openEditDialog(parent)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setDeleteService(parent)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {parent.children.map((child: any) => (
+                        <TableRow key={child.id} className="bg-muted/30">
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2 pl-6">
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              {child.icon && <span>{child.icon}</span>}
+                              {child.name}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{child.slug}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {categoryLabels[child.category] || child.category}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">Undertjänst</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openEditDialog(child)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDeleteService(child)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </>
                   ))
                 )}
               </TableBody>
@@ -390,7 +477,7 @@ export default function ServicesPage() {
             <DialogHeader>
               <DialogTitle>Redigera tjänst</DialogTitle>
             </DialogHeader>
-            <ServiceFormFields />
+            {renderFormFields()}
             <Button onClick={handleSubmit} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "Sparar..." : "Spara ändringar"}
             </Button>
