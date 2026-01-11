@@ -2,10 +2,11 @@ import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { HeroSectionNew } from '@/components/sections/HeroSectionNew';
-import { BusinessList } from '@/components/business/BusinessList';
-import { CTASection } from '@/components/sections/CTASection';
+import { BusinessCard } from '@/components/business/BusinessCard';
+import { BusinessTable } from '@/components/business/BusinessTable';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { InfoSection } from '@/components/sections/InfoSection';
+import { SubServicesSection } from '@/components/sections/SubServicesSection';
 import { CityGrid } from '@/components/sections/CityGrid';
 import { Card } from '@/components/ui/card';
 import { LeadForm } from '@/components/forms/LeadForm';
@@ -14,13 +15,12 @@ import { useService } from '@/hooks/useService';
 import { useBusinesses, useFeaturedBusiness } from '@/hooks/useBusinesses';
 import { generateLocalBusinessSchema, generateFAQSchema, generateBreadcrumbSchema } from '@/lib/seo';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Info } from 'lucide-react';
 
 const cityFAQs: Record<string, { question: string; answer: string }[]> = {
   stockholm: [
     {
       question: 'Vad kostar det att anlita en flyttfirma i Stockholm?',
-      answer: 'Priset varierar beroende på bostadens storlek och flyttsträcka. En lägenhetsflytt i Stockholm kostar vanligtvis mellan 3 000 och 15 000 kr. Be alltid om offert från flera företag.',
+      answer: 'Priset varierar beroende på bostadens storlek och flyttsträcka. En lägenhetsflytt i Stockholm kostar vanligtvis mellan 3 000 och 15 000 kr. Be alltid om offert för att få ett exakt pris.',
     },
     {
       question: 'Hur långt i förväg bör jag boka flyttfirma i Stockholm?',
@@ -28,7 +28,7 @@ const cityFAQs: Record<string, { question: string; answer: string }[]> = {
     },
     {
       question: 'Behöver jag parkeringstillstånd för flyttbilen i Stockholm?',
-      answer: 'Ja, för att parkera på gatan i Stockholm city behöver flyttfirman ofta parkeringstillstånd. Många professionella flyttfirmor hjälper till att ordna detta.',
+      answer: 'Ja, för att parkera på gatan i Stockholm city behöver flyttfirman ofta parkeringstillstånd. Professionella flyttfirmor hjälper till att ordna detta.',
     },
     {
       question: 'Ingår flyttstädning hos flyttfirmor i Stockholm?',
@@ -42,7 +42,7 @@ const cityFAQs: Record<string, { question: string; answer: string }[]> = {
   goteborg: [
     {
       question: 'Vad kostar en flytt i Göteborg?',
-      answer: 'En genomsnittlig lägenhetsflytt i Göteborg kostar mellan 2 500 och 12 000 kr beroende på storlek och avstånd. Jämför alltid flera offerter.',
+      answer: 'En genomsnittlig lägenhetsflytt i Göteborg kostar mellan 2 500 och 12 000 kr beroende på storlek och avstånd.',
     },
     {
       question: 'Vilka stadsdelar är svårast att flytta i Göteborg?',
@@ -50,7 +50,7 @@ const cityFAQs: Record<string, { question: string; answer: string }[]> = {
     },
     {
       question: 'Hur bokar jag flyttfirma i Göteborg?',
-      answer: 'Jämför företag här på FlyttGuide, begär gratis offerter och välj den som passar dina behov och budget bäst.',
+      answer: 'Fyll i vårt formulär med information om din flytt så kontaktar vår rekommenderade partner dig med en offert.',
     },
     {
       question: 'Kan flyttfirman hjälpa till med packning?',
@@ -68,7 +68,7 @@ const cityFAQs: Record<string, { question: string; answer: string }[]> = {
     },
     {
       question: 'Hur planerar jag en flytt till Malmö från annan stad?',
-      answer: 'Börja med att jämföra offerter från flyttfirmor som erbjuder långdistansflytt. Boka i god tid och planera för eventuell mellanlagring.',
+      answer: 'Börja med att begära offert via vårt formulär. Vi hjälper dig hitta en pålitlig partner för långdistansflytt.',
     },
   ],
 };
@@ -76,7 +76,7 @@ const cityFAQs: Record<string, { question: string; answer: string }[]> = {
 const defaultFAQs = [
   {
     question: 'Hur väljer jag rätt flyttfirma?',
-    answer: 'Jämför omdömen, begär offerter från flera företag och kontrollera att de har försäkring. Läs recensioner och fråga om referensprojekt.',
+    answer: 'Läs omdömen, kontrollera att de har försäkring och be om en detaljerad offert. Vår rekommenderade partner har genomgått kvalitetskontroll.',
   },
   {
     question: 'Vad ingår vanligtvis i en fullservice-flytt?',
@@ -84,7 +84,7 @@ const defaultFAQs = [
   },
   {
     question: 'Hur fungerar offertförfrågningar via FlyttGuide?',
-    answer: 'Fyll i vårt formulär med information om din flytt. Relevanta flyttfirmor i ditt område kontaktar dig med offerter, vanligtvis inom 24 timmar.',
+    answer: 'Fyll i vårt formulär med information om din flytt. Vår rekommenderade partner kontaktar dig med en offert, vanligtvis inom 24 timmar.',
   },
 ];
 
@@ -109,14 +109,19 @@ export default function ServiceCityPage() {
   const currentYear = new Date().getFullYear();
   const totalReviews = businesses?.reduce((sum, b) => sum + (b.review_count || 0), 0) || 0;
 
+  // Get other businesses (not featured)
+  const otherBusinesses = featuredBusiness
+    ? (businesses || []).filter((b) => b.id !== featuredBusiness.id)
+    : (businesses || []);
+
   const breadcrumbs = [
     { label: 'Hem', href: '/' },
     { label: service?.name || serviceSlug, href: `/${serviceSlug}` },
     { label: city?.name || citySlug },
   ];
 
-  const title = city?.seo_title || `Bästa ${service?.name || 'Flyttfirmor'} i ${city?.name || citySlug} ${currentYear}`;
-  const description = city?.seo_description || `Hitta pålitliga ${service?.name?.toLowerCase() || 'flyttfirmor'} i ${city?.name || citySlug}. Jämför priser, läs omdömen och få gratis offerter.`;
+  const title = city?.seo_title || `Bästa ${service?.name?.toLowerCase()} i ${city?.name} ${currentYear}`;
+  const description = city?.seo_description || `Hitta pålitliga ${service?.name?.toLowerCase() || 'flyttfirmor'} i ${city?.name || citySlug}. Få gratis offert från vår rekommenderade partner.`;
 
   const jsonLd = [];
   
@@ -163,43 +168,40 @@ export default function ServiceCityPage() {
       ) : (
         <HeroSectionNew
           title={`Bästa ${service?.name?.toLowerCase()} i ${city?.name} (${currentYear})`}
-          subtitle={`Jämför ${businesses?.length || 0} ${service?.name?.toLowerCase()} i ${city?.name} baserat på omdömen, priser och kvalitet. Få gratis offerter och hitta rätt företag för din flytt.`}
+          subtitle={`Hitta en pålitlig ${service?.name?.toLowerCase()?.replace(/or$/, 'a')} i ${city?.name}. Vår rekommenderade partner har granskats för kvalitet och pålitlighet.`}
           breadcrumbs={breadcrumbs}
           businessCount={businesses?.length || 0}
           reviewCount={totalReviews}
         />
       )}
 
-      {/* Business listings */}
-      <section className="py-8 lg:py-12">
-        <div className="container">
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-48 w-full" />
-              ))}
+      {/* Featured Business */}
+      {featuredBusiness && (
+        <section className="py-8 lg:py-12" id="businesses">
+          <div className="container">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-xl font-semibold mb-4">Vår rekommenderade partner</h2>
+              <BusinessCard
+                business={featuredBusiness}
+                serviceSlug={serviceSlug}
+                citySlug={citySlug}
+                isFeatured
+              />
             </div>
-          ) : (
-            <BusinessList
-              businesses={businesses || []}
-              featuredBusiness={featuredBusiness || undefined}
-              serviceSlug={serviceSlug}
-              citySlug={citySlug}
-            />
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {/* Lead Form Section */}
       <section id="lead-form" className="py-12 lg:py-16 bg-secondary/30">
         <div className="container">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start max-w-5xl mx-auto">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold mb-4">
                 Få offert från {service?.name?.toLowerCase()} i {city?.name}
               </h2>
               <p className="text-lg text-muted-foreground mb-6">
-                Fyll i formuläret så kontaktar vi dig med offerter från pålitliga företag i ditt område. 
+                Fyll i formuläret så kontaktar vår rekommenderade partner dig med en offert. 
                 Det är helt gratis och utan förpliktelse.
               </p>
               
@@ -221,9 +223,9 @@ export default function ServiceCityPage() {
                     2
                   </div>
                   <div>
-                    <h3 className="font-medium">Få offerter</h3>
+                    <h3 className="font-medium">Få offert</h3>
                     <p className="text-sm text-muted-foreground">
-                      Vi kontaktar lokala företag som matchar dina behov
+                      Vår rekommenderade partner kontaktar dig inom 24 timmar
                     </p>
                   </div>
                 </div>
@@ -233,9 +235,9 @@ export default function ServiceCityPage() {
                     3
                   </div>
                   <div>
-                    <h3 className="font-medium">Jämför & välj</h3>
+                    <h3 className="font-medium">Boka din flytt</h3>
                     <p className="text-sm text-muted-foreground">
-                      Jämför priser och välj det företag som passar dig bäst
+                      Acceptera offerten och boka ett datum som passar dig
                     </p>
                   </div>
                 </div>
@@ -256,34 +258,31 @@ export default function ServiceCityPage() {
         cityName={city?.name || ''} 
       />
 
+      {/* Sub-services Section */}
+      {service?.id && city && (
+        <SubServicesSection
+          parentServiceId={service.id}
+          parentServiceName={service.name}
+          citySlug={citySlug}
+          cityName={city.name}
+        />
+      )}
+
+      {/* Other Businesses Table */}
+      {otherBusinesses.length > 0 && (
+        <BusinessTable
+          businesses={otherBusinesses}
+          serviceSlug={serviceSlug}
+          citySlug={citySlug}
+          cityName={city?.name || ''}
+        />
+      )}
+
       {/* FAQ Section */}
       <FAQSection 
         title={`Vanliga frågor om ${service?.name?.toLowerCase()} i ${city?.name}`}
         faqs={faqs} 
       />
-
-      {/* Trust Section */}
-      <section className="py-12 lg:py-16 bg-secondary/30">
-        <div className="container">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 mb-4">
-              <Info className="h-6 w-6 text-accent" />
-            </div>
-            <h2 className="text-xl font-semibold mb-3">Om våra rekommendationer</h2>
-            <p className="text-muted-foreground mb-4">
-              Vi granskar och jämför {service?.name?.toLowerCase()} baserat på omdömen, priser, tillgänglighet och 
-              kundservice. Rekommenderade företag har genomgått extra kvalitetskontroll och 
-              uppfyller våra krav på professionalism.
-            </p>
-            <Link 
-              to="/hur-vi-rankar" 
-              className="text-accent hover:underline font-medium"
-            >
-              Läs mer om hur vi rankar företag →
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* Other cities */}
       <CityGrid 

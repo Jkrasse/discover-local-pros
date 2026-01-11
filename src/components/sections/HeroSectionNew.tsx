@@ -63,7 +63,7 @@ export function HeroSectionNew({
               className="gap-2"
             >
               <ArrowDown className="h-4 w-4" />
-              Bläddra bland företag
+              Se vår rekommendation
             </Button>
           </div>
 
@@ -71,11 +71,11 @@ export function HeroSectionNew({
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <CheckCircle className="h-4 w-4 text-success" />
-              <span>Gratis jämförelse</span>
+              <span>Gratis offert</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Star className="h-4 w-4 text-featured" />
-              <span>{businessCount} lokala företag</span>
+              <span>Kvalitetsgranskad partner</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Shield className="h-4 w-4 text-accent" />
