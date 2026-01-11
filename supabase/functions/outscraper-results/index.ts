@@ -256,22 +256,57 @@ serve(async (req) => {
       }
     }
 
-    // Create placeholder featured slots for affected cities
+    // Create featured slots for affected cities and assign random business
     for (const cityId of affectedCities) {
       const { data: existingSlot } = await supabase
         .from("featured_slots")
-        .select("id")
+        .select("id, business_id, status")
         .eq("city_id", cityId)
         .eq("service_id", serviceId)
         .maybeSingle();
 
       if (!existingSlot) {
+        // No slot exists - create one with a random business from this import
+        const { data: coverages } = await supabase
+          .from("business_service_coverage")
+          .select("business_id")
+          .eq("city_id", cityId)
+          .eq("service_id", serviceId);
+
+        let randomBusinessId: string | null = null;
+        if (coverages && coverages.length > 0) {
+          const randomIndex = Math.floor(Math.random() * coverages.length);
+          randomBusinessId = coverages[randomIndex].business_id;
+        }
+
         await supabase.from("featured_slots").insert({
           city_id: cityId,
           service_id: serviceId,
-          status: "pending",
+          business_id: randomBusinessId,
+          status: randomBusinessId ? "active" : "pending",
           is_placeholder: true,
         });
+      } else if (!existingSlot.business_id || existingSlot.status === "pending") {
+        // Slot exists but has no business or is pending - assign a random one
+        const { data: coverages } = await supabase
+          .from("business_service_coverage")
+          .select("business_id")
+          .eq("city_id", cityId)
+          .eq("service_id", serviceId);
+
+        if (coverages && coverages.length > 0) {
+          const randomIndex = Math.floor(Math.random() * coverages.length);
+          const randomBusinessId = coverages[randomIndex].business_id;
+
+          await supabase
+            .from("featured_slots")
+            .update({
+              business_id: randomBusinessId,
+              status: "active",
+              is_placeholder: true,
+            })
+            .eq("id", existingSlot.id);
+        }
       }
     }
 
