@@ -1,5 +1,7 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 import { 
   LayoutDashboard, 
   Upload, 
@@ -7,7 +9,8 @@ import {
   MapPin, 
   Briefcase,
   Users,
-  Settings 
+  Settings,
+  LogOut
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -26,6 +29,13 @@ const navigation = [
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/admin/login");
+  };
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -61,13 +71,25 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           })}
         </nav>
         
-        <div className="absolute bottom-4 left-4 right-4">
+        <div className="absolute bottom-4 left-4 right-4 space-y-2">
+          <div className="text-xs text-muted-foreground truncate px-3">
+            {user?.email}
+          </div>
           <Link
             to="/"
             className="flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
           >
             ← Tillbaka till sidan
           </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-muted-foreground"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logga ut
+          </Button>
         </div>
       </aside>
 
