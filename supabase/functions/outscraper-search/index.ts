@@ -58,11 +58,8 @@ serve(async (req) => {
         language: "sv",
         region: "SE",
         async: true,
-        enrichments: [
-          "domains_service",           // Emails And Contacts
-          "company_insights_service",  // Company Insights
-          "emails_validator_service",  // Email Validator
-        ],
+        // Note: Enrichments (emails, company insights) are fetched by default
+        // when available in the Google Maps data
       }),
     });
 
