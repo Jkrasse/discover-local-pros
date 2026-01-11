@@ -89,7 +89,7 @@ const defaultFAQs = [
 ];
 
 export default function ServiceCityPage() {
-  const { service: serviceSlug, city: citySlug } = useParams();
+  const { serviceSlug, citySlug } = useParams();
   
   const { data: city, isLoading: cityLoading } = useCity(citySlug || '');
   const { data: service, isLoading: serviceLoading } = useService(serviceSlug || '');
