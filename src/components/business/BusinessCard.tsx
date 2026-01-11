@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Star, Phone, Globe, MapPin, Clock, ChevronRight, Award } from 'lucide-react';
+import { Star, Phone, Globe, MapPin, ChevronRight, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ interface BusinessCardProps {
   citySlug: string;
   isFeatured?: boolean;
   rank?: number;
+  variant?: 'default' | 'compact';
 }
 
 export function BusinessCard({
@@ -19,9 +20,86 @@ export function BusinessCard({
   citySlug,
   isFeatured = false,
   rank,
+  variant = 'default',
 }: BusinessCardProps) {
   const profileUrl = `/${serviceSlug}/${citySlug}/${business.slug}`;
 
+  // Compact variant for grid display
+  if (variant === 'compact') {
+    return (
+      <article className="card-business flex flex-col h-full">
+        {/* Rank badge */}
+        {rank && (
+          <div className="absolute -top-2 -left-2 flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground shadow-soft">
+            #{rank}
+          </div>
+        )}
+
+        {/* Image */}
+        <div className="w-full h-24 rounded-lg bg-secondary flex items-center justify-center mb-4">
+          {business.images?.[0] ? (
+            <img
+              src={business.images[0]}
+              alt={business.name}
+              className="w-full h-full object-cover rounded-lg"
+              loading="lazy"
+            />
+          ) : (
+            <span className="text-2xl font-bold text-muted-foreground">
+              {business.name.charAt(0)}
+            </span>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 flex flex-col">
+          <h3 className="font-semibold text-foreground mb-1 line-clamp-1">
+            <Link to={profileUrl} className="hover:text-accent transition-colors">
+              {business.name}
+            </Link>
+          </h3>
+
+          {/* Rating */}
+          {business.rating && (
+            <div className="flex items-center gap-1 mb-2">
+              <Star className="h-4 w-4 rating-star fill-featured" />
+              <span className="text-sm font-medium">{business.rating.toFixed(1)}</span>
+              <span className="text-xs text-muted-foreground">
+                ({business.review_count})
+              </span>
+            </div>
+          )}
+
+          {/* Description */}
+          {business.description && (
+            <p className="text-xs text-muted-foreground line-clamp-2 mb-3 flex-1">
+              {business.description}
+            </p>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-2 mt-auto">
+            {business.phone && (
+              <a href={`tel:${business.phone}`} className="flex-1">
+                <Button variant="outline" size="sm" className="w-full gap-1 text-xs">
+                  <Phone className="h-3 w-3" />
+                  Ring
+                </Button>
+              </a>
+            )}
+            <Link to={profileUrl} className="flex-1">
+              <Button variant="ghost" size="sm" className="w-full gap-1 text-xs">
+                Info
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  // Default/Featured variant
   return (
     <article
       className={cn(

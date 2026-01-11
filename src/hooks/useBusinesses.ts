@@ -31,10 +31,14 @@ export function useBusinesses(options: UseBusinessesOptions = {}) {
       if (serviceSlug && !serviceId) {
         const { data: service } = await supabase
           .from('services')
-          .select('id')
+          .select('id, parent_service_id')
           .eq('slug', serviceSlug)
           .maybeSingle();
-        serviceId = service?.id;
+        
+        if (service) {
+          // If this is a sub-service, use parent service for business lookup
+          serviceId = service.parent_service_id || service.id;
+        }
       }
 
       if (!cityId || !serviceId) {
@@ -74,22 +78,33 @@ export function useFeaturedBusiness(citySlug: string, serviceSlug: string) {
   return useQuery({
     queryKey: ['featured-business', citySlug, serviceSlug],
     queryFn: async () => {
-      // Get city and service IDs
-      const [cityResult, serviceResult] = await Promise.all([
-        supabase.from('cities').select('id').eq('slug', citySlug).maybeSingle(),
-        supabase.from('services').select('id').eq('slug', serviceSlug).maybeSingle(),
-      ]);
+      // Get city ID
+      const { data: city } = await supabase
+        .from('cities')
+        .select('id')
+        .eq('slug', citySlug)
+        .maybeSingle();
 
-      if (!cityResult.data?.id || !serviceResult.data?.id) {
+      // Get service and check for parent
+      const { data: service } = await supabase
+        .from('services')
+        .select('id, parent_service_id')
+        .eq('slug', serviceSlug)
+        .maybeSingle();
+
+      if (!city?.id || !service?.id) {
         return null;
       }
+
+      // Use parent service ID if this is a sub-service
+      const effectiveServiceId = service.parent_service_id || service.id;
 
       // Get active featured slot
       const { data: featuredSlot, error: slotError } = await supabase
         .from('featured_slots')
         .select('business_id')
-        .eq('city_id', cityResult.data.id)
-        .eq('service_id', serviceResult.data.id)
+        .eq('city_id', city.id)
+        .eq('service_id', effectiveServiceId)
         .eq('status', 'active')
         .maybeSingle();
 

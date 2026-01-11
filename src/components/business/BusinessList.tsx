@@ -19,6 +19,10 @@ export function BusinessList({
     ? businesses.filter((b) => b.id !== featuredBusiness.id)
     : businesses;
 
+  // Show first 3 businesses in the grid
+  const gridBusinesses = regularBusinesses.slice(0, 3);
+  const remainingBusinesses = regularBusinesses.slice(3);
+
   if (businesses.length === 0 && !featuredBusiness) {
     return (
       <div className="text-center py-12">
@@ -30,10 +34,10 @@ export function BusinessList({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8" id="businesses">
       {/* Featured business */}
       {featuredBusiness && (
-        <div className="mb-8">
+        <div>
           <BusinessCard
             business={featuredBusiness}
             serviceSlug={serviceSlug}
@@ -43,20 +47,41 @@ export function BusinessList({
         </div>
       )}
 
-      {/* Regular businesses */}
-      {regularBusinesses.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">
-            Övriga {regularBusinesses.length} företag
+      {/* Grid of 3 businesses */}
+      {gridBusinesses.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold text-foreground mb-4">
+            Fler företag i området
           </h2>
-          <div className="space-y-4">
-            {regularBusinesses.map((business, index) => (
+          <div className="grid md:grid-cols-3 gap-4">
+            {gridBusinesses.map((business, index) => (
               <BusinessCard
                 key={business.id}
                 business={business}
                 serviceSlug={serviceSlug}
                 citySlug={citySlug}
                 rank={index + 1}
+                variant="compact"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Remaining businesses */}
+      {remainingBusinesses.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-foreground mb-4">
+            Övriga {remainingBusinesses.length} företag
+          </h3>
+          <div className="space-y-4">
+            {remainingBusinesses.map((business, index) => (
+              <BusinessCard
+                key={business.id}
+                business={business}
+                serviceSlug={serviceSlug}
+                citySlug={citySlug}
+                rank={gridBusinesses.length + index + 1}
               />
             ))}
           </div>
