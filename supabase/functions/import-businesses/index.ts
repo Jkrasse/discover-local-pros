@@ -238,6 +238,26 @@ Deno.serve(async (req) => {
           console.error('Coverage error:', coverageError)
         }
 
+        // Create a page entry for the business profile
+        const pageRoute = `/${service.name.toLowerCase().replace(/[åä]/g, 'a').replace(/ö/g, 'o').replace(/[^a-z0-9]+/g, '-')}/${matchedCity.slug}/${slug}`
+        const { error: pageError } = await supabase
+          .from('pages')
+          .upsert({
+            route: pageRoute,
+            title: `${business.name} - ${service.name} i ${matchedCity.name}`,
+            meta_description: business.description ? 
+              business.description.substring(0, 155) : 
+              `${business.name} erbjuder ${service.name.toLowerCase()} i ${matchedCity.name}. Se omdömen, kontaktuppgifter och öppettider.`,
+            h1: business.name,
+            noindex: false
+          }, {
+            onConflict: 'route'
+          })
+
+        if (pageError) {
+          console.error('Page creation error:', pageError)
+        }
+
         citiesWithNewBusinesses.add(matchedCity.id)
 
         results.push({

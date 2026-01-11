@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ServiceIndexPage from "./pages/ServiceIndexPage";
 import ServiceCityPage from "./pages/ServiceCityPage";
+import BusinessProfilePage from "./pages/BusinessProfilePage";
 import CitiesPage from "./pages/CitiesPage";
 import AboutPage from "./pages/AboutPage";
 import HowWeRankPage from "./pages/HowWeRankPage";
@@ -41,6 +42,7 @@ const App = () => (
             {/* Service routes */}
             <Route path="/:serviceSlug" element={<ServiceIndexPage />} />
             <Route path="/:serviceSlug/:citySlug" element={<ServiceCityPage />} />
+            <Route path="/:serviceSlug/:citySlug/:businessSlug" element={<BusinessProfilePage />} />
             
             {/* Cities */}
             <Route path="/stader" element={<CitiesPage />} />
