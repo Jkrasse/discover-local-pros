@@ -1,17 +1,20 @@
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
-import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { HeroSectionNew } from '@/components/sections/HeroSectionNew';
 import { BusinessList } from '@/components/business/BusinessList';
 import { CTASection } from '@/components/sections/CTASection';
 import { FAQSection } from '@/components/sections/FAQSection';
+import { InfoSection } from '@/components/sections/InfoSection';
 import { CityGrid } from '@/components/sections/CityGrid';
+import { Card } from '@/components/ui/card';
+import { LeadForm } from '@/components/forms/LeadForm';
 import { useCity } from '@/hooks/useCity';
 import { useService } from '@/hooks/useService';
 import { useBusinesses, useFeaturedBusiness } from '@/hooks/useBusinesses';
 import { generateLocalBusinessSchema, generateFAQSchema, generateBreadcrumbSchema } from '@/lib/seo';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Star, Clock, Shield, MapPin } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 const cityFAQs: Record<string, { question: string; answer: string }[]> = {
   stockholm: [
@@ -104,6 +107,7 @@ export default function ServiceCityPage() {
 
   const faqs = cityFAQs[citySlug] || defaultFAQs;
   const currentYear = new Date().getFullYear();
+  const totalReviews = businesses?.reduce((sum, b) => sum + (b.review_count || 0), 0) || 0;
 
   const breadcrumbs = [
     { label: 'Hem', href: '/' },
@@ -146,44 +150,25 @@ export default function ServiceCityPage() {
       />
 
       {/* Hero */}
-      <section className="bg-gradient-to-b from-primary/5 to-background pt-8 pb-12 lg:pt-12 lg:pb-16">
-        <div className="container">
-          <Breadcrumbs items={breadcrumbs} />
-
-          {isLoading ? (
-            <div className="space-y-4 mt-6">
-              <Skeleton className="h-10 w-3/4" />
+      {isLoading ? (
+        <section className="bg-gradient-to-b from-primary/5 to-background pt-8 pb-12">
+          <div className="container">
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-12 w-3/4" />
               <Skeleton className="h-6 w-1/2" />
             </div>
-          ) : (
-            <div className="mt-6">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-                Bästa {service?.name?.toLowerCase()} i {city?.name} <span className="text-accent">({currentYear})</span>
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-3xl">
-                Jämför {businesses?.length || 0} {service?.name?.toLowerCase()} i {city?.name} baserat på omdömen, priser och kvalitet. 
-                Få gratis offerter och hitta rätt företag för din flytt.
-              </p>
-              
-              {/* Trust signals */}
-              <div className="flex flex-wrap gap-4 mt-6 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-accent" />
-                  <span>Uppdaterat: januari {currentYear}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-accent" />
-                  <span>Baserat på {businesses?.reduce((sum, b) => sum + (b.review_count || 0), 0) || 0}+ omdömen</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-accent" />
-                  <span>Kvalitetsgranskade företag</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      ) : (
+        <HeroSectionNew
+          title={`Bästa ${service?.name?.toLowerCase()} i ${city?.name} (${currentYear})`}
+          subtitle={`Jämför ${businesses?.length || 0} ${service?.name?.toLowerCase()} i ${city?.name} baserat på omdömen, priser och kvalitet. Få gratis offerter och hitta rätt företag för din flytt.`}
+          breadcrumbs={breadcrumbs}
+          businessCount={businesses?.length || 0}
+          reviewCount={totalReviews}
+        />
+      )}
 
       {/* Business listings */}
       <section className="py-8 lg:py-12">
@@ -205,47 +190,100 @@ export default function ServiceCityPage() {
         </div>
       </section>
 
-      {/* SEO Content */}
-      <section className="py-12 lg:py-16 bg-secondary/30">
+      {/* Lead Form Section */}
+      <section id="lead-form" className="py-12 lg:py-16 bg-secondary/30">
         <div className="container">
-          <div className="max-w-4xl mx-auto prose prose-lg">
-            <h2>Så väljer du {service?.name?.toLowerCase()} i {city?.name}</h2>
-            <p>
-              Att hitta rätt {service?.name?.toLowerCase()} i {city?.name} kan kännas överväldigande. 
-              Med så många alternativ är det viktigt att jämföra noggrant innan du bestämmer dig. 
-              Här är våra tips för att göra rätt val:
-            </p>
-            
-            <h3>1. Jämför flera offerter</h3>
-            <p>
-              Be alltid om offerter från minst tre olika företag. Priserna kan variera kraftigt 
-              mellan olika {service?.name?.toLowerCase()} i {city?.name}, även för samma typ av flytt.
-            </p>
-            
-            <h3>2. Läs omdömen och recensioner</h3>
-            <p>
-              Företag med många positiva omdömen har ofta en bevisad track record av nöjda kunder. 
-              Var uppmärksam på hur företagen hanterar eventuella klagomål.
-            </p>
-            
-            <h3>3. Kontrollera försäkring</h3>
-            <p>
-              Alla seriösa {service?.name?.toLowerCase()} ska ha ansvarsförsäkring. 
-              Fråga specifikt vad som täcks och hur processen ser ut om något går sönder.
-            </p>
-            
-            <h3>4. Tänk på timing</h3>
-            <p>
-              Månadsskiften och sommarmånaderna är högsäsong för flyttar i {city?.name}. 
-              Boka i god tid eller överväg att flytta mitt i månaden för bättre priser.
-            </p>
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">
+                Få offert från {service?.name?.toLowerCase()} i {city?.name}
+              </h2>
+              <p className="text-lg text-muted-foreground mb-6">
+                Fyll i formuläret så kontaktar vi dig med offerter från pålitliga företag i ditt område. 
+                Det är helt gratis och utan förpliktelse.
+              </p>
+              
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent font-semibold text-sm">
+                    1
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Beskriv din flytt</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Berätta var du ska flytta och vilken typ av bostad det gäller
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent font-semibold text-sm">
+                    2
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Få offerter</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Vi kontaktar lokala företag som matchar dina behov
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent font-semibold text-sm">
+                    3
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Jämför & välj</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Jämför priser och välj det företag som passar dig bäst
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Card className="p-6 lg:p-8 shadow-card">
+              <h3 className="text-xl font-semibold mb-6">Fyll i dina uppgifter</h3>
+              <LeadForm cityId={city?.id} serviceId={service?.id} />
+            </Card>
           </div>
         </div>
       </section>
 
-      <FAQSection faqs={faqs} />
+      {/* Info Section */}
+      <InfoSection 
+        serviceName={service?.name || 'Flyttfirmor'} 
+        cityName={city?.name || ''} 
+      />
 
-      <CTASection cityName={city?.name} serviceName={service?.name} />
+      {/* FAQ Section */}
+      <FAQSection 
+        title={`Vanliga frågor om ${service?.name?.toLowerCase()} i ${city?.name}`}
+        faqs={faqs} 
+      />
+
+      {/* Trust Section */}
+      <section className="py-12 lg:py-16 bg-secondary/30">
+        <div className="container">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 mb-4">
+              <Info className="h-6 w-6 text-accent" />
+            </div>
+            <h2 className="text-xl font-semibold mb-3">Om våra rekommendationer</h2>
+            <p className="text-muted-foreground mb-4">
+              Vi granskar och jämför {service?.name?.toLowerCase()} baserat på omdömen, priser, tillgänglighet och 
+              kundservice. Rekommenderade företag har genomgått extra kvalitetskontroll och 
+              uppfyller våra krav på professionalism.
+            </p>
+            <Link 
+              to="/hur-vi-rankar" 
+              className="text-accent hover:underline font-medium"
+            >
+              Läs mer om hur vi rankar företag →
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Other cities */}
       <CityGrid 
