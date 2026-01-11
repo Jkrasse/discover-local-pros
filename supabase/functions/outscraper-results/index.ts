@@ -57,6 +57,19 @@ interface OutscraperBusiness {
   employees_range?: string;
   founded_year?: number;
   industry?: string;
+  // Flat email fields (email_1, email_2, email_3 format)
+  email_1?: string;
+  email_2?: string;
+  email_3?: string;
+  "email_1.emails_validator.status"?: string;
+  "email_2.emails_validator.status"?: string;
+  // Dot-notation company insights fields
+  "company_insights.employees_range"?: string;
+  "company_insights.founded_year"?: number;
+  "company_insights.industry"?: string;
+  "company_insights.description"?: string;
+  // Index signature for dynamic dot-notation access
+  [key: string]: unknown;
 }
 
 interface ImportResult {
@@ -219,9 +232,11 @@ serve(async (req) => {
           console.log(JSON.stringify(business, null, 2));
           console.log("=== ENRICHMENT FIELDS CHECK ===");
           console.log({
+            // Nested structures
             emails_and_contacts: business.emails_and_contacts,
             company_insights: business.company_insights,
             emails_validator: business.emails_validator,
+            // Flat fields
             flat_emails: business.emails,
             flat_email: business.email,
             flat_facebook: business.facebook,
@@ -230,6 +245,15 @@ serve(async (req) => {
             flat_employees_range: business.employees_range,
             flat_founded_year: business.founded_year,
             flat_industry: business.industry,
+            // Numbered email fields (Outscraper format)
+            email_1: business.email_1,
+            email_2: business.email_2,
+            email_3: business.email_3,
+            "email_1.validator_status": business["email_1.emails_validator.status"],
+            // Dot-notation company insights
+            "company_insights.employees_range": business["company_insights.employees_range"],
+            "company_insights.founded_year": business["company_insights.founded_year"],
+            "company_insights.industry": business["company_insights.industry"],
           });
         }
 
@@ -266,13 +290,29 @@ serve(async (req) => {
         if (business.category) categories.push(business.category);
         if (business.subtypes) categories.push(...business.subtypes);
 
-        // Extract enrichment data - handle both nested and flat structures
-        const enrichedEmails: string[] = 
-          business.emails_and_contacts?.emails || 
-          business.emails || 
-          (business.email ? [business.email] : []);
+        // Extract enrichment data - prioritize flat email_1/email_2/email_3 format
+        const enrichedEmails: string[] = [];
+        if (business.email_1) enrichedEmails.push(business.email_1);
+        if (business.email_2) enrichedEmails.push(business.email_2);
+        if (business.email_3) enrichedEmails.push(business.email_3);
+        
+        // Fallback to alternative formats if no numbered emails found
+        if (enrichedEmails.length === 0) {
+          if (business.emails_and_contacts?.emails && business.emails_and_contacts.emails.length > 0) {
+            enrichedEmails.push(...business.emails_and_contacts.emails);
+          } else if (business.emails && business.emails.length > 0) {
+            enrichedEmails.push(...business.emails);
+          } else if (business.email) {
+            enrichedEmails.push(business.email);
+          }
+        }
         const primaryEmail = enrichedEmails[0] || null;
-        const emailValidated = business.emails_validator?.some(e => e.is_valid) || false;
+        
+        // Check email validation status - support both formats
+        const emailValidated = 
+          business["email_1.emails_validator.status"] === "VALID" ||
+          business.emails_validator?.some(e => e.is_valid) || 
+          false;
 
         // Social media - check both nested and flat structure
         const facebook = business.emails_and_contacts?.facebook || business.facebook || null;
@@ -281,17 +321,20 @@ serve(async (req) => {
         const twitter = business.emails_and_contacts?.twitter || business.twitter || null;
         const youtube = business.emails_and_contacts?.youtube || business.youtube || null;
 
-        // Company insights - check both nested and flat structure
+        // Company insights - check dot-notation first, then nested, then flat
         const employeeCount = 
+          (business["company_insights.employees_range"] as string) ||
           business.company_insights?.employees_range || 
           business.employees_range || 
           business.employees || 
           null;
         const foundedYear = 
+          (business["company_insights.founded_year"] as number) ||
           business.company_insights?.founded_year || 
           business.founded_year || 
           null;
         const industry = 
+          (business["company_insights.industry"] as string) ||
           business.company_insights?.industry || 
           business.industry || 
           null;
@@ -333,32 +376,45 @@ serve(async (req) => {
         };
 
         try {
-          // Check if business exists
+          // Check if business exists (by gbp_id)
           const { data: existing } = await supabase
             .from("businesses")
-            .select("id")
+            .select("id, city_id")
             .eq("gbp_id", business.place_id)
             .maybeSingle();
 
           let businessId: string;
 
           if (existing) {
-            // Update existing
+            // Business exists - update non-geographic data only to support multi-city
+            // Keep the original city_id to preserve the "primary" city
+            const { city_id: _unusedCityId, ...updateData } = businessData;
+            
             const { error: updateError } = await supabase
               .from("businesses")
-              .update(businessData)
+              .update(updateData)
               .eq("id", existing.id);
 
             if (updateError) throw updateError;
             businessId = existing.id;
 
+            // Check if this is a new city for this business
+            const isNewCityForBusiness = existing.city_id !== matchedCity.id;
+
             results.push({
               name: business.name,
               status: "updated",
+              message: isNewCityForBusiness 
+                ? `Also added coverage for ${matchedCity.name} (business exists in another city)` 
+                : undefined,
               city: matchedCity.name,
             });
+
+            if (isNewCityForBusiness) {
+              console.log(`Business "${business.name}" exists in another city, adding coverage for ${matchedCity.name}`);
+            }
           } else {
-            // Insert new
+            // Insert new business
             const { data: inserted, error: insertError } = await supabase
               .from("businesses")
               .insert(businessData)
@@ -375,13 +431,14 @@ serve(async (req) => {
             });
           }
 
-          // Create service coverage
+          // Always create service coverage for this city (supports multi-city businesses)
+          // is_primary is only true if this is the first/original city for the business
           await supabase.from("business_service_coverage").upsert(
             {
               business_id: businessId,
               service_id: serviceId,
               city_id: matchedCity.id,
-              is_primary: true,
+              is_primary: !existing, // Only primary if this is a new business
             },
             { onConflict: "business_id,service_id,city_id" }
           );
