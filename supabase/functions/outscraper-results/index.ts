@@ -71,6 +71,59 @@ function normalizeCity(cityName: string): string {
     .replace(/[ö]/g, "o");
 }
 
+async function getOrCreateCity(
+  supabase: any,
+  cityName: string,
+  cityMap: Map<string, { id: string; name: string }>
+): Promise<{ id: string; name: string; isNew: boolean } | null> {
+  if (!cityName) return null;
+
+  const normalizedName = normalizeCity(cityName);
+
+  // Try exact match first
+  let matchedCity = cityMap.get(normalizedName);
+
+  // Try partial match if exact match fails
+  if (!matchedCity) {
+    for (const [key, value] of cityMap.entries()) {
+      if (normalizedName.includes(key) || key.includes(normalizedName)) {
+        matchedCity = value;
+        break;
+      }
+    }
+  }
+
+  // If city found, return it
+  if (matchedCity) {
+    return { ...matchedCity, isNew: false };
+  }
+
+  // City not found - create it
+  const slug = generateSlug(cityName);
+
+  const { data: newCity, error } = await supabase
+    .from("cities")
+    .insert({
+      name: cityName.trim(),
+      slug: slug,
+      region: null,
+      population: null,
+    })
+    .select("id, name")
+    .single();
+
+  if (error) {
+    console.error("Failed to create city:", cityName, error);
+    return null;
+  }
+
+  // Add to cache for future matches in this import
+  cityMap.set(normalizedName, { id: newCity.id, name: newCity.name });
+  console.log("Created new city:", newCity.name);
+
+  return { id: newCity.id, name: newCity.name, isNew: true };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -139,6 +192,7 @@ serve(async (req) => {
 
     const results: ImportResult[] = [];
     const affectedCities = new Set<string>();
+    let newCitiesCreated = 0;
 
     // Outscraper returns an array of arrays (one per query)
     const allData = statusResult.data || [];
@@ -156,31 +210,21 @@ serve(async (req) => {
           continue;
         }
 
-        // Match city
-        let matchedCity: { id: string; name: string } | undefined;
-        if (business.city) {
-          const normalizedBusinessCity = normalizeCity(business.city);
-          matchedCity = cityMap.get(normalizedBusinessCity);
-
-          // Try partial match if exact match fails
-          if (!matchedCity) {
-            for (const [key, value] of cityMap.entries()) {
-              if (normalizedBusinessCity.includes(key) || key.includes(normalizedBusinessCity)) {
-                matchedCity = value;
-                break;
-              }
-            }
-          }
-        }
+        // Match or create city
+        const matchedCity = await getOrCreateCity(supabase, business.city || '', cityMap);
 
         if (!matchedCity) {
           results.push({
             name: business.name,
             status: "skipped",
-            message: `City not found: ${business.city}`,
+            message: `Could not match or create city: ${business.city}`,
             city: business.city,
           });
           continue;
+        }
+
+        if (matchedCity.isNew) {
+          newCitiesCreated++;
         }
 
         affectedCities.add(matchedCity.id);
@@ -358,6 +402,7 @@ serve(async (req) => {
       skipped: results.filter((r) => r.status === "skipped").length,
       errors: results.filter((r) => r.status === "error").length,
       citiesAffected: affectedCities.size,
+      newCitiesCreated,
     };
 
     return new Response(
