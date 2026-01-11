@@ -11,7 +11,9 @@ import {
   Users,
   Settings,
   LogOut,
-  Search
+  Search,
+  Award,
+  DollarSign
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -20,11 +22,13 @@ interface AdminLayoutProps {
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "CRM", href: "/admin/crm", icon: DollarSign },
   { name: "Scraping", href: "/admin/scrape", icon: Search },
   { name: "Importera", href: "/admin/import", icon: Upload },
   { name: "Företag", href: "/admin/businesses", icon: Building2 },
   { name: "Städer", href: "/admin/cities", icon: MapPin },
   { name: "Tjänster", href: "/admin/services", icon: Briefcase },
+  { name: "Featured", href: "/admin/featured", icon: Award },
   { name: "Leads", href: "/admin/leads", icon: Users },
   { name: "Inställningar", href: "/admin/settings", icon: Settings },
 ];

@@ -193,9 +193,13 @@ export type Database = {
           business_id: string | null
           city_id: string
           created_at: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
           end_date: string | null
           id: string
           is_placeholder: boolean | null
+          notes: string | null
           plan: string | null
           price_monthly: number | null
           service_id: string
@@ -207,9 +211,13 @@ export type Database = {
           business_id?: string | null
           city_id: string
           created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           end_date?: string | null
           id?: string
           is_placeholder?: boolean | null
+          notes?: string | null
           plan?: string | null
           price_monthly?: number | null
           service_id: string
@@ -221,9 +229,13 @@ export type Database = {
           business_id?: string | null
           city_id?: string
           created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           end_date?: string | null
           id?: string
           is_placeholder?: boolean | null
+          notes?: string | null
           plan?: string | null
           price_monthly?: number | null
           service_id?: string
