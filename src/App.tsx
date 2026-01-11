@@ -15,6 +15,7 @@ import ContactPage from "./pages/ContactPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ImportPage from "./pages/admin/ImportPage";
+import ScrapePage from "./pages/admin/ScrapePage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import { ProtectedRoute } from "./components/admin/ProtectedRoute";
 
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/import" element={<ProtectedRoute><ImportPage /></ProtectedRoute>} />
+            <Route path="/admin/scrape" element={<ProtectedRoute><ScrapePage /></ProtectedRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
