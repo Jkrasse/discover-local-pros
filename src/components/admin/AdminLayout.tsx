@@ -10,7 +10,8 @@ import {
   Briefcase,
   Users,
   Settings,
-  LogOut
+  LogOut,
+  Search
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -19,6 +20,7 @@ interface AdminLayoutProps {
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Scraping", href: "/admin/scrape", icon: Search },
   { name: "Importera", href: "/admin/import", icon: Upload },
   { name: "Företag", href: "/admin/businesses", icon: Building2 },
   { name: "Städer", href: "/admin/cities", icon: MapPin },
