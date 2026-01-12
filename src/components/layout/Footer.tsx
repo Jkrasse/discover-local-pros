@@ -3,6 +3,8 @@ import { Truck, Mail, MapPin, Shield, FileText, Scale } from 'lucide-react';
 import { useCities } from '@/hooks/useCity';
 import { useServices } from '@/hooks/useService';
 
+export default function Footer() {
+  const currentYear = new Date().getFullYear();
   const { data: cities } = useCities();
   const { data: services } = useServices();
 
