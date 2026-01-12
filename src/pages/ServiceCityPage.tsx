@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { HeroSectionNew } from '@/components/sections/HeroSectionNew';
@@ -15,6 +15,7 @@ import { useService } from '@/hooks/useService';
 import { useBusinesses, useFeaturedBusiness } from '@/hooks/useBusinesses';
 import { generateLocalBusinessSchema, generateFAQSchema, generateBreadcrumbSchema } from '@/lib/seo';
 import { Skeleton } from '@/components/ui/skeleton';
+import NotFound from './NotFound';
 
 const cityFAQs: Record<string, { question: string; answer: string }[]> = {
   stockholm: [
@@ -103,6 +104,10 @@ export default function ServiceCityPage() {
 
   if (!citySlug || !serviceSlug) {
     return null;
+  }
+
+  if (!isLoading && (!city || !service)) {
+    return <NotFound />;
   }
 
   const faqs = cityFAQs[citySlug] || defaultFAQs;
