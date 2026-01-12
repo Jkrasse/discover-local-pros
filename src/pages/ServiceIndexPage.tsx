@@ -8,9 +8,10 @@ import { useCities } from '@/hooks/useCity';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MapPin, ChevronRight, Users } from 'lucide-react';
+import NotFound from './NotFound';
 
 export default function ServiceIndexPage() {
-  const { service: serviceSlug } = useParams();
+  const { serviceSlug } = useParams();
   
   const { data: service, isLoading: serviceLoading } = useService(serviceSlug || '');
   const { data: cities, isLoading: citiesLoading } = useCities();
@@ -21,14 +22,19 @@ export default function ServiceIndexPage() {
     return null;
   }
 
+  if (!isLoading && !service) {
+    return <NotFound />;
+  }
+
   const breadcrumbs = [
     { label: 'Hem', href: '/' },
     { label: service?.name || serviceSlug },
   ];
 
   const currentYear = new Date().getFullYear();
-  const title = `${service?.name || serviceSlug} i Sverige ${currentYear} | Jämför & Få Offert`;
-  const description = `Hitta ${service?.name?.toLowerCase() || serviceSlug} i hela Sverige. Välj din stad och jämför lokala företag baserat på omdömen och priser.`;
+  const serviceName = service?.name || serviceSlug;
+  const title = `${serviceName} i Sverige ${currentYear} | Jämför & Få Offert`;
+  const description = `Hitta ${serviceName.toLowerCase()} i hela Sverige. Välj din stad och jämför lokala företag baserat på omdömen och priser.`;
 
   return (
     <Layout>

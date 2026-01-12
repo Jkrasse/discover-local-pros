@@ -1,36 +1,19 @@
 import { Link } from 'react-router-dom';
 import { Truck, Mail, MapPin, Shield, FileText, Scale } from 'lucide-react';
+import { useCities } from '@/hooks/useCity';
+import { useServices } from '@/hooks/useService';
 
-const footerLinks = {
-  tjanster: [
-    { name: 'Flyttfirmor', href: '/flyttfirmor' },
-    { name: 'Flyttbil', href: '/flyttbil' },
-    { name: 'Flytthjälp', href: '/flytthjalp' },
-    { name: 'Magasinering', href: '/magasinering' },
-  ],
-  stader: [
-    { name: 'Stockholm', href: '/flyttfirmor/stockholm' },
-    { name: 'Göteborg', href: '/flyttfirmor/goteborg' },
-    { name: 'Malmö', href: '/flyttfirmor/malmo' },
-    { name: 'Uppsala', href: '/flyttfirmor/uppsala' },
-    { name: 'Västerås', href: '/flyttfirmor/vasteras' },
-    { name: 'Alla städer', href: '/stader' },
-  ],
-  foretag: [
-    { name: 'Om oss', href: '/om-oss' },
-    { name: 'Så rankar vi', href: '/hur-vi-rankar' },
-    { name: 'Kontakta oss', href: '/kontakt' },
-    { name: 'Bli rekommenderad', href: '/bli-partner' },
-  ],
-  juridik: [
-    { name: 'Integritetspolicy', href: '/privacy-policy' },
-    { name: 'Cookiepolicy', href: '/cookie-policy' },
-    { name: 'Villkor', href: '/villkor' },
-  ],
-};
+  const { data: cities } = useCities();
+  const { data: services } = useServices();
 
-export function Footer() {
-  const currentYear = new Date().getFullYear();
+  const topLevelServices = (services || []).filter((s) => !s.parent_service_id).slice(0, 6);
+  const topCities = (cities || []).slice(0, 6);
+
+  const serviceLinks = topLevelServices.map((s) => ({ name: s.name, href: `/${s.slug}` }));
+  const cityLinks = topCities.map((c) => ({
+    name: c.name,
+    href: topLevelServices[0] ? `/${topLevelServices[0].slug}/${c.slug}` : '/stader',
+  }));
 
   return (
     <footer className="bg-primary text-primary-foreground">
@@ -70,7 +53,7 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Tjänster</h3>
             <ul className="space-y-2">
-              {footerLinks.tjanster.map((link) => (
+              {serviceLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     to={link.href}
@@ -87,7 +70,7 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Städer</h3>
             <ul className="space-y-2">
-              {footerLinks.stader.map((link) => (
+              {cityLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     to={link.href}
@@ -97,6 +80,14 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link
+                  to="/stader"
+                  className="text-sm text-primary-foreground/70 hover:text-accent transition-colors"
+                >
+                  Alla städer
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -104,7 +95,11 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Om FlyttGuide</h3>
             <ul className="space-y-2">
-              {footerLinks.foretag.map((link) => (
+              {[
+                { name: 'Om oss', href: '/om-oss' },
+                { name: 'Så rankar vi', href: '/hur-vi-rankar' },
+                { name: 'Kontakta oss', href: '/kontakt' },
+              ].map((link) => (
                 <li key={link.href}>
                   <Link
                     to={link.href}
@@ -121,7 +116,7 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Juridik</h3>
             <ul className="space-y-2">
-              {footerLinks.juridik.map((link) => (
+              {[{ name: 'Integritetspolicy', href: '/integritetspolicy' }].map((link) => (
                 <li key={link.href}>
                   <Link
                     to={link.href}
