@@ -1,4 +1,3 @@
-import { Card } from '@/components/ui/card';
 import { LeadForm } from '@/components/forms/LeadForm';
 import { FileText, Phone, Shield } from 'lucide-react';
 
@@ -17,62 +16,57 @@ export function CTASection({
   cityId,
   serviceId,
 }: CTASectionProps) {
+  const benefits = [
+    {
+      icon: FileText,
+      title: 'Gratis & utan förpliktelse',
+      description: 'Det kostar ingenting att få offerter. Du väljer själv om du vill gå vidare.',
+    },
+    {
+      icon: Phone,
+      title: 'Snabbt svar',
+      description: 'Vi återkommer inom 24 timmar med offerter från företag i ditt område.',
+    },
+    {
+      icon: Shield,
+      title: 'Kvalitetssäkrade företag',
+      description: 'Alla företag är granskade och har bra omdömen från tidigare kunder.',
+    },
+  ];
+
   return (
-    <section className="py-12 lg:py-16 bg-secondary/30">
+    <section className="py-24">
       <div className="container">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1fr_1.3fr] gap-16 items-start">
           {/* Content */}
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">{title}</h2>
-            <p className="text-lg text-muted-foreground mb-8">{subtitle}</p>
+            <h2 className="text-3xl lg:text-[44px] font-bold tracking-tight leading-tight mb-5">
+              {title}
+            </h2>
+            <p className="text-lg text-muted-foreground leading-relaxed mb-10">
+              {subtitle}
+            </p>
 
-            <div className="space-y-4">
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                  <FileText className="h-5 w-5" />
+            <div className="space-y-6">
+              {benefits.map((benefit, i) => (
+                <div key={i} className="benefit-item">
+                  <div className="benefit-icon">
+                    <benefit.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-[17px] mb-1">{benefit.title}</h4>
+                    <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold mb-1">Gratis & utan förpliktelse</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Det kostar ingenting att få offerter. Du väljer själv om du
-                    vill gå vidare.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                  <Phone className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">Snabbt svar</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Vi återkommer inom 24 timmar med offerter från företag i ditt
-                    område.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                  <Shield className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">Kvalitetssäkrade företag</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Alla företag är granskade och har bra omdömen från tidigare
-                    kunder.
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Form */}
-          <Card className="p-6 lg:p-8 shadow-card">
-            <h3 className="text-xl font-semibold mb-6">Fyll i dina uppgifter</h3>
+          {/* Form Card */}
+          <div className="quote-form-card">
+            <h3 className="text-2xl font-bold mb-8">Fyll i dina uppgifter</h3>
             <LeadForm cityId={cityId} serviceId={serviceId} />
-          </Card>
+          </div>
         </div>
       </div>
     </section>
