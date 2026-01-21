@@ -3,7 +3,6 @@ import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { CTASection } from '@/components/sections/CTASection';
 import { FAQSection } from '@/components/sections/FAQSection';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Truck, 
@@ -16,8 +15,9 @@ import {
   ArrowRight,
   Building2,
   Clock,
-  Award,
-  ThumbsUp
+  ThumbsUp,
+  Package,
+  ArrowLeftRight
 } from 'lucide-react';
 import { useCities } from '@/hooks/useCity';
 import { useServices } from '@/hooks/useService';
@@ -41,26 +41,21 @@ const faqs = [
   },
 ];
 
-const trustPoints = [
-  { icon: Shield, text: 'Kvalitetsgranskade företag' },
-  { icon: CheckCircle, text: 'Gratis & oförpliktigande' },
-  { icon: Clock, text: 'Snabba offerter' },
-];
-
 export default function Index() {
   const { data: cities } = useCities();
   const { data: services } = useServices();
 
   // Get top-level services and limit cities
-  const topServices = services?.filter(s => !s.parent_service_id)?.slice(0, 4) || [];
+  const topServices = services?.filter(s => !s.parent_service_id)?.slice(0, 3) || [];
   const popularCities = cities?.slice(0, 6) || [];
   const primaryService = topServices[0];
 
   const serviceIcons: Record<string, typeof Truck> = {
     'flyttfirmor': Truck,
-    'flyttbil': Truck,
+    'flyttbil': ArrowLeftRight,
     'flytthjalp': Users,
     'magasinering': Building2,
+    'packning': Package,
   };
 
   return (
@@ -71,49 +66,67 @@ export default function Index() {
         canonical="/"
       />
 
-      {/* Hero Section - Clean WordPress style */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/[0.03] via-background to-background">
-        {/* Subtle background pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--accent)/0.08),transparent_50%)]" />
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/[0.03] to-background" />
         
-        <div className="container relative">
-          <div className="py-16 lg:py-24 max-w-4xl mx-auto text-center">
-            {/* Trust badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6">
-              <Award className="h-4 w-4" />
-              <span>Sveriges ledande jämförelsetjänst</span>
+        {/* Decorative elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-20 left-1/5 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-primary/10 to-transparent animate-float opacity-60" />
+          <div className="absolute bottom-10 right-1/5 w-[300px] h-[300px] rounded-full bg-gradient-to-br from-accent/10 to-transparent animate-float-reverse opacity-50" />
+        </div>
+
+        <div className="container relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Hero badge */}
+            <div className="hero-badge mb-8 animate-fade-in-up">
+              <div className="hero-badge-icon">
+                <Shield className="h-3.5 w-3.5 text-primary" />
+              </div>
+              Sveriges ledande jämförelsetjänst
             </div>
 
             {/* Main headline */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground mb-6">
+            <h1 className="text-4xl sm:text-5xl lg:text-[68px] font-extrabold tracking-tight leading-[1.1] mb-6 animate-fade-in-up animate-delay-100">
               Hitta rätt företag för{' '}
-              <span className="text-accent">din flytt</span>
+              <span className="title-highlight">din flytt</span>
             </h1>
 
             {/* Subtitle */}
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg lg:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up animate-delay-200">
               Jämför lokala företag baserat på omdömen och få gratis offerter. 
               Vi hjälper dig hitta pålitliga partners i hela Sverige.
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Button size="lg" className="btn-hero text-base px-8 py-6">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 animate-fade-in-up animate-delay-300">
+              <a href="#quote" className="btn-hero">
                 Få gratis offert
-                <ArrowRight className="h-5 w-5 ml-2" />
-              </Button>
+                <ArrowRight className="h-5 w-5" />
+              </a>
               <Link to={primaryService ? `/${primaryService.slug}` : '/stader'}>
-                <Button variant="outline" size="lg" className="text-base px-8 py-6 w-full sm:w-auto">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="w-full sm:w-auto text-base px-8 py-6 rounded-full border-2 hover:border-primary hover:text-primary hover:bg-primary/5"
+                >
                   Utforska tjänster
                 </Button>
               </Link>
             </div>
 
             {/* Trust points */}
-            <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
-              {trustPoints.map((point, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <point.icon className="h-4 w-4 text-success" />
+            <div className="flex flex-wrap justify-center gap-8 animate-fade-in-up animate-delay-400">
+              {[
+                { icon: Shield, text: 'Kvalitetsgranskade företag' },
+                { icon: CheckCircle, text: 'Gratis & oförpliktigande' },
+                { icon: Clock, text: 'Snabba offerter' },
+              ].map((point, i) => (
+                <div key={i} className="flex items-center gap-2.5 text-muted-foreground text-sm font-medium">
+                  <div className="trust-icon">
+                    <point.icon className="h-4 w-4 text-primary" />
+                  </div>
                   <span>{point.text}</span>
                 </div>
               ))}
@@ -122,8 +135,11 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Stats Section - Clean cards */}
-      <section className="py-12 lg:py-16 border-y border-border bg-secondary/30">
+      {/* Stats Section */}
+      <section className="py-20 relative">
+        {/* Top divider */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        
         <div className="container">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {[
@@ -132,55 +148,58 @@ export default function Index() {
               { value: '4.6', label: 'Snittbetyg', icon: Star },
               { value: '10k+', label: 'Offertförfrågningar', icon: ThumbsUp },
             ].map((stat, i) => (
-              <div key={i} className="text-center p-4">
-                <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-accent/10 mb-3">
-                  <stat.icon className="h-6 w-6 text-accent" />
+              <div key={i} className="stat-card">
+                <div className="stat-icon">
+                  <stat.icon className="h-7 w-7 text-primary" />
                 </div>
-                <div className="text-3xl lg:text-4xl font-bold text-foreground mb-1">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
+                <div className="stat-value">{stat.value}</div>
+                <div className="stat-label">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Services Section - WordPress theme style */}
-      <section className="py-16 lg:py-24">
-        <div className="container">
+      {/* Services Section */}
+      <section className="py-24 bg-gradient-to-b from-secondary/50 via-secondary/30 to-background relative" id="services">
+        {/* Top fade */}
+        <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-background to-transparent pointer-events-none" />
+        
+        <div className="container relative z-10">
           {/* Section header */}
-          <div className="text-center mb-12">
-            <span className="inline-block text-accent text-sm font-semibold tracking-wider uppercase mb-3">
-              Våra tjänster
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+          <div className="text-center mb-16">
+            <div className="section-tag mb-4">Våra tjänster</div>
+            <h2 className="text-3xl lg:text-5xl font-bold tracking-tight mb-4">
               Vad behöver du hjälp med?
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Oavsett om du behöver fullservice-flytt eller bara en flyttbil – vi hjälper dig hitta rätt.
             </p>
           </div>
 
           {/* Service cards grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {topServices.map((service) => {
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {topServices.map((service, i) => {
               const IconComponent = serviceIcons[service.slug] || Truck;
               return (
-                <Link key={service.id} to={`/${service.slug}`}>
-                  <Card className="group h-full p-6 border border-border hover:border-accent/40 hover:shadow-lg transition-all duration-300 bg-card">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-accent/10 mb-5 group-hover:bg-accent group-hover:scale-110 transition-all duration-300">
-                      <IconComponent className="h-7 w-7 text-accent group-hover:text-accent-foreground transition-colors" />
+                <Link key={service.id} to={`/${service.slug}`} className="block">
+                  <div className="service-card h-full">
+                    <div className="relative z-10">
+                      <div className="service-icon">
+                        <IconComponent className="h-8 w-8 text-primary transition-colors duration-500" />
+                      </div>
+                      <h3 className="text-xl lg:text-[22px] font-bold mb-3">
+                        {service.name}
+                      </h3>
+                      <p className="text-muted-foreground text-[15px] leading-relaxed mb-5">
+                        {service.description || 'Hitta de bästa företagen i din stad och få gratis offerter.'}
+                      </p>
+                      <span className="service-link">
+                        Läs mer
+                        <ArrowRight className="h-[18px] w-[18px]" />
+                      </span>
                     </div>
-                    <h3 className="font-semibold text-lg mb-2 group-hover:text-accent transition-colors">
-                      {service.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                      {service.description || 'Hitta de bästa företagen i din stad'}
-                    </p>
-                    <div className="flex items-center text-accent text-sm font-medium">
-                      <span>Hitta företag</span>
-                      <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </Card>
+                  </div>
                 </Link>
               );
             })}
@@ -188,55 +207,49 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Popular Cities Section */}
-      <section className="py-16 lg:py-24 bg-secondary/30">
+      {/* Cities Section */}
+      <section className="py-24">
         <div className="container">
           {/* Section header */}
-          <div className="text-center mb-12">
-            <span className="inline-block text-accent text-sm font-semibold tracking-wider uppercase mb-3">
-              Populära områden
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+          <div className="text-center mb-16">
+            <div className="section-tag mb-4">Populära områden</div>
+            <h2 className="text-3xl lg:text-5xl font-bold tracking-tight mb-4">
               Hitta företag nära dig
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Välj din stad för att se lokala företag med bäst omdömen
             </p>
           </div>
 
           {/* Cities grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto mb-12">
             {popularCities.map((city) => (
               <Link 
                 key={city.id} 
                 to={primaryService ? `/${primaryService.slug}/${city.slug}` : `/stader`}
+                className="block"
               >
-                <Card className="group p-5 border border-border hover:border-accent/40 hover:shadow-md transition-all duration-300 bg-card">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary group-hover:bg-accent/10 transition-colors">
-                      <MapPin className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors truncate">
-                        {city.name}
-                      </h3>
-                      {city.region && (
-                        <p className="text-sm text-muted-foreground truncate">{city.region}</p>
-                      )}
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-accent group-hover:translate-x-1 transition-all flex-shrink-0" />
+                <div className="city-card">
+                  <div className="city-icon">
+                    <MapPin className="h-5 w-5 text-muted-foreground transition-colors duration-300 group-hover:text-primary" />
                   </div>
-                </Card>
+                  <span className="flex-1 font-semibold text-base">{city.name}</span>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground/50 transition-all duration-300" />
+                </div>
               </Link>
             ))}
           </div>
 
           {/* View all button */}
-          <div className="text-center mt-10">
+          <div className="text-center">
             <Link to="/stader">
-              <Button variant="outline" size="lg" className="px-8">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="px-8 rounded-full border-2 hover:border-primary hover:text-primary hover:bg-primary/5"
+              >
                 Visa alla städer
-                <ChevronRight className="h-4 w-4 ml-2" />
+                <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </Link>
           </div>
@@ -244,56 +257,49 @@ export default function Index() {
       </section>
 
       {/* How it Works Section */}
-      <section className="py-16 lg:py-24">
-        <div className="container">
+      <section className="py-24 bg-gradient-to-b from-secondary/30 to-background relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-primary/[0.03] pointer-events-none" />
+        
+        <div className="container relative z-10">
           {/* Section header */}
           <div className="text-center mb-16">
-            <span className="inline-block text-accent text-sm font-semibold tracking-wider uppercase mb-3">
-              Så fungerar det
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <div className="section-tag mb-4">Så fungerar det</div>
+            <h2 className="text-3xl lg:text-5xl font-bold tracking-tight mb-4">
               Tre enkla steg
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Från förfrågan till färdigt jobb – så enkelt är det
             </p>
           </div>
 
           {/* Steps */}
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12 max-w-5xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-center gap-8 lg:gap-12 max-w-5xl mx-auto relative">
+            {/* Connector lines (desktop) */}
+            <div className="hidden md:block absolute top-10 left-[33%] w-[34%] h-[3px] rounded bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
+            <div className="hidden md:block absolute top-10 left-[58%] w-[34%] h-[3px] rounded bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
+            
             {[
               {
                 step: '01',
                 title: 'Jämför företag',
                 description: 'Sök i din stad och jämför företag baserat på omdömen och priser.',
-                icon: Building2,
               },
               {
                 step: '02',
                 title: 'Begär offert',
                 description: 'Fyll i formuläret och få offerter från kvalitetsgranskade företag.',
-                icon: CheckCircle,
               },
               {
                 step: '03',
                 title: 'Välj & boka',
                 description: 'Jämför offerterna och välj det företag som passar dig bäst.',
-                icon: ThumbsUp,
               },
             ].map((item, i) => (
-              <div key={i} className="relative text-center group">
-                {/* Connector line (desktop only) */}
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-px bg-border" />
-                )}
-                
-                {/* Step number circle */}
-                <div className="relative inline-flex items-center justify-center h-20 w-20 rounded-2xl bg-accent/10 mb-6 group-hover:bg-accent/20 transition-colors">
-                  <span className="text-2xl font-bold text-accent">{item.step}</span>
-                </div>
-
-                <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">
+              <div key={i} className="step-card group">
+                <div className="step-number">{item.step}</div>
+                <h3 className="text-xl lg:text-[22px] font-bold mb-3">{item.title}</h3>
+                <p className="text-muted-foreground text-[15px] leading-relaxed">
                   {item.description}
                 </p>
               </div>
@@ -303,7 +309,9 @@ export default function Index() {
       </section>
 
       {/* CTA Section */}
-      <CTASection />
+      <div id="quote">
+        <CTASection />
+      </div>
 
       {/* FAQ Section */}
       <FAQSection faqs={faqs} />
