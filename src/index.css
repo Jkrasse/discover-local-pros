@@ -407,6 +407,203 @@
     color: hsl(var(--primary));
   }
 
+  /* ============================================
+     RECOMMENDED PARTNER CARD - Premium Design
+     ============================================ */
+  .recommended-card {
+    @apply relative rounded-3xl p-8 overflow-hidden transition-all duration-500;
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(25 95% 53% / 0.03) 100%);
+    border: 2px solid hsl(25 95% 53% / 0.3);
+    box-shadow: 0 16px 50px hsl(25 95% 53% / 0.15);
+  }
+
+  .recommended-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 60px hsl(25 95% 53% / 0.25);
+  }
+
+  .recommended-card-shimmer {
+    @apply absolute top-0 left-0 right-0 h-1;
+    background: linear-gradient(90deg, hsl(var(--accent)), hsl(45 93% 58%), hsl(var(--accent)));
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .recommended-badge {
+    @apply inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white;
+    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(15 90% 48%) 100%);
+    box-shadow: 0 4px 12px hsl(25 95% 53% / 0.4);
+  }
+
+  .verified-badge {
+    @apply inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold;
+    background: hsl(168 84% 39% / 0.1);
+    color: hsl(var(--primary));
+    border: 1px solid hsl(168 84% 39% / 0.2);
+  }
+
+  .company-logo-large {
+    @apply w-24 h-24 rounded-2xl flex items-center justify-center border overflow-hidden;
+    background: hsl(var(--background));
+    border-color: hsl(var(--border));
+    box-shadow: var(--shadow-md);
+    font-family: var(--font-heading);
+    font-size: 36px;
+    font-weight: 700;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .btn-call {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm font-semibold;
+    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(15 90% 48%) 100%);
+    color: white;
+    box-shadow: 0 4px 16px hsl(25 95% 53% / 0.4);
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .btn-call:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px hsl(25 95% 53% / 0.5);
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 4px 16px hsl(25 95% 53% / 0.4); }
+    50% { box-shadow: 0 4px 24px hsl(25 95% 53% / 0.6); }
+  }
+
+  .btn-info-link {
+    @apply inline-flex items-center justify-center gap-1 px-2 py-2 text-sm font-medium transition-colors;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .btn-info-link:hover {
+    color: hsl(var(--primary));
+  }
+
+  .recommended-card-footer {
+    @apply mt-6 pt-5 border-t;
+    border-color: hsl(25 95% 53% / 0.15);
+  }
+
+  /* Quote form step */
+  .quote-step {
+    @apply flex gap-4;
+  }
+
+  .quote-step .step-num {
+    @apply w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold;
+    background: hsl(168 84% 39% / 0.1);
+    border: 2px solid hsl(168 84% 39% / 0.2);
+    color: hsl(var(--primary));
+  }
+
+  .quote-step .step-text h4 {
+    font-family: var(--font-heading);
+  }
+
+  .quote-form-card-styled {
+    @apply rounded-3xl p-10 border;
+    background: hsl(var(--background));
+    border-color: hsl(var(--border));
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Section label */
+  .section-label {
+    @apply text-[15px] font-bold text-foreground mb-5 flex items-center gap-2;
+  }
+
+  .section-label-icon {
+    @apply w-5 h-5;
+    color: hsl(var(--primary));
+  }
+
+  /* Feature card for info section */
+  .feature-card-new {
+    @apply text-center p-8 bg-card border border-border rounded-3xl transition-all duration-300;
+  }
+
+  .feature-card-new:hover {
+    border-color: hsl(168 84% 39% / 0.3);
+    box-shadow: var(--shadow-md);
+  }
+
+  .feature-card-new .feature-icon {
+    @apply w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4;
+    background: hsl(168 84% 39% / 0.1);
+  }
+
+  .feature-card-new .feature-icon svg {
+    @apply w-7 h-7;
+    color: hsl(var(--primary));
+  }
+
+  /* Tips card */
+  .tips-card-styled {
+    @apply bg-card border border-border rounded-3xl p-8;
+  }
+
+  .tips-card-styled .card-header {
+    @apply flex items-center gap-3 mb-6;
+  }
+
+  .tips-card-styled .card-header-icon {
+    @apply w-11 h-11 rounded-xl flex items-center justify-center;
+    background: hsl(25 95% 53% / 0.1);
+  }
+
+  .tips-card-styled .card-header-icon svg {
+    @apply w-5 h-5;
+    color: hsl(var(--accent));
+  }
+
+  /* Companies list table */
+  .companies-list-card {
+    @apply bg-card rounded-3xl overflow-hidden;
+    box-shadow: var(--shadow-md);
+  }
+
+  .company-row {
+    @apply grid items-center px-7 py-5 border-b transition-colors;
+    grid-template-columns: 1fr 120px 180px 200px;
+    border-color: hsl(var(--border) / 0.5);
+  }
+
+  .company-row:hover {
+    background: hsl(var(--secondary) / 0.5);
+  }
+
+  .company-row.header {
+    @apply text-xs font-semibold uppercase tracking-wider py-4;
+    background: hsl(var(--secondary));
+    color: hsl(var(--muted-foreground));
+  }
+
+  .company-row.header:hover {
+    background: hsl(var(--secondary));
+  }
+
+  .company-row.recommended {
+    background: linear-gradient(90deg, hsl(25 95% 53% / 0.05) 0%, hsl(var(--background)) 100%);
+    border-left: 4px solid hsl(var(--accent));
+  }
+
+  .company-row-logo {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold;
+    background: hsl(var(--secondary));
+    color: hsl(var(--muted-foreground));
+  }
+
+  .company-row-badge-small {
+    @apply inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold text-white ml-2;
+    background: hsl(var(--accent));
+  }
+
   /* Header sticky */
   .header-sticky {
     @apply fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b;
@@ -423,6 +620,51 @@
   /* FAQ item */
   .faq-item {
     @apply border-b border-border last:border-0;
+  }
+
+  /* Service link card */
+  .service-link-card {
+    @apply flex items-center justify-between px-6 py-5 bg-card border border-border rounded-2xl transition-all duration-300 max-w-md;
+    color: hsl(var(--foreground));
+  }
+
+  .service-link-card:hover {
+    border-color: hsl(var(--primary));
+    background: hsl(168 84% 39% / 0.03);
+    transform: translateX(8px);
+  }
+
+  .service-link-card:hover svg {
+    color: hsl(var(--primary));
+    transform: translateX(4px);
+  }
+
+  /* City card new */
+  .city-card-new {
+    @apply flex items-center gap-3 px-5 py-4 bg-card border border-border rounded-2xl transition-all duration-300;
+  }
+
+  .city-card-new:hover {
+    border-color: hsl(var(--primary));
+    background: hsl(168 84% 39% / 0.03);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .city-icon-new {
+    @apply w-9 h-9 rounded-lg flex items-center justify-center transition-all;
+    background: hsl(var(--secondary));
+    color: hsl(var(--muted-foreground));
+  }
+
+  .city-card-new:hover .city-icon-new {
+    background: hsl(168 84% 39% / 0.15);
+    color: hsl(var(--primary));
+  }
+
+  .city-card-new:hover > svg:last-child {
+    color: hsl(var(--primary));
+    transform: translateX(4px);
   }
 }
 

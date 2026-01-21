@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { MapPin, ChevronRight } from 'lucide-react';
-import { Card } from '@/components/ui/card';
 import { useCities } from '@/hooks/useCity';
 import type { City } from '@/types/database';
 
@@ -15,39 +14,42 @@ export function CityGrid({ cities: propCities, serviceSlug, serviceName, exclude
   const { data: fetchedCities } = useCities();
   const cities = propCities || fetchedCities || [];
   const filteredCities = excludeCitySlug ? cities.filter(c => c.slug !== excludeCitySlug) : cities;
+  
   return (
-    <section className="py-12 lg:py-16">
+    <section className="py-16 lg:py-20 bg-secondary/30">
       <div className="container">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">
-          {serviceName} i hela Sverige
-        </h2>
-        <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Välj din stad för att hitta de bästa {serviceName.toLowerCase()} nära dig.
-        </p>
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4 tracking-tight">
+              {serviceName} i hela Sverige
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Välj din stad för att hitta de bästa {serviceName.toLowerCase()} nära dig.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredCities.map((city) => (
-            <Link key={city.id} to={`/${serviceSlug}/${city.slug}`}>
-              <Card className="p-4 h-full hover:border-accent/50 hover:shadow-card transition-all group">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary group-hover:bg-accent/10 transition-colors">
-                    <MapPin className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-medium text-foreground group-hover:text-accent transition-colors truncate">
-                      {city.name}
-                    </h3>
-                    {city.region && (
-                      <p className="text-sm text-muted-foreground truncate">
-                        {city.region}
-                      </p>
-                    )}
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-accent transition-colors shrink-0" />
+          {/* City grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredCities.map((city) => (
+              <Link key={city.id} to={`/${serviceSlug}/${city.slug}`} className="city-card-new">
+                <div className="city-icon-new">
+                  <MapPin className="h-[18px] w-[18px]" />
                 </div>
-              </Card>
-            </Link>
-          ))}
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold text-[15px] text-foreground block truncate">
+                    {city.name}
+                  </span>
+                  {city.region && (
+                    <span className="text-xs text-muted-foreground truncate block">
+                      {city.region}
+                    </span>
+                  )}
+                </div>
+                <ChevronRight className="h-[18px] w-[18px] text-muted-foreground transition-all" />
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </section>

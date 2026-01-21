@@ -1,5 +1,4 @@
-import { Check, Lightbulb, ClipboardList, Shield, Clock, Package } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { Check, Lightbulb, ClipboardList, Shield, Clock, BadgeCheck } from 'lucide-react';
 
 interface InfoSectionProps {
   serviceName: string;
@@ -32,88 +31,92 @@ export function InfoSection({
   checklist = defaultChecklist,
 }: InfoSectionProps) {
   return (
-    <section className="py-12 lg:py-16">
+    <section className="py-16 lg:py-20">
       <div className="container">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">
-            Allt du behöver veta om {serviceName.toLowerCase()} i {cityName}
-          </h2>
-          <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Att flytta kan vara stressigt, men med rätt förberedelser och en pålitlig partner 
-            blir det betydligt enklare. Här är våra bästa tips.
-          </p>
-
-          {/* Key benefits */}
-          <div className="grid sm:grid-cols-3 gap-4 mb-8">
-            <Card className="p-5 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent mx-auto mb-3">
-                <Shield className="h-6 w-6" />
-              </div>
-              <h3 className="font-semibold mb-1">Försäkrad flytt</h3>
-              <p className="text-sm text-muted-foreground">
-                Alla våra rekommenderade företag har fullgod ansvarsförsäkring
-              </p>
-            </Card>
-            <Card className="p-5 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-featured/10 text-featured mx-auto mb-3">
-                <Clock className="h-6 w-6" />
-              </div>
-              <h3 className="font-semibold mb-1">Snabbt svar</h3>
-              <p className="text-sm text-muted-foreground">
-                Få svar på din förfrågan inom 24 timmar
-              </p>
-            </Card>
-            <Card className="p-5 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10 text-success mx-auto mb-3">
-                <Package className="h-6 w-6" />
-              </div>
-              <h3 className="font-semibold mb-1">Professionell hantering</h3>
-              <p className="text-sm text-muted-foreground">
-                Erfarenhet av alla typer av flyttar
-              </p>
-            </Card>
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4 tracking-tight">
+              Allt du behöver veta om {serviceName.toLowerCase()} i {cityName}
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Att flytta kan vara stressigt, men med rätt förberedelser och en pålitlig partner 
+              blir det betydligt enklare. Här är våra bästa tips.
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          {/* Feature cards */}
+          <div className="grid sm:grid-cols-3 gap-6 mb-12">
+            <div className="feature-card-new">
+              <div className="feature-icon">
+                <Shield className="h-7 w-7" />
+              </div>
+              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Försäkrad flytt</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Alla våra rekommenderade företag har fullgod ansvarsförsäkring
+              </p>
+            </div>
+            <div className="feature-card-new">
+              <div className="feature-icon">
+                <Clock className="h-7 w-7" />
+              </div>
+              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Snabbt svar</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Få svar på din förfrågan inom 24 timmar
+              </p>
+            </div>
+            <div className="feature-card-new">
+              <div className="feature-icon">
+                <BadgeCheck className="h-7 w-7" />
+              </div>
+              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Professionell hantering</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Erfarenhet av alla typer av flyttar
+              </p>
+            </div>
+          </div>
+
+          {/* Tips and Checklist cards */}
+          <div className="grid md:grid-cols-2 gap-6">
             {/* Tips */}
-            <Card className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-featured/10 text-featured">
-                  <Lightbulb className="h-5 w-5" />
+            <div className="tips-card-styled">
+              <div className="card-header">
+                <div className="card-header-icon">
+                  <Lightbulb />
                 </div>
-                <h3 className="text-lg font-semibold">Tips inför flytten</h3>
+                <h3 className="font-heading text-xl font-bold text-foreground">Tips inför flytten</h3>
               </div>
               
-              <ul className="space-y-3">
+              <div className="space-y-4">
                 {tips.map((tip, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <Check className="h-4 w-4 mt-1 text-success shrink-0" />
-                    <span className="text-sm text-muted-foreground">{tip}</span>
-                  </li>
+                  <div key={index} className="flex items-start gap-3">
+                    <Check className="h-[18px] w-[18px] text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-muted-foreground leading-relaxed">{tip}</span>
+                  </div>
                 ))}
-              </ul>
-            </Card>
+              </div>
+            </div>
 
             {/* Checklist */}
-            <Card className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                  <ClipboardList className="h-5 w-5" />
+            <div className="tips-card-styled">
+              <div className="card-header">
+                <div className="card-header-icon">
+                  <ClipboardList />
                 </div>
-                <h3 className="text-lg font-semibold">Checklista inför flytten</h3>
+                <h3 className="font-heading text-xl font-bold text-foreground">Checklista inför flytten</h3>
               </div>
               
               <div className="space-y-3">
                 {checklist.map((item, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-border bg-secondary">
-                      <span className="text-xs font-medium text-muted-foreground">{index + 1}</span>
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-muted-foreground">{index + 1}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground">{item}</span>
+                    <span className="text-sm text-muted-foreground leading-relaxed">{item}</span>
                   </div>
                 ))}
               </div>
-            </Card>
+            </div>
           </div>
         </div>
       </div>
