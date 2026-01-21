@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
 import { useSubServices } from '@/hooks/useSubServices';
 
@@ -25,35 +24,25 @@ export function SubServicesSection({
   return (
     <section className="py-12 lg:py-16">
       <div className="container">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">
-            Specialiserade tjänster i {cityName}
-          </h2>
-          <p className="text-muted-foreground mb-8">
-            Utöver {parentServiceName.toLowerCase()} erbjuder vi även hjälp med dessa relaterade tjänster.
-          </p>
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-6">
+            <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-2 tracking-tight">
+              Specialiserade tjänster i {cityName}
+            </h2>
+            <p className="text-muted-foreground">
+              Utöver {parentServiceName.toLowerCase()} erbjuder vi även hjälp med dessa relaterade tjänster.
+            </p>
+          </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-3">
             {subServices.map((service) => (
               <Link
                 key={service.id}
                 to={`/${service.slug}/${citySlug}`}
+                className="service-link-card"
               >
-                <Card className="p-5 h-full hover:shadow-lg hover:border-accent/50 transition-all group">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors">
-                        {service.name} {cityName}
-                      </h3>
-                      {service.description && (
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                          {service.description}
-                        </p>
-                      )}
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors shrink-0" />
-                  </div>
-                </Card>
+                <span className="font-semibold">{service.name} {cityName}</span>
+                <ArrowRight className="h-5 w-5 text-muted-foreground transition-all group-hover:text-primary group-hover:translate-x-1" />
               </Link>
             ))}
           </div>

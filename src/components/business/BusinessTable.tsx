@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Star, MapPin } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Star, MapPin, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Business } from '@/types/database';
 
@@ -21,88 +20,116 @@ export function BusinessTable({
     return null;
   }
 
-  return (
-    <section className="py-12 lg:py-16">
-      <div className="container">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">
-            Andra flyttfirmor i {cityName}
-          </h2>
-          <p className="text-muted-foreground mb-8">
-            Här är fler företag som erbjuder flyttjänster i {cityName}.
-          </p>
+  const getInitials = (name: string) => {
+    return name.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase();
+  };
 
-          <div className="rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-secondary/50">
-                  <TableHead className="font-semibold">Företag</TableHead>
-                  <TableHead className="font-semibold">Omdöme</TableHead>
-                  <TableHead className="font-semibold hidden md:table-cell">Adress</TableHead>
-                  <TableHead className="font-semibold hidden lg:table-cell">Kategorier</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {businesses.map((business) => (
-                  <TableRow key={business.id} className="hover:bg-secondary/30">
-                    <TableCell>
-                      <Link 
-                        to={`/${serviceSlug}/${citySlug}/${business.slug}`}
-                        className="font-medium text-foreground hover:text-accent transition-colors"
-                      >
-                        {business.name}
-                      </Link>
-                      {business.verified && (
-                        <Badge variant="secondary" className="ml-2 text-xs">
-                          Verifierad
-                        </Badge>
+  return (
+    <section className="py-16 lg:py-20 bg-secondary/30">
+      <div className="container">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-8">
+            <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-2 tracking-tight">
+              Andra {serviceSlug === 'flyttfirmor' ? 'flyttfirmor' : 'företag'} i {cityName}
+            </h2>
+            <p className="text-muted-foreground">
+              Här är fler företag som erbjuder {serviceSlug === 'flyttfirmor' ? 'flyttjänster' : 'tjänster'} i {cityName}.
+            </p>
+          </div>
+
+          <div className="companies-list-card">
+            {/* Header row */}
+            <div className="company-row header">
+              <span>Företag</span>
+              <span>Omdöme</span>
+              <span className="hidden md:block">Adress</span>
+              <span className="hidden lg:block">Kategorier</span>
+            </div>
+
+            {/* Business rows */}
+            {businesses.map((business) => (
+              <Link 
+                key={business.id}
+                to={`/${serviceSlug}/${citySlug}/${business.slug}`}
+                className="company-row hover:bg-secondary/50 cursor-pointer block"
+              >
+                {/* Company info */}
+                <div className="flex items-center gap-4">
+                  <div className="company-row-logo">
+                    {business.images?.[0] ? (
+                      <img 
+                        src={business.images[0]} 
+                        alt={business.name}
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    ) : (
+                      getInitials(business.name)
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-foreground flex items-center flex-wrap gap-2">
+                      {business.name}
+                    </div>
+                    {business.verified && (
+                      <div className="flex items-center gap-1 text-primary text-xs font-semibold mt-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Verifierad
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Rating */}
+                <div className="flex items-center gap-2">
+                  {business.rating ? (
+                    <>
+                      <Star className="h-4 w-4 text-featured fill-featured" />
+                      <span className="font-semibold text-foreground">{business.rating.toFixed(1)}</span>
+                      <span className="text-muted-foreground text-sm">
+                        ({business.review_count})
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">-</span>
+                  )}
+                </div>
+
+                {/* Address - hidden on mobile */}
+                <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground">
+                  {business.address ? (
+                    <>
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground/60 flex-shrink-0" />
+                      <span className="truncate max-w-[160px]">{business.address}</span>
+                    </>
+                  ) : (
+                    <span>-</span>
+                  )}
+                </div>
+
+                {/* Categories - hidden on mobile/tablet */}
+                <div className="hidden lg:flex flex-wrap gap-1.5">
+                  {business.categories && business.categories.length > 0 ? (
+                    <>
+                      {business.categories.slice(0, 2).map((category, i) => (
+                        <span 
+                          key={i} 
+                          className="px-2.5 py-1 rounded-full text-xs font-medium bg-secondary text-muted-foreground"
+                        >
+                          {category}
+                        </span>
+                      ))}
+                      {business.categories.length > 2 && (
+                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-border/50 text-muted-foreground">
+                          +{business.categories.length - 2}
+                        </span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      {business.rating ? (
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 text-featured fill-featured" />
-                          <span className="font-medium">{business.rating.toFixed(1)}</span>
-                          <span className="text-muted-foreground text-sm">
-                            ({business.review_count})
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">Inga omdömen</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {business.address ? (
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <MapPin className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate max-w-[200px]">{business.address}</span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {business.categories && business.categories.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {business.categories.slice(0, 2).map((category, i) => (
-                            <Badge key={i} variant="outline" className="text-xs">
-                              {category}
-                            </Badge>
-                          ))}
-                          {business.categories.length > 2 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{business.categories.length - 2}
-                            </Badge>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">-</span>
+                  )}
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </div>

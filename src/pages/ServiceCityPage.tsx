@@ -2,20 +2,20 @@ import { useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { HeroSectionNew } from '@/components/sections/HeroSectionNew';
-import { BusinessCard } from '@/components/business/BusinessCard';
+import { RecommendedPartnerCard } from '@/components/business/RecommendedPartnerCard';
 import { BusinessTable } from '@/components/business/BusinessTable';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { InfoSection } from '@/components/sections/InfoSection';
 import { SubServicesSection } from '@/components/sections/SubServicesSection';
+import { QuoteFormSection } from '@/components/sections/QuoteFormSection';
 import { CityGrid } from '@/components/sections/CityGrid';
-import { Card } from '@/components/ui/card';
-import { LeadForm } from '@/components/forms/LeadForm';
 import { useCity } from '@/hooks/useCity';
 import { useService } from '@/hooks/useService';
 import { useBusinesses, useFeaturedBusiness } from '@/hooks/useBusinesses';
 import { generateLocalBusinessSchema, generateFAQSchema, generateBreadcrumbSchema } from '@/lib/seo';
 import { Skeleton } from '@/components/ui/skeleton';
 import NotFound from './NotFound';
+import { Award } from 'lucide-react';
 
 const cityFAQs: Record<string, { question: string; answer: string }[]> = {
   stockholm: [
@@ -180,82 +180,57 @@ export default function ServiceCityPage() {
         />
       )}
 
-      {/* Featured Business */}
-      {featuredBusiness && (
-        <section className="py-8 lg:py-12" id="businesses">
-          <div className="container">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-xl font-semibold mb-4">Vår rekommenderade partner</h2>
-              <BusinessCard
-                business={featuredBusiness}
-                serviceSlug={serviceSlug}
-                citySlug={citySlug}
-                isFeatured
-              />
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Lead Form Section */}
-      <section id="lead-form" className="py-12 lg:py-16 bg-secondary/30">
+      {/* Recommended Partner Section */}
+      <section className="pb-12 lg:pb-16" id="businesses">
         <div className="container">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start max-w-5xl mx-auto">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                Få offert från {service?.name?.toLowerCase()} i {city?.name}
-              </h2>
-              <p className="text-lg text-muted-foreground mb-6">
-                Fyll i formuläret så kontaktar vår rekommenderade partner dig med en offert. 
-                Det är helt gratis och utan förpliktelse.
-              </p>
-              
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent font-semibold text-sm">
-                    1
+          <div className="max-w-5xl mx-auto">
+            {/* Section label */}
+            <div className="section-label mb-5">
+              <Award className="section-label-icon" />
+              <span>Vår rekommenderade partner</span>
+            </div>
+
+            {/* Featured Business Card */}
+            {isLoading ? (
+              <div className="recommended-card">
+                <div className="mt-14 grid md:grid-cols-[auto_1fr_auto] gap-7">
+                  <Skeleton className="w-24 h-24 rounded-2xl" />
+                  <div className="space-y-3">
+                    <Skeleton className="h-7 w-48" />
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-16 w-full max-w-xl" />
                   </div>
-                  <div>
-                    <h3 className="font-medium">Beskriv din flytt</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Berätta var du ska flytta och vilken typ av bostad det gäller
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent font-semibold text-sm">
-                    2
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Få offert</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Vår rekommenderade partner kontaktar dig inom 24 timmar
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent font-semibold text-sm">
-                    3
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Boka din flytt</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Acceptera offerten och boka ett datum som passar dig
-                    </p>
+                  <div className="space-y-3">
+                    <Skeleton className="h-12 w-40" />
+                    <Skeleton className="h-12 w-40" />
                   </div>
                 </div>
               </div>
-            </div>
-
-            <Card className="p-6 lg:p-8 shadow-card">
-              <h3 className="text-xl font-semibold mb-6">Fyll i dina uppgifter</h3>
-              <LeadForm cityId={city?.id} serviceId={service?.id} />
-            </Card>
+            ) : featuredBusiness ? (
+              <RecommendedPartnerCard
+                business={featuredBusiness}
+                serviceSlug={serviceSlug}
+                citySlug={citySlug}
+              />
+            ) : (
+              <div className="recommended-card text-center py-12">
+                <p className="text-muted-foreground">
+                  Vi letar efter den bästa partnern för dig i {city?.name}. 
+                  Fyll i formuläret nedan så hjälper vi dig hitta rätt.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>
+
+      {/* Quote Form Section */}
+      <QuoteFormSection
+        serviceName={service?.name || 'Flyttfirmor'}
+        cityName={city?.name || ''}
+        cityId={city?.id}
+        serviceId={service?.id}
+      />
 
       {/* Info Section */}
       <InfoSection 
