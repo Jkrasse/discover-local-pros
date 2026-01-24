@@ -136,10 +136,7 @@ export default function Index() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 relative">
-        {/* Top divider */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-        
+      <section className="py-20 relative bg-secondary/40">
         <div className="container">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {[
@@ -208,7 +205,7 @@ export default function Index() {
       </section>
 
       {/* Cities Section */}
-      <section className="py-24">
+      <section className="py-24 bg-gradient-to-b from-background via-secondary/20 to-secondary/40">
         <div className="container">
           {/* Section header */}
           <div className="text-center mb-16">
@@ -314,7 +311,9 @@ export default function Index() {
       </div>
 
       {/* FAQ Section */}
-      <FAQSection faqs={faqs} />
+      <div className="bg-secondary/30">
+        <FAQSection faqs={faqs} />
+      </div>
     </Layout>
   );
 }
