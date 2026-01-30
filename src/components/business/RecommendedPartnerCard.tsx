@@ -38,6 +38,7 @@ interface Business {
   categories?: string[] | null;
   employee_count?: string | null;
   founded_year?: number | null;
+  gbp_id?: string | null; // Google Business Profile ID for reviews
 }
 
 interface RecommendedPartnerCardProps {
@@ -58,7 +59,8 @@ export function RecommendedPartnerCard({
   const { data: reviews, isLoading: reviewsLoading } = useBusinessReviews(
     business.name,
     cityName,
-    true
+    true,
+    business.gbp_id // Pass Google Business Profile ID for accurate matching
   );
 
   const renderStars = (rating: number) => {

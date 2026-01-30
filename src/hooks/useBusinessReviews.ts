@@ -16,21 +16,33 @@ interface ReviewsResponse {
   totalFound: number;
 }
 
-export function useBusinessReviews(businessName: string, cityName?: string, enabled = true) {
+export function useBusinessReviews(
+  businessName: string, 
+  cityName?: string, 
+  enabled = true,
+  gbpId?: string | null // Google Business Profile ID for more accurate matching
+) {
   return useQuery({
-    queryKey: ['business-reviews', businessName, cityName],
+    queryKey: ['business-reviews', gbpId || businessName, cityName],
     queryFn: async (): Promise<Review[]> => {
-      // Build a search query with business name and city for better matching
-      const query = cityName 
-        ? `${businessName} ${cityName}, Sweden` 
-        : `${businessName}, Sweden`;
+      // Build request body - prefer gbpId for exact matching
+      const body: { placeId?: string; query?: string; limit: number; sort: string } = {
+        limit: 5,
+        sort: 'highest_rating'
+      };
+
+      if (gbpId) {
+        // Use place_id for exact matching
+        body.placeId = gbpId;
+      } else {
+        // Fallback to search query with business name and city
+        body.query = cityName 
+          ? `${businessName} ${cityName}, Sweden` 
+          : `${businessName}, Sweden`;
+      }
 
       const { data, error } = await supabase.functions.invoke<ReviewsResponse>('fetch-reviews', {
-        body: { 
-          query,
-          limit: 5,
-          sort: 'highest_rating'
-        },
+        body,
       });
 
       if (error) {
@@ -40,8 +52,9 @@ export function useBusinessReviews(businessName: string, cityName?: string, enab
 
       return data?.reviews || [];
     },
-    enabled: enabled && !!businessName,
+    enabled: enabled && !!(gbpId || businessName),
     staleTime: 1000 * 60 * 60 * 24, // Cache for 24 hours
     gcTime: 1000 * 60 * 60 * 24 * 7, // Keep in cache for 7 days
+    retry: 1, // Only retry once on failure
   });
 }
