@@ -24,7 +24,7 @@ serve(async (req) => {
       throw new Error("OUTSCRAPER_API_KEY is not configured");
     }
 
-    const { searchTerm, cities, limit = 20, serviceId }: SearchRequest = await req.json();
+    const { searchTerm, cities, limit = 25, serviceId }: SearchRequest = await req.json();
 
     if (!searchTerm || !cities || cities.length === 0) {
       return new Response(
@@ -40,29 +40,44 @@ serve(async (req) => {
       );
     }
 
-    // We need high recall ("get everything").
-    // Outscraper/Maps can be sensitive to query phrasing, so we generate a few variants per city.
-    // We keep it small to control cost.
-    const effectiveLimit = Math.max(10, Number.isFinite(limit) ? limit : 20);
+    // Max limit capped at 25 per user preference (relevance matters more than volume)
+    const effectiveLimit = Math.min(Math.max(10, Number.isFinite(limit) ? limit : 25), 25);
 
+    // Build many query variants per city to maximize recall.
+    // Google Maps is sensitive to phrasing so we use several Swedish + English patterns.
     const buildCityQueries = (cityRaw: string) => {
       const city = cityRaw.trim();
       if (!city) return [] as string[];
 
-      // Variants (sv + en) and without comma (often yields broader category results)
+      // Various query patterns optimized for Swedish local search
+      // These mimic how users actually search for local services on Google Maps
       return [
-        `${searchTerm} ${city}, Sweden`,
-        `${searchTerm} ${city} Sweden`,
+        // Core Swedish patterns (most likely to match local listings)
+        `${searchTerm} ${city}`,
         `${searchTerm} i ${city}`,
+        `${searchTerm} ${city} Sverige`,
+        
+        // English variants (sometimes yields different results from Google)
+        `${searchTerm} ${city}, Sweden`,
         `${searchTerm} in ${city} Sweden`,
+        
+        // Broader category patterns
+        `${searchTerm} nära ${city}`,
+        `Bästa ${searchTerm} ${city}`,
+        
+        // Direct location format (Maps sometimes prefers this)
+        `${city} ${searchTerm}`,
       ];
     };
 
     const queries = cities.flatMap(buildCityQueries);
 
-    console.log(`Starting Outscraper search with ${queries.length} queries (variants per city). Effective limit: ${effectiveLimit}. Queries:`, queries);
+    console.log(`Starting Outscraper search with ${queries.length} queries (${queries.length / cities.length} variants per city). Effective limit per query: ${effectiveLimit}.`);
+    console.log("Query list:", JSON.stringify(queries, null, 2));
 
-    // Send request to Outscraper API with enrichments
+    // Send request to Outscraper API
+    // NOTE: We intentionally skip enrichment for better raw result volume.
+    // Enrichment can be done in a second pass if needed.
     const response = await fetch("https://api.app.outscraper.com/maps/search-v3", {
       method: "POST",
       headers: {
@@ -75,11 +90,8 @@ serve(async (req) => {
         language: "sv",
         region: "SE",
         async: true,
-        enrichment: [
-          "domains_service",
-          "company_insights_service",
-          "emails_validator_service",
-        ],
+        // Removed enrichment to maximize result count. We can enrich later if needed.
+        // enrichment: ["domains_service", "company_insights_service", "emails_validator_service"],
       }),
     });
 
@@ -102,7 +114,7 @@ serve(async (req) => {
         requestId: result.id,
         queriesCount: queries.length,
         queries: queries,
-        message: `Scraping started for ${queries.length} queries. Use the request ID to check status.`,
+        message: `Scraping started for ${queries.length} queries (${cities.length} cities × ${queries.length / cities.length} variants). Use the request ID to check status.`,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

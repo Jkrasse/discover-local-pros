@@ -11,7 +11,7 @@ interface OutscraperBusiness {
   name?: string;
   phone?: string;
   site?: string;
-  website?: string; // Outscraper returns website in this field
+  website?: string;
   full_address?: string;
   city?: string;
   rating?: number;
@@ -25,7 +25,6 @@ interface OutscraperBusiness {
   about?: string;
   photos?: string[];
   logo?: string;
-  // Enrichment: Emails And Contacts (nested structure)
   emails_and_contacts?: {
     emails?: string[];
     phones?: string[];
@@ -35,18 +34,12 @@ interface OutscraperBusiness {
     twitter?: string;
     youtube?: string;
   };
-  // Enrichment: Company Insights (nested structure)
   company_insights?: {
     employees_range?: string;
     founded_year?: number;
     industry?: string;
   };
-  // Enrichment: Emails Validator
-  emails_validator?: Array<{
-    email: string;
-    is_valid: boolean;
-  }>;
-  // Alternative flat field names from Outscraper
+  emails_validator?: Array<{ email: string; is_valid: boolean }>;
   emails?: string[];
   email?: string;
   facebook?: string;
@@ -58,18 +51,15 @@ interface OutscraperBusiness {
   employees_range?: string;
   founded_year?: number;
   industry?: string;
-  // Flat email fields (email_1, email_2, email_3 format)
   email_1?: string;
   email_2?: string;
   email_3?: string;
   "email_1.emails_validator.status"?: string;
   "email_2.emails_validator.status"?: string;
-  // Dot-notation company insights fields
   "company_insights.employees_range"?: string;
   "company_insights.founded_year"?: number;
   "company_insights.industry"?: string;
   "company_insights.description"?: string;
-  // Index signature for dynamic dot-notation access
   [key: string]: unknown;
 }
 
@@ -119,7 +109,6 @@ async function getOrCreateCity(
     }
   }
 
-  // If city found, return it
   if (matchedCity) {
     return { ...matchedCity, isNew: false };
   }
@@ -143,7 +132,6 @@ async function getOrCreateCity(
     return null;
   }
 
-  // Add to cache for future matches in this import
   cityMap.set(normalizedName, { id: newCity.id, name: newCity.name });
   console.log("Created new city:", newCity.name);
 
@@ -197,7 +185,7 @@ serve(async (req) => {
     if (statusResult.status !== "Success") {
       return new Response(
         JSON.stringify({
-          status: statusResult.status,
+          status: statusResult.status === "Pending" ? "Pending" : statusResult.status,
           message: "Scraping is still in progress. Please check again later.",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -220,92 +208,100 @@ serve(async (req) => {
     const affectedCities = new Set<string>();
     let newCitiesCreated = 0;
 
-     // Outscraper returns an array of arrays (one per query)
-     const allData = statusResult.data || [];
+    // Outscraper returns an array of arrays (one per query)
+    const allData = statusResult.data || [];
 
-     // Helpful diagnostics: confirm what the provider actually returned
-     const queryArrayCount = Array.isArray(allData) ? allData.length : 0;
-     const perQueryCounts = Array.isArray(allData)
-       ? allData.map((q: unknown) => (Array.isArray(q) ? q.length : 0))
-       : [];
-     const totalRawResults = perQueryCounts.reduce((a, b) => a + b, 0);
-     console.log(
-       `Outscraper data shape: queries=${queryArrayCount}, total_items=${totalRawResults}, per_query_counts=${JSON.stringify(perQueryCounts)}`
-     );
+    // === DETAILED LOGGING: Understand what Outscraper returned ===
+    const queryArrayCount = Array.isArray(allData) ? allData.length : 0;
+    const perQueryCounts: number[] = [];
+    let totalRawResults = 0;
 
-    for (const queryResults of allData) {
-      if (!Array.isArray(queryResults)) continue;
+    if (Array.isArray(allData)) {
+      for (let i = 0; i < allData.length; i++) {
+        const queryResults = allData[i];
+        const count = Array.isArray(queryResults) ? queryResults.length : 0;
+        perQueryCounts.push(count);
+        totalRawResults += count;
+      }
+    }
+
+    console.log("=== OUTSCRAPER DATA ANALYSIS ===");
+    console.log(`Total queries returned: ${queryArrayCount}`);
+    console.log(`Total raw items: ${totalRawResults}`);
+    console.log(`Per-query counts: ${JSON.stringify(perQueryCounts)}`);
+    console.log("================================");
+
+    // Track seen business IDs to avoid processing duplicates within this import
+    const seenGbpIds = new Set<string>();
+    let skipReason = {
+      noName: 0,
+      noCity: 0,
+      duplicateInBatch: 0,
+    };
+
+    for (let queryIdx = 0; queryIdx < allData.length; queryIdx++) {
+      const queryResults = allData[queryIdx];
+      if (!Array.isArray(queryResults)) {
+        console.log(`Query ${queryIdx}: Not an array, skipping`);
+        continue;
+      }
+
+      console.log(`Query ${queryIdx}: Processing ${queryResults.length} items`);
 
       for (const business of queryResults as OutscraperBusiness[]) {
-        // Debug: Log first business to see actual data structure
-        if (results.length === 0) {
-          console.log("=== SAMPLE BUSINESS DATA (first) ===");
-          console.log(JSON.stringify(business, null, 2));
-          console.log("=== ENRICHMENT FIELDS CHECK ===");
-          console.log({
-            // Nested structures
-            emails_and_contacts: business.emails_and_contacts,
-            company_insights: business.company_insights,
-            emails_validator: business.emails_validator,
-            // Flat fields
-            flat_emails: business.emails,
-            flat_email: business.email,
-            flat_facebook: business.facebook,
-            flat_linkedin: business.linkedin,
-            flat_employees: business.employees,
-            flat_employees_range: business.employees_range,
-            flat_founded_year: business.founded_year,
-            flat_industry: business.industry,
-            // Numbered email fields (Outscraper format)
-            email_1: business.email_1,
-            email_2: business.email_2,
-            email_3: business.email_3,
-            "email_1.validator_status": business["email_1.emails_validator.status"],
-            // Dot-notation company insights
-            "company_insights.employees_range": business["company_insights.employees_range"],
-            "company_insights.founded_year": business["company_insights.founded_year"],
-            "company_insights.industry": business["company_insights.industry"],
-          });
+        // Debug: Log first few businesses from each query to see data shape
+        if (results.length < 3) {
+          console.log(`=== SAMPLE BUSINESS (query ${queryIdx}, item ${results.length}) ===`);
+          console.log(JSON.stringify({
+            name: business.name,
+            place_id: business.place_id,
+            city: business.city,
+            full_address: business.full_address,
+            phone: business.phone,
+            website: business.website || business.site,
+            rating: business.rating,
+            reviews: business.reviews,
+          }, null, 2));
         }
 
-         // Skip if no name - this is the only hard requirement
+        // Skip if no name
         if (!business.name) {
-          console.log(`SKIPPED: No name provided`, {
-            hasPlaceId: !!business.place_id,
-            hasCity: !!business.city,
-            hasPhone: !!business.phone,
-          });
-          results.push({
-            name: "Unknown",
-            status: "skipped",
-            message: "Missing business name",
-          });
+          skipReason.noName++;
           continue;
         }
 
-        // Generate gbp_id - use place_id if available, otherwise create a *deterministic* synthetic ID.
-        // Deterministic is important to avoid duplicates when the same business appears across query variants.
+        // Generate gbp_id - use place_id if available, otherwise create a deterministic synthetic ID
         let gbpId = business.place_id;
         if (!gbpId) {
-          // Generate synthetic ID from name + city + any available identifier
           const nameSlug = generateSlug(business.name);
-          const citySlug = generateSlug(business.city || 'unknown');
-          const phoneHash = (business.phone || '').replace(/\D/g, '').slice(-8) || '';
-          const websiteHash = business.website ? generateSlug(business.website).slice(0, 12) : '';
-          const addressHash = business.full_address ? generateSlug(business.full_address).slice(0, 12) : '';
+          const citySlug = generateSlug(business.city || "unknown");
+          const phoneHash = (business.phone || "").replace(/\D/g, "").slice(-8) || "";
+          const websiteHash = business.website || business.site
+            ? generateSlug(business.website || business.site || "").slice(0, 12)
+            : "";
+          const addressHash = business.full_address
+            ? generateSlug(business.full_address).slice(0, 12)
+            : "";
           const coordsHash =
-            typeof business.latitude === 'number' && typeof business.longitude === 'number'
-              ? `${business.latitude.toFixed(4).replace(/\./g, '')}_${business.longitude.toFixed(4).replace(/\./g, '')}`
-              : '';
-          const identifier = phoneHash || websiteHash || addressHash || coordsHash || 'na';
+            typeof business.latitude === "number" && typeof business.longitude === "number"
+              ? `${business.latitude.toFixed(4).replace(/\./g, "")}_${business.longitude.toFixed(4).replace(/\./g, "")}`
+              : "";
+          const identifier = phoneHash || websiteHash || addressHash || coordsHash || "na";
           gbpId = `synthetic_${nameSlug}_${citySlug}_${identifier}`;
-          console.log(`Generated synthetic ID for "${business.name}": ${gbpId}`);
         }
 
+        // Skip duplicates within this batch (same business from multiple query variants)
+        if (seenGbpIds.has(gbpId)) {
+          skipReason.duplicateInBatch++;
+          continue;
+        }
+        seenGbpIds.add(gbpId);
+
         // Match or create city
-        const matchedCity = await getOrCreateCity(supabase, business.city || '', cityMap);
+        const matchedCity = await getOrCreateCity(supabase, business.city || "", cityMap);
 
         if (!matchedCity) {
+          skipReason.noCity++;
           results.push({
             name: business.name,
             status: "skipped",
@@ -326,17 +322,16 @@ serve(async (req) => {
         if (business.category) categories.push(business.category);
         if (business.subtypes) categories.push(...business.subtypes);
 
-        // Extract enrichment data - prioritize flat email_1/email_2/email_3 format
+        // Extract enrichment data (may be empty if enrichment was skipped)
         const enrichedEmails: string[] = [];
         if (business.email_1) enrichedEmails.push(business.email_1);
         if (business.email_2) enrichedEmails.push(business.email_2);
         if (business.email_3) enrichedEmails.push(business.email_3);
         
-        // Fallback to alternative formats if no numbered emails found
         if (enrichedEmails.length === 0) {
-          if (business.emails_and_contacts?.emails && business.emails_and_contacts.emails.length > 0) {
+          if (business.emails_and_contacts?.emails?.length) {
             enrichedEmails.push(...business.emails_and_contacts.emails);
-          } else if (business.emails && business.emails.length > 0) {
+          } else if (business.emails?.length) {
             enrichedEmails.push(...business.emails);
           } else if (business.email) {
             enrichedEmails.push(business.email);
@@ -344,20 +339,17 @@ serve(async (req) => {
         }
         const primaryEmail = enrichedEmails[0] || null;
         
-        // Check email validation status - support both formats
         const emailValidated = 
           business["email_1.emails_validator.status"] === "VALID" ||
           business.emails_validator?.some(e => e.is_valid) || 
           false;
 
-        // Social media - check both nested and flat structure
         const facebook = business.emails_and_contacts?.facebook || business.facebook || null;
         const instagram = business.emails_and_contacts?.instagram || business.instagram || null;
         const linkedin = business.emails_and_contacts?.linkedin || business.linkedin || null;
         const twitter = business.emails_and_contacts?.twitter || business.twitter || null;
         const youtube = business.emails_and_contacts?.youtube || business.youtube || null;
 
-        // Company insights - check dot-notation first, then nested, then flat
         const employeeCount = 
           (business["company_insights.employees_range"] as string) ||
           business.company_insights?.employees_range || 
@@ -375,7 +367,7 @@ serve(async (req) => {
           business.industry || 
           null;
 
-        // Prepare business data with enrichments
+        // Prepare business data
         const businessData = {
           gbp_id: gbpId,
           name: business.name,
@@ -394,20 +386,16 @@ serve(async (req) => {
           images: business.photos?.slice(0, 5) || null,
           is_active: true,
           verified: false,
-          // Enrichment: Emails
           email: primaryEmail,
           emails: enrichedEmails.length > 0 ? enrichedEmails : null,
-          // Enrichment: Social Media
           facebook,
           instagram,
           linkedin,
           twitter,
           youtube,
-          // Enrichment: Company Insights
           employee_count: employeeCount,
           founded_year: foundedYear,
           industry,
-          // Enrichment: Emails Validator
           email_verified: emailValidated,
         };
 
@@ -422,8 +410,7 @@ serve(async (req) => {
           let businessId: string;
 
           if (existing) {
-            // Business exists - update non-geographic data only to support multi-city
-            // Keep the original city_id to preserve the "primary" city
+            // Business exists - update non-geographic data only
             const { city_id: _unusedCityId, ...updateData } = businessData;
             
             const { error: updateError } = await supabase
@@ -434,21 +421,16 @@ serve(async (req) => {
             if (updateError) throw updateError;
             businessId = existing.id;
 
-            // Check if this is a new city for this business
             const isNewCityForBusiness = existing.city_id !== matchedCity.id;
 
             results.push({
               name: business.name,
               status: "updated",
               message: isNewCityForBusiness 
-                ? `Also added coverage for ${matchedCity.name} (business exists in another city)` 
+                ? `Also added coverage for ${matchedCity.name}` 
                 : undefined,
               city: matchedCity.name,
             });
-
-            if (isNewCityForBusiness) {
-              console.log(`Business "${business.name}" exists in another city, adding coverage for ${matchedCity.name}`);
-            }
           } else {
             // Insert new business
             const { data: inserted, error: insertError } = await supabase
@@ -467,14 +449,13 @@ serve(async (req) => {
             });
           }
 
-          // Always create service coverage for this city (supports multi-city businesses)
-          // is_primary is only true if this is the first/original city for the business
+          // Create service coverage for this city
           await supabase.from("business_service_coverage").upsert(
             {
               business_id: businessId,
               service_id: serviceId,
               city_id: matchedCity.id,
-              is_primary: !existing, // Only primary if this is a new business
+              is_primary: !existing,
             },
             { onConflict: "business_id,service_id,city_id" }
           );
@@ -491,7 +472,14 @@ serve(async (req) => {
       }
     }
 
-    // Create featured slots for affected cities and assign random business
+    // Log skip reasons
+    console.log("=== SKIP REASONS ===");
+    console.log(`No name: ${skipReason.noName}`);
+    console.log(`No city: ${skipReason.noCity}`);
+    console.log(`Duplicate in batch: ${skipReason.duplicateInBatch}`);
+    console.log("====================");
+
+    // Create featured slots for affected cities
     for (const cityId of affectedCities) {
       const { data: existingSlot } = await supabase
         .from("featured_slots")
@@ -501,7 +489,6 @@ serve(async (req) => {
         .maybeSingle();
 
       if (!existingSlot) {
-        // No slot exists - create one with a random business from this import
         const { data: coverages } = await supabase
           .from("business_service_coverage")
           .select("business_id")
@@ -522,7 +509,6 @@ serve(async (req) => {
           is_placeholder: true,
         });
       } else if (!existingSlot.business_id || existingSlot.status === "pending") {
-        // Slot exists but has no business or is pending - assign a random one
         const { data: coverages } = await supabase
           .from("business_service_coverage")
           .select("business_id")
@@ -554,7 +540,13 @@ serve(async (req) => {
       errors: results.filter((r) => r.status === "error").length,
       citiesAffected: affectedCities.size,
       newCitiesCreated,
+      rawItemsFromOutscraper: totalRawResults,
+      duplicatesFiltered: skipReason.duplicateInBatch,
     };
+
+    console.log("=== FINAL SUMMARY ===");
+    console.log(JSON.stringify(summary, null, 2));
+    console.log("=====================");
 
     return new Response(
       JSON.stringify({
