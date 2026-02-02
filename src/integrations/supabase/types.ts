@@ -474,44 +474,116 @@ export type Database = {
         }
         Relationships: []
       }
+      service_content: {
+        Row: {
+          checklist: Json | null
+          city_id: string | null
+          created_at: string
+          faqs: Json | null
+          feature_cards: Json | null
+          generated_at: string | null
+          id: string
+          intro_text: string | null
+          service_id: string | null
+          tips: Json | null
+          updated_at: string
+        }
+        Insert: {
+          checklist?: Json | null
+          city_id?: string | null
+          created_at?: string
+          faqs?: Json | null
+          feature_cards?: Json | null
+          generated_at?: string | null
+          id?: string
+          intro_text?: string | null
+          service_id?: string | null
+          tips?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          checklist?: Json | null
+          city_id?: string | null
+          created_at?: string
+          faqs?: Json | null
+          feature_cards?: Json | null
+          generated_at?: string | null
+          id?: string
+          intro_text?: string | null
+          service_id?: string | null
+          tips?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_content_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_content_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           category: Database["public"]["Enums"]["service_category"]
+          checklist_template: Json | null
           created_at: string | null
           description: string | null
+          faqs_template: Json | null
+          feature_cards_template: Json | null
           icon: string | null
           id: string
+          intro_template: string | null
           name: string
           parent_service_id: string | null
           seo_description_template: string | null
           seo_title_template: string | null
           slug: string
+          tips_template: Json | null
           updated_at: string | null
         }
         Insert: {
           category?: Database["public"]["Enums"]["service_category"]
+          checklist_template?: Json | null
           created_at?: string | null
           description?: string | null
+          faqs_template?: Json | null
+          feature_cards_template?: Json | null
           icon?: string | null
           id?: string
+          intro_template?: string | null
           name: string
           parent_service_id?: string | null
           seo_description_template?: string | null
           seo_title_template?: string | null
           slug: string
+          tips_template?: Json | null
           updated_at?: string | null
         }
         Update: {
           category?: Database["public"]["Enums"]["service_category"]
+          checklist_template?: Json | null
           created_at?: string | null
           description?: string | null
+          faqs_template?: Json | null
+          feature_cards_template?: Json | null
           icon?: string | null
           id?: string
+          intro_template?: string | null
           name?: string
           parent_service_id?: string | null
           seo_description_template?: string | null
           seo_title_template?: string | null
           slug?: string
+          tips_template?: Json | null
           updated_at?: string | null
         }
         Relationships: [

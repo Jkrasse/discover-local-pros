@@ -26,6 +26,7 @@ import ServicesPage from "./pages/admin/ServicesPage";
 import FeaturedPage from "./pages/admin/FeaturedPage";
 import CRMPage from "./pages/admin/CRMPage";
 import SettingsPage from "./pages/admin/SettingsPage";
+import ContentGeneratorPage from "./pages/admin/ContentGeneratorPage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import { ProtectedRoute } from "./components/admin/ProtectedRoute";
 import { ScrollToTop } from "./components/ScrollToTop";
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="/admin/featured" element={<ProtectedRoute><FeaturedPage /></ProtectedRoute>} />
             <Route path="/admin/crm" element={<ProtectedRoute><CRMPage /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/admin/content" element={<ProtectedRoute><ContentGeneratorPage /></ProtectedRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

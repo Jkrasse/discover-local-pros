@@ -12,7 +12,9 @@ import { CityGrid } from '@/components/sections/CityGrid';
 import { useCity } from '@/hooks/useCity';
 import { useService } from '@/hooks/useService';
 import { useBusinesses, useFeaturedBusiness } from '@/hooks/useBusinesses';
+import { useServiceContent } from '@/hooks/useServiceContent';
 import { generateLocalBusinessSchema, generateFAQSchema, generateBreadcrumbSchema } from '@/lib/seo';
+import { generateServiceTitle, generateDefaultIntroText } from '@/lib/serviceContentHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 import NotFound from './NotFound';
 import { Award } from 'lucide-react';
@@ -99,6 +101,7 @@ export default function ServiceCityPage() {
     serviceSlug: serviceSlug || '',
   });
   const { data: featuredBusiness } = useFeaturedBusiness(citySlug || '', serviceSlug || '');
+  const { data: serviceContent } = useServiceContent(service?.id, city?.id);
 
   const isLoading = cityLoading || serviceLoading || businessesLoading;
 
@@ -110,8 +113,20 @@ export default function ServiceCityPage() {
     return <NotFound />;
   }
 
-  const faqs = cityFAQs[citySlug] || defaultFAQs;
   const currentYear = new Date().getFullYear();
+  
+  // Use dynamic content or fallback to defaults
+  const faqs = serviceContent?.faqs?.length 
+    ? serviceContent.faqs 
+    : (cityFAQs[citySlug] || defaultFAQs);
+  
+  // Generate dynamic title and intro
+  const dynamicTitle = service && city 
+    ? generateServiceTitle(service.name, city.name, currentYear)
+    : '';
+  
+  const dynamicIntro = serviceContent?.intro_text 
+    || (service && city ? generateDefaultIntroText(service.name, city.name) : '');
   const totalReviews = businesses?.reduce((sum, b) => sum + (b.review_count || 0), 0) || 0;
 
   // Get other businesses (not featured)
@@ -172,8 +187,8 @@ export default function ServiceCityPage() {
         </section>
       ) : (
         <HeroSectionNew
-          title={`Bästa ${service?.name?.toLowerCase()} i ${city?.name} (${currentYear})`}
-          subtitle={`Hitta en pålitlig ${service?.name?.toLowerCase()?.replace(/or$/, 'a')} i ${city?.name}. Vår rekommenderade partner har granskats för kvalitet och pålitlighet.`}
+          title={dynamicTitle}
+          subtitle={dynamicIntro}
           breadcrumbs={breadcrumbs}
           businessCount={businesses?.length || 0}
           reviewCount={totalReviews}
@@ -240,6 +255,9 @@ export default function ServiceCityPage() {
       <InfoSection 
         serviceName={service?.name || 'Flyttfirmor'} 
         cityName={city?.name || ''} 
+        tips={serviceContent?.tips}
+        checklist={serviceContent?.checklist}
+        featureCards={serviceContent?.feature_cards}
       />
 
       {/* Sub-services Section */}
