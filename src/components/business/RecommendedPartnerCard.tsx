@@ -244,20 +244,7 @@ export function RecommendedPartnerCard({
 
       {/* Content */}
       <div className="relative z-[1] mt-14">
-        <div className="grid md:grid-cols-[auto_1fr_auto] gap-6 md:gap-7 items-start">
-          {/* Logo */}
-          <div className="company-logo-large">
-            {business.images?.[0] ? (
-              <img 
-                src={business.images[0]} 
-                alt={business.name}
-                className="w-full h-full object-cover rounded-xl"
-              />
-            ) : (
-              <span>{getInitials(business.name)}</span>
-            )}
-          </div>
-
+        <div className="grid md:grid-cols-[1fr_auto] gap-6 md:gap-7 items-start">
           {/* Info */}
           <div className="flex-1 min-w-0">
             <h3 className="font-heading text-2xl font-bold text-foreground mb-2">
