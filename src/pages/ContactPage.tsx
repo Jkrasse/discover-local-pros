@@ -89,7 +89,9 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold mb-1">Adress</h3>
                     <p className="text-muted-foreground">
-                      Stockholm, Sverige
+                      J.Krasse Marketing AB<br />
+                      Ätrastigen 5 A<br />
+                      311 38 Falkenberg
                     </p>
                   </div>
                 </div>
