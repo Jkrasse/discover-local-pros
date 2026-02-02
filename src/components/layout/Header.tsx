@@ -133,20 +133,6 @@ export function Header() {
             </NavigationMenu>
           </nav>
 
-          {/* CTA Button */}
-          <div className="hidden lg:flex items-center gap-4">
-            <Link to="/kontakt">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Phone className="h-4 w-4" />
-                Kontakt
-              </Button>
-            </Link>
-            <Link to="/fa-offert">
-              <Button size="sm" className="bg-accent hover:bg-accent/90">
-                Få offert
-              </Button>
-            </Link>
-          </div>
 
           {/* Mobile Menu Button */}
           <button
