@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_reviews: {
+        Row: {
+          author_image: string | null
+          author_name: string
+          business_id: string
+          created_at: string
+          fetched_at: string
+          id: string
+          likes: number | null
+          rating: number
+          review_text: string | null
+          review_time: string | null
+        }
+        Insert: {
+          author_image?: string | null
+          author_name: string
+          business_id: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          likes?: number | null
+          rating: number
+          review_text?: string | null
+          review_time?: string | null
+        }
+        Update: {
+          author_image?: string | null
+          author_name?: string
+          business_id?: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          likes?: number | null
+          rating?: number
+          review_text?: string | null
+          review_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_reviews_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_service_coverage: {
         Row: {
           business_id: string

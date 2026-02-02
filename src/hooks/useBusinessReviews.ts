@@ -14,19 +14,28 @@ interface ReviewsResponse {
   success: boolean;
   reviews: Review[];
   totalFound: number;
+  cached?: boolean;
 }
 
 export function useBusinessReviews(
+  businessId: string,
   businessName: string, 
   cityName?: string, 
   enabled = true,
   gbpId?: string | null // Google Business Profile ID for more accurate matching
 ) {
   return useQuery({
-    queryKey: ['business-reviews', gbpId || businessName, cityName],
+    queryKey: ['business-reviews', businessId],
     queryFn: async (): Promise<Review[]> => {
-      // Build request body - prefer gbpId for exact matching
-      const body: { placeId?: string; query?: string; limit: number; sort: string } = {
+      // Build request body
+      const body: { 
+        businessId: string;
+        placeId?: string; 
+        query?: string; 
+        limit: number; 
+        sort: string;
+      } = {
+        businessId,
         limit: 5,
         sort: 'highest_rating'
       };
@@ -52,8 +61,8 @@ export function useBusinessReviews(
 
       return data?.reviews || [];
     },
-    enabled: enabled && !!(gbpId || businessName),
-    staleTime: 1000 * 60 * 60 * 24, // Cache for 24 hours
+    enabled: enabled && !!businessId && !!(gbpId || businessName),
+    staleTime: 1000 * 60 * 60 * 24, // Cache for 24 hours in React Query
     gcTime: 1000 * 60 * 60 * 24 * 7, // Keep in cache for 7 days
     retry: 1, // Only retry once on failure
   });

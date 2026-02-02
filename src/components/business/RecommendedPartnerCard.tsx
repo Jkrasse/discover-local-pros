@@ -64,6 +64,7 @@ export function RecommendedPartnerCard({
 }: RecommendedPartnerCardProps) {
   const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
   const { data: reviews, isLoading: reviewsLoading } = useBusinessReviews(
+    business.id,
     business.name,
     cityName,
     true,
