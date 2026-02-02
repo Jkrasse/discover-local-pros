@@ -132,13 +132,22 @@ export function RecommendedPartnerCard({
     return `${business.name} är en pålitlig ${serviceName} i ${cityName} som erbjuder professionella tjänster med fokus på kvalitet och kundnöjdhet.`;
   };
 
+  // Helper to create Swedish definite form (bestämd form)
+  const getDefiniteForm = (word: string): string => {
+    if (word.endsWith('a')) {
+      return word + 'n'; // flyttfirma → flyttfirman
+    }
+    return word;
+  };
+
   // Generate exactly 5 USPs for the recommendation section
   const getRecommendationReasons = (): string[] => {
     const allReasons: string[] = [];
+    const definiteServiceName = getDefiniteForm(serviceName);
     
     // Rating-based reasons
     if (business.rating && business.rating >= 4.5) {
-      allReasons.push(`Med ett betyg på ${business.rating.toFixed(1)} av 5 stjärnor tillhör ${business.name} de högst rankade ${serviceName}na i ${cityName}.`);
+      allReasons.push(`Med ett betyg på ${business.rating.toFixed(1)} av 5 stjärnor tillhör ${business.name} de högst rankade ${serviceName}rna i ${cityName}.`);
     } else if (business.rating && business.rating >= 4.0) {
       allReasons.push(`${business.name} har ett utmärkt betyg på ${business.rating.toFixed(1)} av 5 stjärnor baserat på ${business.review_count || 'många'} kundrecensioner.`);
     } else if (business.rating) {
@@ -352,7 +361,7 @@ export function RecommendedPartnerCard({
               <AccordionTrigger className="text-left font-medium hover:text-primary py-4 text-[15px]">
                 <span className="flex items-center gap-2">
                   <Award className="h-4 w-4 text-primary" />
-                  Varför är {business.name} den bästa {serviceName}n i {cityName}?
+                  Varför är {business.name} den bästa {getDefiniteForm(serviceName)} i {cityName}?
                 </span>
               </AccordionTrigger>
               <AccordionContent className="pb-5">
