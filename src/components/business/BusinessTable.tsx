@@ -56,28 +56,26 @@ export function BusinessTable({
                 <Link 
                   key={business.id}
                   to={`/${serviceSlug}/${citySlug}/${business.slug}`}
-                  className={`company-row hover:bg-secondary/50 cursor-pointer block ${isFeatured ? 'bg-accent/5 border-l-4 border-l-accent' : ''}`}
+                  className={`company-row cursor-pointer ${isFeatured ? 'bg-accent/5 border-l-4 border-l-accent' : ''}`}
                 >
-                  {/* Company info */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col gap-1">
-                      <div className="font-semibold text-foreground flex items-center flex-wrap gap-2">
-                        {business.name}
-                        {isFeatured && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold text-accent-foreground bg-gradient-to-r from-accent to-featured">
-                            <Award className="h-3 w-3" />
-                            Rekommenderad
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                  {/* Company name */}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-semibold text-foreground truncate">
+                      {business.name}
+                    </span>
+                    {isFeatured && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold text-accent-foreground bg-gradient-to-r from-accent to-featured flex-shrink-0">
+                        <Award className="h-3 w-3" />
+                        Rekommenderad
+                      </span>
+                    )}
                   </div>
 
                   {/* Rating */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     {business.rating ? (
                       <>
-                        <Star className="h-4 w-4 text-featured fill-featured" />
+                        <Star className="h-4 w-4 text-featured fill-featured flex-shrink-0" />
                         <span className="font-semibold text-foreground">{business.rating.toFixed(1)}</span>
                         {business.review_count && (
                           <span className="text-muted-foreground text-sm">
@@ -90,24 +88,24 @@ export function BusinessTable({
                     )}
                   </div>
 
-                  {/* Phone - hidden on mobile */}
-                  <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground">
+                  {/* Phone */}
+                  <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground min-w-0">
                     {business.phone ? (
                       <>
                         <Phone className="h-3.5 w-3.5 text-muted-foreground/60 flex-shrink-0" />
-                        <span>{business.phone}</span>
+                        <span className="truncate">{business.phone}</span>
                       </>
                     ) : (
                       <span className="text-muted-foreground/50">-</span>
                     )}
                   </div>
 
-                  {/* Address - hidden on mobile/tablet */}
-                  <div className="hidden lg:flex items-center gap-1.5 text-sm text-muted-foreground">
+                  {/* Address */}
+                  <div className="hidden lg:flex items-center gap-1.5 text-sm text-muted-foreground min-w-0">
                     {business.address ? (
                       <>
                         <MapPin className="h-3.5 w-3.5 text-muted-foreground/60 flex-shrink-0" />
-                        <span className="truncate max-w-[200px]">{business.address}</span>
+                        <span className="truncate">{business.address}</span>
                       </>
                     ) : (
                       <span className="text-muted-foreground/50">-</span>
