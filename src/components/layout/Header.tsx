@@ -1,7 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronDown, ChevronRight, Truck, Search, MapPin } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Menu, X, ChevronDown, ChevronRight, Truck, Search, MapPin, Phone } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   NavigationMenu,
@@ -40,6 +39,7 @@ export function Header() {
   const primaryService = topLevelServices[0] || (services || [])[0];
 
   const menuCities = useMemo(() => (cities || []).slice(0, 6), [cities]);
+  const popularCities = useMemo(() => (cities || []).slice(0, 4), [cities]);
 
   // Filter cities based on search query
   const filteredCities = useMemo(() => {
@@ -140,7 +140,6 @@ export function Header() {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-
                 <NavigationMenuItem>
                   <Link
                     to="/kontakt"
@@ -156,7 +155,6 @@ export function Header() {
               </NavigationMenuList>
             </NavigationMenu>
           </nav>
-
 
           {/* Mobile Menu Button */}
           <button
@@ -178,109 +176,128 @@ export function Header() {
       {mobileMenuOpen && (
         <>
           <div
-            className="mobile-menu-overlay lg:hidden"
+            className="fixed inset-0 bg-foreground/20 backdrop-blur-sm lg:hidden z-40"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="lg:hidden absolute top-16 left-0 right-0 bg-background border-b border-border shadow-elevated z-50 max-h-[calc(100vh-4rem)] overflow-y-auto">
-            <nav className="container py-4">
-              <div className="space-y-4">
-                {/* Search */}
+          <div className="lg:hidden fixed top-16 left-0 right-0 bottom-0 bg-background z-50 overflow-y-auto">
+            <div className="container py-6">
+              {/* Search Section */}
+              <div className="mb-6">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">
+                  Hitta flyttfirma i din stad
+                </label>
                 <div className="relative">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      ref={searchInputRef}
-                      type="text"
-                      placeholder="Sök efter stad..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onFocus={() => setSearchFocused(true)}
-                      onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-                      className="pl-9 pr-4"
-                    />
-                  </div>
-                  
-                  {/* Search Results */}
-                  {searchQuery.trim() && (searchFocused || filteredCities.length > 0) && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-elevated z-50 overflow-hidden">
-                      {filteredCities.length > 0 ? (
-                        <ul>
-                          {filteredCities.map((city) => (
-                            <li key={city.id}>
-                              <button
-                                onClick={() => handleCitySelect(city.slug)}
-                                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/10 transition-colors"
-                              >
-                                <MapPin className="h-4 w-4 text-accent shrink-0" />
-                                <div>
-                                  <div className="font-medium text-sm">{city.name}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {primaryService?.name || 'Företag'} i {city.name}
-                                  </div>
-                                </div>
-                                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto" />
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <div className="px-4 py-3 text-sm text-muted-foreground">
-                          Ingen stad hittades för "{searchQuery}"
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Sök stad..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+                    className="pl-12 h-12 text-base rounded-xl border-2 focus:border-accent"
+                  />
                 </div>
+                
+                {/* Search Results */}
+                {searchQuery.trim() && (
+                  <div className="mt-2 bg-secondary rounded-xl overflow-hidden">
+                    {filteredCities.length > 0 ? (
+                      <ul className="divide-y divide-border">
+                        {filteredCities.map((city) => (
+                          <li key={city.id}>
+                            <button
+                              onClick={() => handleCitySelect(city.slug)}
+                              className="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-accent/10 transition-colors"
+                            >
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+                                <MapPin className="h-5 w-5 text-accent" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-semibold">{city.name}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {primaryService?.name} i {city.name}
+                                </div>
+                              </div>
+                              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="px-4 py-3 text-sm text-muted-foreground">
+                        Ingen stad hittades för "{searchQuery}"
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                {/* Main Service Link */}
+                {/* Popular Cities (show when not searching) */}
+                {!searchQuery.trim() && popularCities.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {popularCities.map((city) => (
+                      <button
+                        key={city.id}
+                        onClick={() => handleCitySelect(city.slug)}
+                        className="px-3 py-1.5 text-sm bg-secondary rounded-full hover:bg-accent/10 hover:text-accent transition-colors"
+                      >
+                        {city.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Navigation Links */}
+              <nav className="space-y-2">
+                {/* Main Service */}
                 {primaryService && (
                   <Link
                     to={`/${primaryService.slug}`}
-                    className="flex items-center justify-between px-4 py-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                    className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10 hover:border-accent/30 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-                        <Truck className="h-5 w-5 text-accent" />
-                      </div>
-                      <div>
-                        <div className="font-semibold">{primaryService.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          Se alla städer
-                        </div>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                      <Truck className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-lg">{primaryService.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Jämför firmor i alla städer
                       </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </Link>
                 )}
 
-                {/* Services Dropdown */}
+                {/* Sub-services Accordion */}
                 {subServices.length > 0 && (
-                  <div className="border-t border-border pt-4">
+                  <div className="rounded-xl border border-border overflow-hidden">
                     <button
                       onClick={() => setServicesExpanded(!servicesExpanded)}
-                      className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-muted-foreground"
+                      className="flex items-center justify-between w-full p-4 bg-background hover:bg-secondary/50 transition-colors"
                     >
-                      <span>Tjänster</span>
+                      <span className="font-semibold">Alla tjänster</span>
                       <ChevronDown 
                         className={cn(
-                          "h-4 w-4 transition-transform",
+                          "h-5 w-5 text-muted-foreground transition-transform duration-200",
                           servicesExpanded && "rotate-180"
                         )} 
                       />
                     </button>
                     
                     {servicesExpanded && (
-                      <div className="mt-2 space-y-1">
+                      <div className="border-t border-border bg-secondary/30">
                         {subServices.map((service) => (
                           <Link
                             key={service.slug}
                             to={`/${service.slug}`}
-                            className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-md hover:bg-accent/10 transition-colors"
+                            className="flex items-center gap-3 px-4 py-3 hover:bg-accent/10 transition-colors border-b border-border last:border-0"
                             onClick={() => setMobileMenuOpen(false)}
                           >
-                            <div className="h-2 w-2 rounded-full bg-accent/50" />
-                            {service.name}
+                            <div className="h-2 w-2 rounded-full bg-accent" />
+                            <span>{service.name}</span>
                           </Link>
                         ))}
                       </div>
@@ -289,24 +306,24 @@ export function Header() {
                 )}
 
                 {/* Contact Link */}
-                <div className="border-t border-border pt-4">
-                  <Link
-                    to="/kontakt"
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md hover:bg-accent/10 transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Kontakta oss
-                  </Link>
-                  <Link
-                    to="/om-oss"
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-muted-foreground rounded-md hover:bg-accent/10 transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Om oss
-                  </Link>
-                </div>
-              </div>
-            </nav>
+                <Link
+                  to="/kontakt"
+                  className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-accent/30 hover:bg-accent/5 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
+                    <Phone className="h-5 w-5 text-accent" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold">Kontakta oss</div>
+                    <div className="text-sm text-muted-foreground">
+                      Frågor eller feedback?
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </Link>
+              </nav>
+            </div>
           </div>
         </>
       )}
