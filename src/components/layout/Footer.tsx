@@ -98,12 +98,12 @@ export default function Footer() {
               <Link to="/integritetspolicy" className="hover:text-white transition-colors">
                 Integritetspolicy
               </Link>
-              <Link to="/integritetspolicy" className="hover:text-white transition-colors">
+              <Link to="/anvandarvillkor" className="hover:text-white transition-colors">
                 Användarvillkor
               </Link>
-              <button className="hover:text-white transition-colors">
+              <Link to="/cookies" className="hover:text-white transition-colors">
                 Cookies
-              </button>
+              </Link>
             </div>
           </div>
         </div>
