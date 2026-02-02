@@ -113,39 +113,84 @@ export function RecommendedPartnerCard({
     return name.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase();
   };
 
-  // Generate dynamic recommendation content
-  const getRecommendationReasons = () => {
-    const reasons = [];
+  // Check if description is valid (not JSON or gibberish)
+  const isValidDescription = (desc: string | null | undefined): boolean => {
+    if (!desc) return false;
+    // Check if it starts with JSON-like patterns
+    if (desc.trim().startsWith('{') || desc.trim().startsWith('[')) return false;
+    // Check for common JSON patterns
+    if (desc.includes('":true') || desc.includes('":false') || desc.includes('":{')) return false;
+    return true;
+  };
+
+  const getValidDescription = (): string | null => {
+    if (isValidDescription(business.description)) {
+      return business.description!;
+    }
+    // Return a generic positive description if no valid one exists
+    return `${business.name} är en pålitlig ${serviceName} i ${cityName} som erbjuder professionella tjänster med fokus på kvalitet och kundnöjdhet.`;
+  };
+
+  // Generate exactly 5 USPs for the recommendation section
+  const getRecommendationReasons = (): string[] => {
+    const allReasons: string[] = [];
     
+    // Rating-based reasons
     if (business.rating && business.rating >= 4.5) {
-      reasons.push(`Med ett betyg på ${business.rating.toFixed(1)} av 5 stjärnor tillhör ${business.name} de högst rankade ${serviceName}na i ${cityName}.`);
+      allReasons.push(`Med ett betyg på ${business.rating.toFixed(1)} av 5 stjärnor tillhör ${business.name} de högst rankade ${serviceName}na i ${cityName}.`);
     } else if (business.rating && business.rating >= 4.0) {
-      reasons.push(`${business.name} har ett utmärkt betyg på ${business.rating.toFixed(1)} av 5 stjärnor baserat på ${business.review_count || 'många'} kundrecensioner.`);
+      allReasons.push(`${business.name} har ett utmärkt betyg på ${business.rating.toFixed(1)} av 5 stjärnor baserat på ${business.review_count || 'många'} kundrecensioner.`);
+    } else if (business.rating) {
+      allReasons.push(`Med ett betyg på ${business.rating.toFixed(1)} stjärnor erbjuder ${business.name} pålitliga tjänster till konkurrenskraftiga priser.`);
     }
 
+    // Verified status
     if (business.verified) {
-      reasons.push(`Företaget är verifierat och har genomgått vår kvalitetskontroll för att säkerställa professionell service.`);
+      allReasons.push(`Företaget är verifierat och har genomgått vår kvalitetskontroll för att säkerställa professionell service.`);
     }
 
+    // Experience/founding year
     if (business.founded_year) {
       const yearsInBusiness = new Date().getFullYear() - business.founded_year;
       if (yearsInBusiness > 5) {
-        reasons.push(`Med ${yearsInBusiness} års erfarenhet sedan ${business.founded_year} har ${business.name} etablerat sig som en pålitlig aktör i branschen.`);
+        allReasons.push(`Med ${yearsInBusiness} års erfarenhet sedan ${business.founded_year} har ${business.name} etablerat sig som en pålitlig aktör i branschen.`);
+      } else if (yearsInBusiness > 0) {
+        allReasons.push(`Sedan grundandet ${business.founded_year} har ${business.name} byggt upp ett starkt rykte för kvalitet och tillförlitlighet.`);
       }
     }
 
+    // Employee count
     if (business.employee_count) {
-      reasons.push(`Med ${business.employee_count} anställda har företaget kapacitet att hantera både små och stora uppdrag.`);
+      allReasons.push(`Med ${business.employee_count} anställda har företaget kapacitet att hantera både små och stora uppdrag effektivt.`);
     }
 
+    // Review count
     if (business.review_count && business.review_count > 50) {
-      reasons.push(`Över ${business.review_count} nöjda kunder har delat sina positiva erfarenheter, vilket visar på konsekvent hög kvalitet.`);
+      allReasons.push(`Över ${business.review_count} nöjda kunder har delat sina positiva erfarenheter, vilket visar på konsekvent hög kvalitet.`);
+    } else if (business.review_count && business.review_count > 10) {
+      allReasons.push(`${business.review_count} kunder har recenserat ${business.name} och ger företaget ett starkt förtroende i branschen.`);
     }
 
-    // Always add a conclusion
-    reasons.push(`Vi rekommenderar ${business.name} för deras kombination av professionalism, pålitlighet och kundnöjdhet.`);
+    // Generic positive reasons to ensure we always have 5
+    const genericReasons = [
+      `${business.name} erbjuder konkurrenskraftiga priser utan att kompromissa med kvaliteten på sina tjänster.`,
+      `Företaget är känt för sin snabba och pålitliga kundservice, med fokus på att överträffa kundernas förväntningar.`,
+      `${business.name} har ett starkt lokalt nätverk i ${cityName} vilket möjliggör snabba och effektiva lösningar.`,
+      `Kundernas behov sätts alltid i centrum och företaget anpassar sina tjänster efter varje unikt uppdrag.`,
+      `${business.name} använder moderna metoder och utrustning för att säkerställa bästa möjliga resultat.`,
+      `Företaget erbjuder transparenta offerter utan dolda avgifter, vilket skapar trygghet för kunderna.`,
+      `Med gedigen erfarenhet inom ${serviceName}-branschen levererar ${business.name} konsekvent hög kvalitet.`,
+    ];
 
-    return reasons;
+    // Fill up to 5 reasons
+    let genericIndex = 0;
+    while (allReasons.length < 5 && genericIndex < genericReasons.length) {
+      allReasons.push(genericReasons[genericIndex]);
+      genericIndex++;
+    }
+
+    // Return exactly 5 reasons
+    return allReasons.slice(0, 5);
   };
 
   const formatReviewDate = (dateString: string) => {
@@ -221,9 +266,9 @@ export function RecommendedPartnerCard({
             )}
 
             {/* Description */}
-            {business.description && (
+            {getValidDescription() && (
               <p className="text-muted-foreground text-[15px] leading-relaxed mb-4 max-w-xl line-clamp-2">
-                {business.description}
+                {getValidDescription()}
               </p>
             )}
 
@@ -236,10 +281,13 @@ export function RecommendedPartnerCard({
                 </div>
               )}
               {business.phone && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <a 
+                  href={`tel:${business.phone.replace(/\s/g, '')}`}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
                   <Phone className="h-4 w-4 text-muted-foreground/60" />
                   <span>{business.phone}</span>
-                </div>
+                </a>
               )}
               {business.employee_count && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
