@@ -252,10 +252,11 @@ export default function ServiceCityPage() {
         />
       )}
 
-      {/* Other Businesses Table */}
-      {otherBusinesses.length > 0 && (
+      {/* All Businesses Table (including featured at top) */}
+      {(businesses && businesses.length > 0) && (
         <BusinessTable
-          businesses={otherBusinesses}
+          businesses={businesses}
+          featuredBusiness={featuredBusiness}
           serviceSlug={serviceSlug}
           citySlug={citySlug}
           cityName={city?.name || ''}
