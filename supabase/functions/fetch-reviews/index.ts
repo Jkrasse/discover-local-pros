@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,10 +7,12 @@ const corsHeaders = {
 };
 
 interface ReviewsRequest {
+  businessId: string; // Required: business ID for caching
   placeId?: string; // Google place ID (preferred, more accurate)
   query?: string; // Business name as fallback
   limit?: number;
   sort?: "newest" | "most_relevant" | "highest_rating" | "lowest_rating";
+  forceRefresh?: boolean; // Force refresh from API
 }
 
 interface Review {
@@ -21,6 +24,18 @@ interface Review {
   likes?: number;
 }
 
+interface CachedReview {
+  id: string;
+  business_id: string;
+  author_name: string;
+  author_image: string | null;
+  rating: number;
+  review_text: string | null;
+  review_time: string | null;
+  likes: number;
+  fetched_at: string;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -29,11 +44,27 @@ serve(async (req) => {
 
   try {
     const OUTSCRAPER_API_KEY = Deno.env.get("OUTSCRAPER_API_KEY");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
     if (!OUTSCRAPER_API_KEY) {
       throw new Error("OUTSCRAPER_API_KEY is not configured");
     }
 
-    const { placeId, query, limit = 5, sort = "highest_rating" }: ReviewsRequest = await req.json();
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Supabase configuration is missing");
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const { businessId, placeId, query, limit = 5, sort = "highest_rating", forceRefresh = false }: ReviewsRequest = await req.json();
+
+    if (!businessId) {
+      return new Response(
+        JSON.stringify({ error: "businessId is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Prefer placeId, fallback to query
     const searchQuery = placeId || query;
@@ -45,7 +76,46 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Fetching reviews for: ${searchQuery}, limit: ${limit}, sort: ${sort}`);
+    console.log(`Fetching reviews for business: ${businessId}, query: ${searchQuery}`);
+
+    // Check for cached reviews (less than 30 days old)
+    if (!forceRefresh) {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { data: cachedReviews, error: cacheError } = await supabase
+        .from("business_reviews")
+        .select("*")
+        .eq("business_id", businessId)
+        .gte("fetched_at", thirtyDaysAgo.toISOString())
+        .order("rating", { ascending: false })
+        .limit(limit);
+
+      if (!cacheError && cachedReviews && cachedReviews.length > 0) {
+        console.log(`Returning ${cachedReviews.length} cached reviews for business ${businessId}`);
+        
+        const reviews: Review[] = cachedReviews.map((r: CachedReview) => ({
+          author_name: r.author_name,
+          author_image: r.author_image || undefined,
+          rating: r.rating,
+          text: r.review_text || "",
+          time: r.review_time || "",
+          likes: r.likes,
+        }));
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            reviews,
+            totalFound: cachedReviews.length,
+            cached: true,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    console.log(`No valid cache found, fetching from Outscraper API...`);
 
     // Use the reviews-v3 endpoint with async=false for synchronous results
     const params = new URLSearchParams({
@@ -80,7 +150,6 @@ serve(async (req) => {
     console.log("Outscraper reviews response:", JSON.stringify(result).substring(0, 1000));
 
     // Parse reviews from the response
-    // reviews-v3 returns data in format: { data: [{ reviews_data: [...] }] }
     const reviews: Review[] = [];
     
     if (result.data && Array.isArray(result.data)) {
@@ -110,11 +179,47 @@ serve(async (req) => {
 
     console.log(`Found ${reviews.length} reviews, returning top ${topReviews.length}`);
 
+    // Save reviews to cache (delete old ones first, then insert new)
+    if (topReviews.length > 0) {
+      // Delete old reviews for this business
+      const { error: deleteError } = await supabase
+        .from("business_reviews")
+        .delete()
+        .eq("business_id", businessId);
+
+      if (deleteError) {
+        console.error("Error deleting old reviews:", deleteError);
+      }
+
+      // Insert new reviews
+      const reviewsToInsert = topReviews.map((r) => ({
+        business_id: businessId,
+        author_name: r.author_name,
+        author_image: r.author_image || null,
+        rating: r.rating,
+        review_text: r.text,
+        review_time: r.time,
+        likes: r.likes || 0,
+        fetched_at: new Date().toISOString(),
+      }));
+
+      const { error: insertError } = await supabase
+        .from("business_reviews")
+        .insert(reviewsToInsert);
+
+      if (insertError) {
+        console.error("Error caching reviews:", insertError);
+      } else {
+        console.log(`Cached ${reviewsToInsert.length} reviews for business ${businessId}`);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         reviews: topReviews,
         totalFound: reviews.length,
+        cached: false,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
