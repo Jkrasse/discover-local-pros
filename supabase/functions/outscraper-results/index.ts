@@ -258,13 +258,7 @@ serve(async (req) => {
           });
         }
 
-        // Generate synthetic gbp_id if missing but we have enough data
-        let gbpId = business.place_id;
-        if (!gbpId && business.name && (business.phone || business.city)) {
-          gbpId = `synthetic_${generateSlug(business.name)}_${generateSlug(business.city || '')}_${(business.phone || '').replace(/\D/g, '')}`;
-          console.log(`Generated synthetic ID for "${business.name}": ${gbpId}`);
-        }
-
+        // Skip if no name - this is the only hard requirement
         if (!business.name) {
           console.log(`SKIPPED: No name provided`, {
             hasPlaceId: !!business.place_id,
@@ -279,18 +273,18 @@ serve(async (req) => {
           continue;
         }
 
+        // Generate gbp_id - use place_id if available, otherwise create synthetic ID
+        // We're very lenient here - we accept any business with a name
+        let gbpId = business.place_id;
         if (!gbpId) {
-          console.log(`SKIPPED: "${business.name}" - No place_id and insufficient data to generate ID`, {
-            hasCity: !!business.city,
-            hasPhone: !!business.phone,
-            hasWebsite: !!business.website,
-          });
-          results.push({
-            name: business.name,
-            status: "skipped",
-            message: "Missing place_id and insufficient data for synthetic ID",
-          });
-          continue;
+          // Generate synthetic ID from name + city + any available identifier
+          const nameSlug = generateSlug(business.name);
+          const citySlug = generateSlug(business.city || 'unknown');
+          const phoneHash = (business.phone || '').replace(/\D/g, '').slice(-6) || '';
+          const websiteHash = business.website ? generateSlug(business.website).slice(0, 10) : '';
+          const identifier = phoneHash || websiteHash || Math.random().toString(36).substring(2, 8);
+          gbpId = `synthetic_${nameSlug}_${citySlug}_${identifier}`;
+          console.log(`Generated synthetic ID for "${business.name}": ${gbpId}`);
         }
 
         // Match or create city

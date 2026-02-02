@@ -24,7 +24,7 @@ serve(async (req) => {
       throw new Error("OUTSCRAPER_API_KEY is not configured");
     }
 
-    const { searchTerm, cities, limit = 10, serviceId }: SearchRequest = await req.json();
+    const { searchTerm, cities, limit = 20, serviceId }: SearchRequest = await req.json();
 
     if (!searchTerm || !cities || cities.length === 0) {
       return new Response(
