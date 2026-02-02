@@ -45,7 +45,7 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
@@ -104,18 +104,6 @@ export function Header() {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-                <NavigationMenuItem>
-                  <Link
-                    to="/hur-vi-rankar"
-                    className={cn(
-                      'inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors',
-                      'hover:bg-accent/10 hover:text-accent',
-                      location.pathname === '/hur-vi-rankar' && 'text-accent'
-                    )}
-                  >
-                    Så rankar vi
-                  </Link>
-                </NavigationMenuItem>
 
                 <NavigationMenuItem>
                   <Link
@@ -198,13 +186,6 @@ export function Header() {
                 </div>
 
                 <div className="border-t border-border pt-4 space-y-2">
-                  <Link
-                    to="/hur-vi-rankar"
-                    className="block px-3 py-2 text-sm rounded-md hover:bg-accent/10"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Så rankar vi
-                  </Link>
                   <Link
                     to="/om-oss"
                     className="block px-3 py-2 text-sm rounded-md hover:bg-accent/10"
