@@ -111,7 +111,7 @@ export default function ServicesPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: ServiceForm) => {
-      const { error } = await supabase.from("services").insert({
+      const { data: newService, error } = await supabase.from("services").insert({
         name: data.name,
         slug: data.slug || generateSlug(data.name),
         category: data.category as "moving" | "cleaning" | "dental" | "other",
@@ -120,8 +120,38 @@ export default function ServicesPage() {
         seo_title_template: data.seo_title_template || null,
         seo_description_template: data.seo_description_template || null,
         parent_service_id: data.parent_service_id || null,
-      });
+      }).select().single();
       if (error) throw error;
+      
+      // Get parent service name if this is a sub-service
+      let parentServiceName: string | undefined;
+      if (data.parent_service_id) {
+        const parent = parentServices.find(s => s.id === data.parent_service_id);
+        parentServiceName = parent?.name;
+      }
+      
+      // Auto-generate AI content for the new service
+      try {
+        const response = await supabase.functions.invoke('generate-service-content', {
+          body: {
+            serviceId: newService.id,
+            serviceName: data.name,
+            parentServiceName,
+          },
+        });
+        
+        if (response.error) {
+          console.error('AI content generation failed:', response.error);
+          toast.warning("Tjänsten skapades men AI-innehåll kunde inte genereras automatiskt");
+        } else {
+          toast.success("AI-innehåll genererades automatiskt!");
+        }
+      } catch (aiError) {
+        console.error('AI content generation error:', aiError);
+        // Don't fail the service creation if AI generation fails
+      }
+      
+      return newService;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-services"] });
