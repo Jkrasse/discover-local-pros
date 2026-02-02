@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, Truck, Phone } from 'lucide-react';
+import { useMemo, useState, useRef, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, ChevronDown, ChevronRight, Truck, Search, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -16,7 +17,12 @@ import { useServices } from '@/hooks/useService';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [servicesExpanded, setServicesExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const { data: cities } = useCities();
   const { data: services } = useServices();
@@ -26,9 +32,39 @@ export function Header() {
     [services]
   );
 
+  const subServices = useMemo(
+    () => (services || []).filter((s) => s.parent_service_id),
+    [services]
+  );
+
   const primaryService = topLevelServices[0] || (services || [])[0];
 
   const menuCities = useMemo(() => (cities || []).slice(0, 6), [cities]);
+
+  // Filter cities based on search query
+  const filteredCities = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const query = searchQuery.toLowerCase().trim();
+    return (cities || [])
+      .filter(city => city.name.toLowerCase().includes(query))
+      .slice(0, 5);
+  }, [cities, searchQuery]);
+
+  const handleCitySelect = (citySlug: string) => {
+    if (primaryService) {
+      navigate(`/${primaryService.slug}/${citySlug}`);
+    } else {
+      navigate(`/stader`);
+    }
+    setSearchQuery('');
+    setMobileMenuOpen(false);
+  };
+
+  // Close menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setSearchQuery('');
+  }, [location.pathname]);
 
   return (
     <header className="header-sticky">
@@ -148,69 +184,125 @@ export function Header() {
           <div className="lg:hidden absolute top-16 left-0 right-0 bg-background border-b border-border shadow-elevated z-50 max-h-[calc(100vh-4rem)] overflow-y-auto">
             <nav className="container py-4">
               <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-3">
-                    {primaryService?.name ? `${primaryService.name} per stad` : 'Städer'}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-1">
-                    {menuCities.map((city) => (
-                      <Link
-                        key={city.slug}
-                        to={primaryService ? `/${primaryService.slug}/${city.slug}` : '/stader'}
-                        className="px-3 py-2 text-sm rounded-md hover:bg-accent/10"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        {city.name}
-                      </Link>
-                    ))}
+                {/* Search */}
+                <div className="relative">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      ref={searchInputRef}
+                      type="text"
+                      placeholder="Sök efter stad..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => setSearchFocused(true)}
+                      onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+                      className="pl-9 pr-4"
+                    />
                   </div>
+                  
+                  {/* Search Results */}
+                  {searchQuery.trim() && (searchFocused || filteredCities.length > 0) && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-elevated z-50 overflow-hidden">
+                      {filteredCities.length > 0 ? (
+                        <ul>
+                          {filteredCities.map((city) => (
+                            <li key={city.id}>
+                              <button
+                                onClick={() => handleCitySelect(city.slug)}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/10 transition-colors"
+                              >
+                                <MapPin className="h-4 w-4 text-accent shrink-0" />
+                                <div>
+                                  <div className="font-medium text-sm">{city.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {primaryService?.name || 'Företag'} i {city.name}
+                                  </div>
+                                </div>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="px-4 py-3 text-sm text-muted-foreground">
+                          Ingen stad hittades för "{searchQuery}"
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
+                {/* Main Service Link */}
+                {primaryService && (
+                  <Link
+                    to={`/${primaryService.slug}`}
+                    className="flex items-center justify-between px-4 py-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+                        <Truck className="h-5 w-5 text-accent" />
+                      </div>
+                      <div>
+                        <div className="font-semibold">{primaryService.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Se alla städer
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </Link>
+                )}
+
+                {/* Services Dropdown */}
+                {subServices.length > 0 && (
+                  <div className="border-t border-border pt-4">
+                    <button
+                      onClick={() => setServicesExpanded(!servicesExpanded)}
+                      className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-muted-foreground"
+                    >
+                      <span>Tjänster</span>
+                      <ChevronDown 
+                        className={cn(
+                          "h-4 w-4 transition-transform",
+                          servicesExpanded && "rotate-180"
+                        )} 
+                      />
+                    </button>
+                    
+                    {servicesExpanded && (
+                      <div className="mt-2 space-y-1">
+                        {subServices.map((service) => (
+                          <Link
+                            key={service.slug}
+                            to={`/${service.slug}`}
+                            className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-md hover:bg-accent/10 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <div className="h-2 w-2 rounded-full bg-accent/50" />
+                            {service.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Contact Link */}
                 <div className="border-t border-border pt-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-3">
-                    Tjänster
-                  </h3>
-                  <div className="space-y-1">
-                    {topLevelServices.map((service) => (
-                      <Link
-                        key={service.slug}
-                        to={`/${service.slug}`}
-                        className="flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-accent/10"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <Truck className="h-4 w-4 text-accent" />
-                        {service.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="border-t border-border pt-4 space-y-2">
                   <Link
                     to="/kontakt"
-                    className="block px-3 py-2 text-sm rounded-md hover:bg-accent/10"
+                    className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md hover:bg-accent/10 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Kontakta oss
                   </Link>
                   <Link
                     to="/om-oss"
-                    className="block px-3 py-2 text-sm rounded-md hover:bg-accent/10"
+                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-muted-foreground rounded-md hover:bg-accent/10 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Om oss
-                  </Link>
-                </div>
-
-                <div className="border-t border-border pt-4">
-                  <Link
-                    to="/fa-offert"
-                    className="block"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Button className="w-full bg-accent hover:bg-accent/90">
-                      Få offert gratis
-                    </Button>
                   </Link>
                 </div>
               </div>
