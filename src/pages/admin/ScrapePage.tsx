@@ -46,7 +46,7 @@ export default function ScrapePage() {
   const [selectedService, setSelectedService] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [citiesInput, setCitiesInput] = useState<string>("");
-  const [limit, setLimit] = useState<number>(10);
+  const [limit, setLimit] = useState<number>(20);
   const [status, setStatus] = useState<ScrapeStatus>("idle");
   const [requestId, setRequestId] = useState<string | null>(null);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
