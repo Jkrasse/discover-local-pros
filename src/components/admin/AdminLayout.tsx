@@ -13,7 +13,8 @@ import {
   LogOut,
   Search,
   Award,
-  DollarSign
+  DollarSign,
+  Sparkles
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -23,6 +24,7 @@ interface AdminLayoutProps {
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "CRM", href: "/admin/crm", icon: DollarSign },
+  { name: "AI-innehåll", href: "/admin/content", icon: Sparkles },
   { name: "Scraping", href: "/admin/scrape", icon: Search },
   { name: "Importera", href: "/admin/import", icon: Upload },
   { name: "Företag", href: "/admin/businesses", icon: Building2 },

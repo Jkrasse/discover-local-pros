@@ -1,10 +1,16 @@
 import { Check, Lightbulb, ClipboardList, Shield, Clock, BadgeCheck } from 'lucide-react';
 
+interface FeatureCard {
+  title: string;
+  description: string;
+}
+
 interface InfoSectionProps {
   serviceName: string;
   cityName: string;
   tips?: string[];
   checklist?: string[];
+  featureCards?: FeatureCard[];
 }
 
 const defaultTips = [
@@ -24,11 +30,18 @@ const defaultChecklist = [
   'Säg upp eller flytta elavtal, internet och försäkringar',
 ];
 
+const defaultFeatureCards: FeatureCard[] = [
+  { title: 'Försäkrad flytt', description: 'Alla våra rekommenderade företag har fullgod ansvarsförsäkring' },
+  { title: 'Snabbt svar', description: 'Få svar på din förfrågan inom 24 timmar' },
+  { title: 'Professionell hantering', description: 'Erfarenhet av alla typer av flyttar' },
+];
+
 export function InfoSection({
   serviceName,
   cityName,
   tips = defaultTips,
   checklist = defaultChecklist,
+  featureCards = defaultFeatureCards,
 }: InfoSectionProps) {
   return (
     <section className="py-16 lg:py-20">
@@ -45,35 +58,23 @@ export function InfoSection({
             </p>
           </div>
 
-          {/* Feature cards */}
+          {/* Feature cards - dynamically rendered */}
           <div className="grid sm:grid-cols-3 gap-6 mb-12">
-            <div className="feature-card-new">
-              <div className="feature-icon">
-                <Shield className="h-7 w-7" />
-              </div>
-              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Försäkrad flytt</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Alla våra rekommenderade företag har fullgod ansvarsförsäkring
-              </p>
-            </div>
-            <div className="feature-card-new">
-              <div className="feature-icon">
-                <Clock className="h-7 w-7" />
-              </div>
-              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Snabbt svar</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Få svar på din förfrågan inom 24 timmar
-              </p>
-            </div>
-            <div className="feature-card-new">
-              <div className="feature-icon">
-                <BadgeCheck className="h-7 w-7" />
-              </div>
-              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Professionell hantering</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Erfarenhet av alla typer av flyttar
-              </p>
-            </div>
+            {featureCards.map((card, index) => {
+              const icons = [Shield, Clock, BadgeCheck];
+              const Icon = icons[index % icons.length];
+              return (
+                <div key={index} className="feature-card-new">
+                  <div className="feature-icon">
+                    <Icon className="h-7 w-7" />
+                  </div>
+                  <h3 className="font-heading text-lg font-bold text-foreground mb-2">{card.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {card.description}
+                  </p>
+                </div>
+              );
+            })}
           </div>
 
           {/* Tips and Checklist cards */}
