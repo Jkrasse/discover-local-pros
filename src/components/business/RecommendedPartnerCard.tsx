@@ -316,9 +316,9 @@ export function RecommendedPartnerCard({
             </Button>
             {business.phone && (
               <Button 
-                variant="outline"
+                variant="secondary"
                 asChild
-                className="flex-1 md:flex-none border-2"
+                className="flex-1 md:flex-none"
               >
                 <a href={`tel:${business.phone.replace(/\s/g, '')}`}>
                   <Phone className="h-4 w-4" />
@@ -328,7 +328,7 @@ export function RecommendedPartnerCard({
             )}
             {business.website && (
               <Button 
-                variant="ghost" 
+                variant="outline" 
                 asChild
                 className="flex-1 md:flex-none"
               >
