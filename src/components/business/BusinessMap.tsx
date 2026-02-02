@@ -1,16 +1,22 @@
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { Icon } from 'leaflet';
+import L from 'leaflet';
 import { Link } from 'react-router-dom';
 import { Star, Phone, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Business } from '@/types/database';
 import 'leaflet/dist/leaflet.css';
 
-// Fix for default marker icons in react-leaflet
-const defaultIcon = new Icon({
+// Fix for default marker icons in Leaflet with bundlers
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+const featuredIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -18,8 +24,9 @@ const defaultIcon = new Icon({
   shadowSize: [41, 41],
 });
 
-const featuredIcon = new Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+const defaultIcon = new L.Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -47,21 +54,28 @@ export function BusinessMap({
   citySlug,
 }: BusinessMapProps) {
   // Filter businesses with valid coordinates
-  const businessesWithCoords = businesses.filter(
-    (b) => b.lat != null && b.lng != null
+  const businessesWithCoords = useMemo(
+    () => businesses.filter((b) => b.lat != null && b.lng != null),
+    [businesses]
   );
+
+  // Calculate center from businesses or use city coordinates
+  const center = useMemo((): [number, number] => {
+    if (cityLat && cityLng) {
+      return [cityLat, cityLng];
+    }
+    if (businessesWithCoords.length === 0) {
+      return [59.3293, 18.0686]; // Stockholm as fallback
+    }
+    return [
+      businessesWithCoords.reduce((sum, b) => sum + (b.lat || 0), 0) / businessesWithCoords.length,
+      businessesWithCoords.reduce((sum, b) => sum + (b.lng || 0), 0) / businessesWithCoords.length,
+    ];
+  }, [cityLat, cityLng, businessesWithCoords]);
 
   if (businessesWithCoords.length === 0) {
     return null;
   }
-
-  // Calculate center from businesses or use city coordinates
-  const center: [number, number] = cityLat && cityLng
-    ? [cityLat, cityLng]
-    : [
-        businessesWithCoords.reduce((sum, b) => sum + (b.lat || 0), 0) / businessesWithCoords.length,
-        businessesWithCoords.reduce((sum, b) => sum + (b.lng || 0), 0) / businessesWithCoords.length,
-      ];
 
   return (
     <section className="py-12 lg:py-16 bg-muted/30">
