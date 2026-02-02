@@ -248,20 +248,6 @@ export function Header() {
                   </div>
                 )}
 
-                {/* Popular Cities (show when not searching) */}
-                {!searchQuery.trim() && popularCities.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {popularCities.map((city) => (
-                      <button
-                        key={city.id}
-                        onClick={() => handleCitySelect(city.slug)}
-                        className="px-4 py-2 text-sm font-medium bg-secondary text-foreground rounded-full hover:bg-accent hover:text-accent-foreground active:bg-accent transition-colors"
-                      >
-                        {city.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
 
               {/* Navigation Links */}
