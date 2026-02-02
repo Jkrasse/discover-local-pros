@@ -4,6 +4,7 @@ import { SEOHead } from '@/components/seo/SEOHead';
 import { HeroSectionNew } from '@/components/sections/HeroSectionNew';
 import { RecommendedPartnerCard } from '@/components/business/RecommendedPartnerCard';
 import { BusinessTable } from '@/components/business/BusinessTable';
+import { BusinessMap } from '@/components/business/BusinessMap';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { InfoSection } from '@/components/sections/InfoSection';
 import { SubServicesSection } from '@/components/sections/SubServicesSection';
@@ -267,6 +268,19 @@ export default function ServiceCityPage() {
           parentServiceName={service.name}
           citySlug={citySlug}
           cityName={city.name}
+        />
+      )}
+
+      {/* Business Map */}
+      {businesses && businesses.length > 0 && (
+        <BusinessMap
+          businesses={businesses}
+          featuredBusinessId={featuredBusiness?.id}
+          cityName={city?.name || ''}
+          cityLat={city?.lat}
+          cityLng={city?.lng}
+          serviceSlug={serviceSlug}
+          citySlug={citySlug}
         />
       )}
 
