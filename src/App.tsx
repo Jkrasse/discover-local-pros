@@ -26,6 +26,7 @@ import CRMPage from "./pages/admin/CRMPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import { ProtectedRoute } from "./components/admin/ProtectedRoute";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Index />} />
             
