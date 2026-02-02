@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Phone, 
@@ -11,7 +12,7 @@ import {
   Calendar,
   Quote,
   ThumbsUp,
-  Loader2
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/accordion';
 import { useBusinessReviews } from '@/hooks/useBusinessReviews';
 import { Skeleton } from '@/components/ui/skeleton';
+import { QuoteFormDialog } from '@/components/forms/QuoteFormDialog';
 
 interface Business {
   id: string;
@@ -47,6 +49,8 @@ interface RecommendedPartnerCardProps {
   citySlug: string;
   serviceName?: string;
   cityName?: string;
+  cityId?: string;
+  serviceId?: string;
 }
 
 export function RecommendedPartnerCard({ 
@@ -54,8 +58,11 @@ export function RecommendedPartnerCard({
   serviceSlug, 
   citySlug,
   serviceName = 'flyttfirma',
-  cityName = ''
+  cityName = '',
+  cityId,
+  serviceId
 }: RecommendedPartnerCardProps) {
+  const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
   const { data: reviews, isLoading: reviewsLoading } = useBusinessReviews(
     business.name,
     cityName,
@@ -251,10 +258,18 @@ export function RecommendedPartnerCard({
 
           {/* Actions */}
           <div className="flex flex-row md:flex-col gap-3 md:min-w-[160px]">
+            <Button 
+              onClick={() => setQuoteDialogOpen(true)}
+              className="flex-1 md:flex-none"
+            >
+              <FileText className="h-4 w-4" />
+              Få offert
+            </Button>
             {business.phone && (
               <Button 
+                variant="outline"
                 asChild
-                className="btn-call flex-1 md:flex-none"
+                className="flex-1 md:flex-none border-2"
               >
                 <a href={`tel:${business.phone.replace(/\s/g, '')}`}>
                   <Phone className="h-4 w-4" />
@@ -264,9 +279,9 @@ export function RecommendedPartnerCard({
             )}
             {business.website && (
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 asChild
-                className="flex-1 md:flex-none border-2"
+                className="flex-1 md:flex-none"
               >
                 <a href={business.website} target="_blank" rel="noopener noreferrer">
                   <Globe className="h-4 w-4" />
@@ -274,13 +289,6 @@ export function RecommendedPartnerCard({
                 </a>
               </Button>
             )}
-            <Link 
-              to={`/${serviceSlug}/${citySlug}/${business.slug}`}
-              className="btn-info-link"
-            >
-              Mer info
-              <ChevronRight className="h-4 w-4" />
-            </Link>
           </div>
         </div>
 
@@ -411,15 +419,17 @@ export function RecommendedPartnerCard({
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="recommended-card-footer">
-        <p className="text-sm text-muted-foreground">
-          Rekommenderad partner.{' '}
-          <Link to="/hur-vi-rankar" className="text-primary font-semibold hover:underline">
-            Så väljer vi rekommenderad →
-          </Link>
-        </p>
-      </div>
+      {/* Quote Form Dialog */}
+      <QuoteFormDialog
+        open={quoteDialogOpen}
+        onOpenChange={setQuoteDialogOpen}
+        businessName={business.name}
+        businessId={business.id}
+        cityId={cityId}
+        cityName={cityName}
+        serviceId={serviceId}
+        serviceName={serviceName}
+      />
     </div>
   );
 }

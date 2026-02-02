@@ -181,6 +181,7 @@ export type Database = {
           created_at: string | null
           id: string
           lat: number | null
+          lead_notification_email: string | null
           lng: number | null
           name: string
           population: number | null
@@ -194,6 +195,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           lat?: number | null
+          lead_notification_email?: string | null
           lng?: number | null
           name: string
           population?: number | null
@@ -207,6 +209,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           lat?: number | null
+          lead_notification_email?: string | null
           lng?: number | null
           name?: string
           population?: number | null
