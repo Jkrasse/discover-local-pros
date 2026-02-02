@@ -271,19 +271,6 @@ export default function ServiceCityPage() {
         />
       )}
 
-      {/* Business Map */}
-      {businesses && businesses.length > 0 && (
-        <BusinessMap
-          businesses={businesses}
-          featuredBusinessId={featuredBusiness?.id}
-          cityName={city?.name || ''}
-          cityLat={city?.lat}
-          cityLng={city?.lng}
-          serviceSlug={serviceSlug}
-          citySlug={citySlug}
-        />
-      )}
-
       {/* All Businesses Table (including featured at top) */}
       {(businesses && businesses.length > 0) && (
         <BusinessTable
@@ -292,6 +279,20 @@ export default function ServiceCityPage() {
           serviceSlug={serviceSlug}
           citySlug={citySlug}
           cityName={city?.name || ''}
+        />
+      )}
+
+      {/* Business Map */}
+      {businesses && businesses.length > 0 && (
+        <BusinessMap
+          businesses={businesses}
+          featuredBusinessId={featuredBusiness?.id}
+          serviceName={service?.name?.toLowerCase() || 'företag'}
+          cityName={city?.name || ''}
+          cityLat={city?.lat}
+          cityLng={city?.lng}
+          serviceSlug={serviceSlug}
+          citySlug={citySlug}
         />
       )}
 
