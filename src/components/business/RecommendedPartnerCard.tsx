@@ -132,8 +132,12 @@ export function RecommendedPartnerCard({
     return `${business.name} är en pålitlig ${serviceName} i ${cityName} som erbjuder professionella tjänster med fokus på kvalitet och kundnöjdhet.`;
   };
 
-  // Helper to create Swedish definite form (bestämd form)
+  // Helper to create Swedish definite singular form (bestämd form singular)
   const getDefiniteForm = (word: string): string => {
+    // Handle plural forms ending in "or" → convert to singular definite "an"
+    if (word.endsWith('or')) {
+      return word.slice(0, -2) + 'an'; // flyttfirmor → flyttfirman
+    }
     if (word.endsWith('a')) {
       return word + 'n'; // flyttfirma → flyttfirman
     }
