@@ -130,7 +130,8 @@ export function Header() {
                       Tjänster
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
-                      <ul className="grid w-[300px] gap-1 p-4">
+                      <ul className="grid w-[400px] gap-1 p-4 md:w-[500px] md:grid-cols-2">
+                        {/* Main services first */}
                         {topLevelServices.map((service) => (
                           <li key={service.slug}>
                             <NavigationMenuLink asChild>
@@ -141,7 +142,29 @@ export function Header() {
                                   'hover:bg-accent/10 hover:text-accent focus:bg-accent/10'
                                 )}
                               >
-                                <Truck className="h-5 w-5 text-accent" />
+                                <Truck className="h-5 w-5 text-primary" />
+                                <div>
+                                  <span className="text-sm font-medium">{service.name}</span>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    Se alla städer
+                                  </p>
+                                </div>
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                        ))}
+                        {/* Sub-services */}
+                        {subServices.map((service) => (
+                          <li key={service.slug}>
+                            <NavigationMenuLink asChild>
+                              <Link
+                                to={`/${service.slug}`}
+                                className={cn(
+                                  'flex items-center gap-3 select-none rounded-md p-3 leading-none no-underline outline-none transition-colors',
+                                  'hover:bg-accent/10 hover:text-accent focus:bg-accent/10'
+                                )}
+                              >
+                                <div className="h-2 w-2 rounded-full bg-accent" />
                                 <span className="text-sm font-medium">{service.name}</span>
                               </Link>
                             </NavigationMenuLink>
