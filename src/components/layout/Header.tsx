@@ -107,14 +107,14 @@ export function Header() {
 
                 <NavigationMenuItem>
                   <Link
-                    to="/om-oss"
+                    to="/kontakt"
                     className={cn(
                       'inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors',
                       'hover:bg-accent/10 hover:text-accent',
-                      location.pathname === '/om-oss' && 'text-accent'
+                      location.pathname === '/kontakt' && 'text-accent'
                     )}
                   >
-                    Om oss
+                    Kontakta oss
                   </Link>
                 </NavigationMenuItem>
               </NavigationMenuList>
@@ -187,18 +187,18 @@ export function Header() {
 
                 <div className="border-t border-border pt-4 space-y-2">
                   <Link
+                    to="/kontakt"
+                    className="block px-3 py-2 text-sm rounded-md hover:bg-accent/10"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Kontakta oss
+                  </Link>
+                  <Link
                     to="/om-oss"
                     className="block px-3 py-2 text-sm rounded-md hover:bg-accent/10"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Om oss
-                  </Link>
-                  <Link
-                    to="/kontakt"
-                    className="block px-3 py-2 text-sm rounded-md hover:bg-accent/10"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Kontakt
                   </Link>
                 </div>
 
