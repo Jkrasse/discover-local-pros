@@ -14,6 +14,8 @@ import AboutPage from "./pages/AboutPage";
 import HowWeRankPage from "./pages/HowWeRankPage";
 import ContactPage from "./pages/ContactPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
+import CookiePolicyPage from "./pages/CookiePolicyPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ImportPage from "./pages/admin/ImportPage";
 import ScrapePage from "./pages/admin/ScrapePage";
@@ -27,6 +29,7 @@ import SettingsPage from "./pages/admin/SettingsPage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import { ProtectedRoute } from "./components/admin/ProtectedRoute";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { CookieBanner } from "./components/CookieBanner";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +57,8 @@ const App = () => (
             <Route path="/hur-vi-rankar" element={<HowWeRankPage />} />
             <Route path="/kontakt" element={<ContactPage />} />
             <Route path="/integritetspolicy" element={<PrivacyPolicyPage />} />
+            <Route path="/anvandarvillkor" element={<TermsPage />} />
+            <Route path="/cookies" element={<CookiePolicyPage />} />
             
             {/* Admin routes */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
@@ -71,6 +76,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <CookieBanner />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
