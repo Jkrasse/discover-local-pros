@@ -40,10 +40,27 @@ serve(async (req) => {
       );
     }
 
-    // Build queries: "Flyttfirma Stockholm, Sweden", "Flyttfirma Göteborg, Sweden", etc.
-    const queries = cities.map(city => `${searchTerm} ${city.trim()}, Sweden`);
+    // We need high recall ("get everything").
+    // Outscraper/Maps can be sensitive to query phrasing, so we generate a few variants per city.
+    // We keep it small to control cost.
+    const effectiveLimit = Math.max(10, Number.isFinite(limit) ? limit : 20);
 
-    console.log(`Starting Outscraper search with ${queries.length} queries:`, queries);
+    const buildCityQueries = (cityRaw: string) => {
+      const city = cityRaw.trim();
+      if (!city) return [] as string[];
+
+      // Variants (sv + en) and without comma (often yields broader category results)
+      return [
+        `${searchTerm} ${city}, Sweden`,
+        `${searchTerm} ${city} Sweden`,
+        `${searchTerm} i ${city}`,
+        `${searchTerm} in ${city} Sweden`,
+      ];
+    };
+
+    const queries = cities.flatMap(buildCityQueries);
+
+    console.log(`Starting Outscraper search with ${queries.length} queries (variants per city). Effective limit: ${effectiveLimit}. Queries:`, queries);
 
     // Send request to Outscraper API with enrichments
     const response = await fetch("https://api.app.outscraper.com/maps/search-v3", {
@@ -54,7 +71,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         query: queries,
-        limit: limit,
+        limit: effectiveLimit,
         language: "sv",
         region: "SE",
         async: true,

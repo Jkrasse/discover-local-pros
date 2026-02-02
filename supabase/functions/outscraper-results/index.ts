@@ -220,8 +220,18 @@ serve(async (req) => {
     const affectedCities = new Set<string>();
     let newCitiesCreated = 0;
 
-    // Outscraper returns an array of arrays (one per query)
-    const allData = statusResult.data || [];
+     // Outscraper returns an array of arrays (one per query)
+     const allData = statusResult.data || [];
+
+     // Helpful diagnostics: confirm what the provider actually returned
+     const queryArrayCount = Array.isArray(allData) ? allData.length : 0;
+     const perQueryCounts = Array.isArray(allData)
+       ? allData.map((q: unknown) => (Array.isArray(q) ? q.length : 0))
+       : [];
+     const totalRawResults = perQueryCounts.reduce((a, b) => a + b, 0);
+     console.log(
+       `Outscraper data shape: queries=${queryArrayCount}, total_items=${totalRawResults}, per_query_counts=${JSON.stringify(perQueryCounts)}`
+     );
 
     for (const queryResults of allData) {
       if (!Array.isArray(queryResults)) continue;
@@ -258,7 +268,7 @@ serve(async (req) => {
           });
         }
 
-        // Skip if no name - this is the only hard requirement
+         // Skip if no name - this is the only hard requirement
         if (!business.name) {
           console.log(`SKIPPED: No name provided`, {
             hasPlaceId: !!business.place_id,
@@ -273,16 +283,21 @@ serve(async (req) => {
           continue;
         }
 
-        // Generate gbp_id - use place_id if available, otherwise create synthetic ID
-        // We're very lenient here - we accept any business with a name
+        // Generate gbp_id - use place_id if available, otherwise create a *deterministic* synthetic ID.
+        // Deterministic is important to avoid duplicates when the same business appears across query variants.
         let gbpId = business.place_id;
         if (!gbpId) {
           // Generate synthetic ID from name + city + any available identifier
           const nameSlug = generateSlug(business.name);
           const citySlug = generateSlug(business.city || 'unknown');
-          const phoneHash = (business.phone || '').replace(/\D/g, '').slice(-6) || '';
-          const websiteHash = business.website ? generateSlug(business.website).slice(0, 10) : '';
-          const identifier = phoneHash || websiteHash || Math.random().toString(36).substring(2, 8);
+          const phoneHash = (business.phone || '').replace(/\D/g, '').slice(-8) || '';
+          const websiteHash = business.website ? generateSlug(business.website).slice(0, 12) : '';
+          const addressHash = business.full_address ? generateSlug(business.full_address).slice(0, 12) : '';
+          const coordsHash =
+            typeof business.latitude === 'number' && typeof business.longitude === 'number'
+              ? `${business.latitude.toFixed(4).replace(/\./g, '')}_${business.longitude.toFixed(4).replace(/\./g, '')}`
+              : '';
+          const identifier = phoneHash || websiteHash || addressHash || coordsHash || 'na';
           gbpId = `synthetic_${nameSlug}_${citySlug}_${identifier}`;
           console.log(`Generated synthetic ID for "${business.name}": ${gbpId}`);
         }
