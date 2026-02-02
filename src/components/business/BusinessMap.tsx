@@ -34,6 +34,7 @@ const defaultIcon = new L.Icon({
 interface BusinessMapProps {
   businesses: Business[];
   featuredBusinessId?: string;
+  serviceName: string;
   cityName: string;
   cityLat?: number | null;
   cityLng?: number | null;
@@ -84,6 +85,7 @@ function createPopupContent(
 export function BusinessMap({
   businesses,
   featuredBusinessId,
+  serviceName,
   cityName,
   cityLat,
   cityLng,
@@ -171,10 +173,10 @@ export function BusinessMap({
       <div className="container">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl font-bold mb-2">
-            Karta över företag i {cityName}
+            Karta över {serviceName} i {cityName}
           </h2>
           <p className="text-muted-foreground mb-6">
-            Se var alla {businessesWithCoords.length} företag finns på kartan
+            Se var alla {businessesWithCoords.length} {serviceName} finns på kartan
           </p>
 
           <div 
