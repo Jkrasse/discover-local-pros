@@ -213,6 +213,8 @@ export default function ServiceCityPage() {
                 citySlug={citySlug}
                 serviceName={service?.name?.toLowerCase() || 'flyttfirma'}
                 cityName={city?.name || ''}
+                cityId={city?.id}
+                serviceId={service?.id}
               />
             ) : (
               <div className="recommended-card text-center py-12">
