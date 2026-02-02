@@ -271,10 +271,9 @@ export default function Index() {
           </div>
 
           {/* Steps */}
-          <div className="flex flex-col md:flex-row justify-center gap-8 lg:gap-12 max-w-5xl mx-auto relative">
-            {/* Connector lines (desktop) */}
-            <div className="hidden md:block absolute top-10 left-[33%] w-[34%] h-[3px] rounded bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
-            <div className="hidden md:block absolute top-10 left-[58%] w-[34%] h-[3px] rounded bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
+          <div className="flex flex-col md:flex-row justify-center gap-8 lg:gap-16 max-w-5xl mx-auto relative">
+            {/* Connector line (desktop) - single line between all circles */}
+            <div className="hidden md:block absolute top-10 left-1/2 -translate-x-1/2 w-[55%] h-[2px] bg-primary/30 -z-10" />
             
             {[
               {
