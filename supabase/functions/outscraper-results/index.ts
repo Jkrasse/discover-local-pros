@@ -87,22 +87,25 @@ function normalizeCity(cityName: string): string {
     .replace(/[ö]/g, "o");
 }
 
-// Match city from existing cities only - NO auto-creation of new cities
-function matchExistingCity(
+// Match city against the allowed cities list (cities from scrape input)
+function matchAllowedCity(
   cityName: string,
-  cityMap: Map<string, { id: string; name: string }>
+  allowedCityMap: Map<string, { id: string; name: string }>
 ): { id: string; name: string } | null {
   if (!cityName) return null;
 
   const normalizedName = normalizeCity(cityName);
 
   // Try exact match first
-  let matchedCity = cityMap.get(normalizedName);
+  let matchedCity = allowedCityMap.get(normalizedName);
 
-  // Try partial match if exact match fails
+  // Try partial match if exact match fails - but only if the allowed city is contained in the business city
+  // This handles cases like "Hisings Backa" which should NOT match "Göteborg"
+  // But "Stockholm" business city should match "Stockholm" in allowed list
   if (!matchedCity) {
-    for (const [key, value] of cityMap.entries()) {
-      if (normalizedName.includes(key) || key.includes(normalizedName)) {
+    for (const [key, value] of allowedCityMap.entries()) {
+      // Only match if the normalized names are very similar
+      if (normalizedName === key || normalizedName.startsWith(key + " ") || key.startsWith(normalizedName + " ")) {
         matchedCity = value;
         break;
       }
@@ -113,9 +116,57 @@ function matchExistingCity(
     return matchedCity;
   }
 
-  // City not found in existing cities - return null (don't create new ones)
-  console.log(`City not found in existing cities, skipping: "${cityName}"`);
+  // City not in allowed list - skip it
+  console.log(`City not in allowed list, skipping: "${cityName}"`);
   return null;
+}
+
+// Create cities from the input list if they don't exist
+async function ensureCitiesExist(
+  supabase: any,
+  cityNames: string[]
+): Promise<Map<string, { id: string; name: string }>> {
+  const cityMap = new Map<string, { id: string; name: string }>();
+  
+  for (const cityName of cityNames) {
+    const trimmedName = cityName.trim();
+    if (!trimmedName) continue;
+    
+    const normalizedName = normalizeCity(trimmedName);
+    
+    // Check if city already exists
+    const { data: existing } = await supabase
+      .from("cities")
+      .select("id, name")
+      .ilike("name", trimmedName)
+      .maybeSingle();
+    
+    if (existing) {
+      cityMap.set(normalizedName, { id: existing.id, name: existing.name });
+      console.log(`City already exists: ${existing.name}`);
+    } else {
+      // Create the city
+      const { data: newCity, error } = await supabase
+        .from("cities")
+        .insert({
+          name: trimmedName,
+          slug: generateSlug(trimmedName),
+          region: null,
+          population: null,
+        })
+        .select("id, name")
+        .single();
+      
+      if (error) {
+        console.error(`Failed to create city ${trimmedName}:`, error);
+      } else {
+        cityMap.set(normalizedName, { id: newCity.id, name: newCity.name });
+        console.log(`Created new city: ${newCity.name}`);
+      }
+    }
+  }
+  
+  return cityMap;
 }
 
 serve(async (req) => {
@@ -135,7 +186,7 @@ serve(async (req) => {
       throw new Error("Supabase configuration is missing");
     }
 
-    const { requestId, serviceId } = await req.json();
+    const { requestId, serviceId, cities: inputCities } = await req.json();
 
     if (!requestId || !serviceId) {
       return new Response(
@@ -143,6 +194,9 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Validate cities input - this is the list of cities from the scrape form
+    const allowedCities: string[] = Array.isArray(inputCities) ? inputCities.filter(c => typeof c === 'string' && c.trim()) : [];
 
     // Check status from Outscraper
     // Outscraper returns `results_location` on the search response (often on api.outscraper.cloud).
@@ -201,13 +255,24 @@ serve(async (req) => {
     // Results are ready - process them
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Fetch cities for matching
-    const { data: cities, error: citiesError } = await supabase.from("cities").select("*");
-    if (citiesError) throw citiesError;
-
-    const cityMap = new Map<string, { id: string; name: string }>();
-    for (const city of cities || []) {
-      cityMap.set(normalizeCity(city.name), { id: city.id, name: city.name });
+    // Create cities from the input list (the cities the user specified in the scrape form)
+    // These are the ONLY cities that will have landing pages and businesses
+    let allowedCityMap: Map<string, { id: string; name: string }>;
+    
+    if (allowedCities.length > 0) {
+      console.log(`Creating/ensuring ${allowedCities.length} cities from input list:`, allowedCities);
+      allowedCityMap = await ensureCitiesExist(supabase, allowedCities);
+      console.log(`Allowed cities map has ${allowedCityMap.size} entries`);
+    } else {
+      // Fallback to existing behavior if no cities provided (shouldn't happen in normal flow)
+      console.log("No cities provided in request, falling back to existing cities in database");
+      const { data: cities, error: citiesError } = await supabase.from("cities").select("*");
+      if (citiesError) throw citiesError;
+      
+      allowedCityMap = new Map<string, { id: string; name: string }>();
+      for (const city of cities || []) {
+        allowedCityMap.set(normalizeCity(city.name), { id: city.id, name: city.name });
+      }
     }
 
     const results: ImportResult[] = [];
@@ -303,15 +368,15 @@ serve(async (req) => {
         }
         seenGbpIds.add(gbpId);
 
-        // Match city from existing cities only (no auto-creation)
-        const matchedCity = matchExistingCity(business.city || "", cityMap);
+        // Match city against allowed cities only (from the scrape input list)
+        const matchedCity = matchAllowedCity(business.city || "", allowedCityMap);
 
         if (!matchedCity) {
           skipReason.noCity++;
           results.push({
             name: business.name,
             status: "skipped",
-            message: `City not in database: ${business.city}`,
+            message: `City not in allowed list: ${business.city}`,
             city: business.city,
           });
           continue;
