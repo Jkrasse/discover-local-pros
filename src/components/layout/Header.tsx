@@ -130,7 +130,7 @@ export function Header() {
                       Tjänster
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
-                      <ul className="grid w-[400px] gap-1 p-4 md:w-[500px] md:grid-cols-2">
+                      <ul className="w-48 p-2">
                         {/* Main services first */}
                         {topLevelServices.map((service) => (
                           <li key={service.slug}>
@@ -138,17 +138,11 @@ export function Header() {
                               <Link
                                 to={`/${service.slug}`}
                                 className={cn(
-                                  'flex items-center gap-3 select-none rounded-md p-3 leading-none no-underline outline-none transition-colors',
+                                  'block select-none rounded-md px-3 py-2 text-sm font-medium no-underline outline-none transition-colors',
                                   'hover:bg-accent/10 hover:text-accent focus:bg-accent/10'
                                 )}
                               >
-                                <Truck className="h-5 w-5 text-primary" />
-                                <div>
-                                  <span className="text-sm font-medium">{service.name}</span>
-                                  <p className="text-xs text-muted-foreground mt-0.5">
-                                    Se alla städer
-                                  </p>
-                                </div>
+                                {service.name}
                               </Link>
                             </NavigationMenuLink>
                           </li>
@@ -160,12 +154,11 @@ export function Header() {
                               <Link
                                 to={`/${service.slug}`}
                                 className={cn(
-                                  'flex items-center gap-3 select-none rounded-md p-3 leading-none no-underline outline-none transition-colors',
+                                  'block select-none rounded-md px-3 py-2 text-sm font-medium no-underline outline-none transition-colors',
                                   'hover:bg-accent/10 hover:text-accent focus:bg-accent/10'
                                 )}
                               >
-                                <div className="h-2 w-2 rounded-full bg-accent" />
-                                <span className="text-sm font-medium">{service.name}</span>
+                                {service.name}
                               </Link>
                             </NavigationMenuLink>
                           </li>
