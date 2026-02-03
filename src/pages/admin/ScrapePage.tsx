@@ -137,6 +137,7 @@ export default function ScrapePage() {
           body: {
             requestId: reqId,
             serviceId: selectedService,
+            cities: parsedCities, // Pass the original cities list to create them and match against
           },
         });
 
