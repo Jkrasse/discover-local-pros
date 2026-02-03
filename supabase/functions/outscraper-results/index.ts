@@ -165,9 +165,35 @@ serve(async (req) => {
     }
 
     // Check status from Outscraper
-    const statusResponse = await fetch(`https://api.app.outscraper.com/requests/${requestId}`, {
-      headers: { "X-API-KEY": OUTSCRAPER_API_KEY },
-    });
+    // Outscraper returns `results_location` on the search response (often on api.outscraper.cloud).
+    // Using api.outscraper.cloud first avoids DNS issues seen with api.app.outscraper.com in some runtimes.
+    const statusUrls = [
+      `https://api.outscraper.cloud/requests/${requestId}`,
+      `https://api.app.outscraper.com/requests/${requestId}`,
+    ];
+
+    let statusResponse: Response | null = null;
+    let lastStatusFetchError: unknown = null;
+
+    for (const url of statusUrls) {
+      try {
+        statusResponse = await fetch(url, {
+          headers: { "X-API-KEY": OUTSCRAPER_API_KEY },
+        });
+        break;
+      } catch (err) {
+        lastStatusFetchError = err;
+        console.error("Outscraper status fetch failed for URL:", url, err);
+      }
+    }
+
+    if (!statusResponse) {
+      const msg =
+        lastStatusFetchError instanceof Error
+          ? lastStatusFetchError.message
+          : String(lastStatusFetchError);
+      throw new Error(`Failed to reach Outscraper status endpoint: ${msg}`);
+    }
 
     if (!statusResponse.ok) {
       const errorText = await statusResponse.text();
