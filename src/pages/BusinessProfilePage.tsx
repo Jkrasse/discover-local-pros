@@ -1,5 +1,5 @@
-import { useParams, Link } from 'react-router-dom';
-import { Star, Phone, Globe, MapPin, Clock, ChevronRight, ArrowLeft, Building2, CheckCircle } from 'lucide-react';
+import { useParams, Link, Navigate } from 'react-router-dom';
+import { Star, Globe, MapPin, Clock, ChevronRight, ArrowLeft, Building2, CheckCircle, Phone } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
@@ -11,7 +11,6 @@ import { useBusiness } from '@/hooks/useBusiness';
 import { useService } from '@/hooks/useService';
 import { LeadForm } from '@/components/forms/LeadForm';
 import { cn } from '@/lib/utils';
-
 // Helper to parse categories - handles corrupted data
 function parseCategories(categories: string[] | null): string[] {
   if (!categories || !Array.isArray(categories)) return [];
@@ -86,7 +85,14 @@ export default function BusinessProfilePage() {
   }>();
 
   const { data: business, isLoading: businessLoading } = useBusiness(businessSlug || '');
-  const { data: service } = useService(serviceSlug || '');
+  const { data: service, isLoading: serviceLoading } = useService(serviceSlug || '');
+
+  // Redirect to parent service if this is a sub-service
+  // Business pages should only exist under the main/parent service
+  if (!serviceLoading && service?.parent_service_id && service?.parent_service) {
+    const parentSlug = service.parent_service.slug;
+    return <Navigate to={`/${parentSlug}/${citySlug}/${businessSlug}`} replace />;
+  }
 
   if (businessLoading) {
     return (
@@ -262,17 +268,9 @@ export default function BusinessProfilePage() {
                 </div>
               </div>
 
-              {/* CTA buttons */}
-              <div className="flex flex-col gap-3 lg:min-w-[200px]">
-                {business.phone && (
-                  <a href={`tel:${business.phone}`} className="w-full">
-                    <Button size="lg" className="w-full gap-2">
-                      <Phone className="h-4 w-4" />
-                      Ring nu
-                    </Button>
-                  </a>
-                )}
-                {business.website && (
+              {/* CTA button - only website */}
+              {business.website && (
+                <div className="flex flex-col gap-3 lg:min-w-[200px]">
                   <a
                     href={business.website}
                     target="_blank"
@@ -284,8 +282,8 @@ export default function BusinessProfilePage() {
                       Besök webbplats
                     </Button>
                   </a>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
