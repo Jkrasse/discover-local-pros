@@ -10,28 +10,31 @@ export function useService(slug: string) {
   return useQuery({
     queryKey: ['service', slug],
     queryFn: async (): Promise<ServiceWithParent | null> => {
+      // First, get the service
       const { data, error } = await supabase
         .from('services')
-        .select(`
-          *,
-          parent_service:services!services_parent_service_id_fkey(*)
-        `)
+        .select('*')
         .eq('slug', slug)
         .maybeSingle();
 
       if (error) throw error;
-      
       if (!data) return null;
       
-      // Transform parent_service from array to single object
-      const result = {
-        ...data,
-        parent_service: Array.isArray(data.parent_service) 
-          ? data.parent_service[0] || null 
-          : data.parent_service
-      } as ServiceWithParent;
+      // If it has a parent, fetch it separately
+      let parent_service: Service | null = null;
+      if (data.parent_service_id) {
+        const { data: parentData } = await supabase
+          .from('services')
+          .select('*')
+          .eq('id', data.parent_service_id)
+          .maybeSingle();
+        parent_service = parentData;
+      }
       
-      return result;
+      return {
+        ...data,
+        parent_service
+      } as ServiceWithParent;
     },
     enabled: !!slug,
   });
