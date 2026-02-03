@@ -1,5 +1,6 @@
 import { LeadForm } from '@/components/forms/LeadForm';
 import { FileText, Phone, Shield } from 'lucide-react';
+import { useSiteSettings, getPrimaryServiceName } from '@/hooks/useSiteSettings';
 
 export interface CTASectionProps {
   title?: string;
@@ -11,11 +12,18 @@ export interface CTASectionProps {
 }
 
 export function CTASection({
-  title = 'Få gratis offert',
-  subtitle = 'Fyll i formuläret så kontaktar vi dig med offerter från pålitliga flyttfirmor.',
+  title,
+  subtitle,
   cityId,
   serviceId,
 }: CTASectionProps) {
+  const { data: settings } = useSiteSettings();
+  const primaryCategory = settings?.primary_service_category || 'other';
+  const primaryServiceTerm = getPrimaryServiceName(primaryCategory);
+
+  const displayTitle = title || 'Få gratis offert';
+  const displaySubtitle = subtitle || `Fyll i formuläret så kontaktar vi dig med offerter från pålitliga ${primaryServiceTerm}.`;
+
   const benefits = [
     {
       icon: FileText,
@@ -41,10 +49,10 @@ export function CTASection({
           {/* Content */}
           <div>
             <h2 className="text-3xl lg:text-[44px] font-bold tracking-tight leading-tight mb-5">
-              {title}
+              {displayTitle}
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed mb-10">
-              {subtitle}
+              {displaySubtitle}
             </p>
 
             <div className="space-y-6">

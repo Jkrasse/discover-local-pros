@@ -1,6 +1,6 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronDown, ChevronRight, Truck, Search, MapPin, Phone } from 'lucide-react';
+import { Menu, X, ChevronDown, ChevronRight, Search, MapPin, Phone, Briefcase } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   NavigationMenu,
@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useCities } from '@/hooks/useCity';
 import { useServices } from '@/hooks/useService';
+import { useSiteSettings, getPrimaryServiceName } from '@/hooks/useSiteSettings';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -23,6 +24,11 @@ export function Header() {
 
   const { data: cities } = useCities();
   const { data: services } = useServices();
+  const { data: settings } = useSiteSettings();
+
+  const siteName = settings?.site_name || 'Katalog';
+  const primaryCategory = settings?.primary_service_category || 'other';
+  const primaryServiceTerm = getPrimaryServiceName(primaryCategory);
 
   const topLevelServices = useMemo(
     () => (services || []).filter((s) => !s.parent_service_id),
@@ -37,7 +43,6 @@ export function Header() {
   const primaryService = topLevelServices[0] || (services || [])[0];
 
   const menuCities = useMemo(() => (cities || []).slice(0, 6), [cities]);
-  const popularCities = useMemo(() => (cities || []).slice(0, 4), [cities]);
 
   // Filter cities based on search query
   const filteredCities = useMemo(() => {
@@ -84,10 +89,10 @@ export function Header() {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <Truck className="h-5 w-5 text-primary-foreground" />
+                <Briefcase className="h-5 w-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold text-foreground">
-                Flytt<span className="text-accent">Guide</span>
+                {siteName}
               </span>
             </Link>
 
@@ -218,7 +223,7 @@ export function Header() {
               {/* Search Section */}
               <div className="mb-6">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                  Hitta flyttfirma i din stad
+                  Hitta {primaryServiceTerm} i din stad
                 </p>
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
@@ -276,12 +281,12 @@ export function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground shrink-0">
-                      <Truck className="h-7 w-7" />
+                      <Briefcase className="h-7 w-7" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-lg text-foreground">{primaryService.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        Jämför firmor i alla städer
+                        Jämför företag i alla städer
                       </div>
                     </div>
                     <ChevronRight className="h-6 w-6 text-muted-foreground shrink-0" />
