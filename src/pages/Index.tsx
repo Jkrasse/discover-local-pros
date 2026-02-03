@@ -33,10 +33,10 @@ export default function Index() {
   const primaryCategory = settings?.primary_service_category || 'other';
   const genericTerm = getGenericServiceTerm(primaryCategory);
 
-  // Get top-level services (all parent services, no sub-services)
-  const topServices = services?.filter(s => !s.parent_service_id) || [];
+  // Get all services (including sub-services)
+  const allServices = services || [];
   const popularCities = cities?.slice(0, 6) || [];
-  const primaryService = topServices[0];
+  const primaryService = allServices[0];
 
   const faqs = [
     {
@@ -175,7 +175,7 @@ export default function Index() {
 
           {/* Service cards grid */}
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {topServices.map((service) => (
+            {allServices.map((service) => (
               <Link key={service.id} to={`/${service.slug}`} className="block">
                 <div className="service-card h-full">
                   <div className="relative z-10">
