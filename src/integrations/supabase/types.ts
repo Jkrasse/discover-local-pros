@@ -643,7 +643,61 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      featured_slots_public: {
+        Row: {
+          business_id: string | null
+          city_id: string | null
+          created_at: string | null
+          id: string | null
+          is_placeholder: boolean | null
+          service_id: string | null
+          status: Database["public"]["Enums"]["featured_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          city_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_placeholder?: boolean | null
+          service_id?: string | null
+          status?: Database["public"]["Enums"]["featured_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          city_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_placeholder?: boolean | null
+          service_id?: string | null
+          status?: Database["public"]["Enums"]["featured_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "featured_slots_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "featured_slots_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "featured_slots_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {
