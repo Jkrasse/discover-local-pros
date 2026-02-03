@@ -33,8 +33,8 @@ export default function Index() {
   const primaryCategory = settings?.primary_service_category || 'other';
   const genericTerm = getGenericServiceTerm(primaryCategory);
 
-  // Get top-level services and limit cities
-  const topServices = services?.filter(s => !s.parent_service_id)?.slice(0, 3) || [];
+  // Get top-level services (all parent services, no sub-services)
+  const topServices = services?.filter(s => !s.parent_service_id) || [];
   const popularCities = cities?.slice(0, 6) || [];
   const primaryService = topServices[0];
 
