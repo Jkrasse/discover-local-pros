@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { Star, Phone, Globe, MapPin, Clock, ChevronRight, ArrowLeft, Award, Building2, CheckCircle } from 'lucide-react';
+import { Star, Phone, Globe, MapPin, Clock, ChevronRight, ArrowLeft, Building2, CheckCircle } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
@@ -9,7 +9,74 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBusiness } from '@/hooks/useBusiness';
 import { useService } from '@/hooks/useService';
+import { LeadForm } from '@/components/forms/LeadForm';
 import { cn } from '@/lib/utils';
+
+// Helper to parse categories - handles corrupted data
+function parseCategories(categories: string[] | null): string[] {
+  if (!categories || !Array.isArray(categories)) return [];
+  
+  // Filter out single character entries and short nonsense
+  return categories.filter(cat => {
+    if (typeof cat !== 'string') return false;
+    // Only keep categories that are actual words (more than 2 chars and not just spaces)
+    return cat.trim().length > 2;
+  });
+}
+
+// Helper to check if description is valid text (not JSON)
+function isValidDescription(description: string | null): boolean {
+  if (!description) return false;
+  // Check if it looks like JSON
+  const trimmed = description.trim();
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    return false;
+  }
+  return true;
+}
+
+// Helper to parse opening hours from various formats
+function parseOpeningHours(openingHours: unknown): Record<string, string> | null {
+  if (!openingHours || typeof openingHours !== 'object') return null;
+  
+  const hours = openingHours as Record<string, unknown>;
+  const result: Record<string, string> = {};
+  
+  // Map Swedish day names to display
+  const dayMapping: Record<string, string> = {
+    'måndag': 'Måndag',
+    'tisdag': 'Tisdag',
+    'onsdag': 'Onsdag',
+    'torsdag': 'Torsdag',
+    'fredag': 'Fredag',
+    'lördag': 'Lördag',
+    'söndag': 'Söndag',
+    'monday': 'Måndag',
+    'tuesday': 'Tisdag',
+    'wednesday': 'Onsdag',
+    'thursday': 'Torsdag',
+    'friday': 'Fredag',
+    'saturday': 'Lördag',
+    'sunday': 'Söndag',
+  };
+  
+  for (const [key, value] of Object.entries(hours)) {
+    const dayName = dayMapping[key.toLowerCase()];
+    if (!dayName) continue;
+    
+    // Handle array values like ["07-17"]
+    if (Array.isArray(value)) {
+      result[dayName] = value[0] || 'Stängt';
+    } else if (typeof value === 'string') {
+      result[dayName] = value || 'Stängt';
+    }
+  }
+  
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+// Ordered weekdays for display
+const orderedWeekDays = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'];
 
 export default function BusinessProfilePage() {
   const { serviceSlug, citySlug, businessSlug } = useParams<{
@@ -71,16 +138,13 @@ export default function BusinessProfilePage() {
     { label: business.name },
   ];
 
-  // Parse opening hours
-  const openingHours = business.opening_hours as Record<string, string> | null;
-  const weekDays = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'];
-  const weekDayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const validCategories = parseCategories(business.categories);
 
   return (
     <Layout>
       <SEOHead
         title={`${business.name} - ${serviceName} i ${cityName}`}
-        description={business.description || `${business.name} erbjuder ${serviceName?.toLowerCase()} i ${cityName}. Läs omdömen och kontakta oss idag.`}
+        description={isValidDescription(business.description) ? business.description! : `${business.name} erbjuder ${serviceName?.toLowerCase()} i ${cityName}. Läs omdömen och kontakta oss idag.`}
       />
 
       <section className="bg-gradient-to-b from-secondary/50 to-background py-6 lg:py-8">
@@ -155,10 +219,10 @@ export default function BusinessProfilePage() {
                   </div>
                 )}
 
-                {/* Categories */}
-                {business.categories && business.categories.length > 0 && (
+                {/* Categories - only show valid ones */}
+                {validCategories.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {business.categories.map((category, index) => (
+                    {validCategories.map((category, index) => (
                       <Badge key={index} variant="outline">
                         {category}
                       </Badge>
@@ -232,8 +296,8 @@ export default function BusinessProfilePage() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left column - Main content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Description */}
-            {business.description && (
+            {/* Description - only show if it's valid text, not JSON */}
+            {isValidDescription(business.description) && (
               <Card>
                 <CardHeader>
                   <CardTitle>Om {business.name}</CardTitle>
@@ -302,7 +366,7 @@ export default function BusinessProfilePage() {
                     <p className="text-muted-foreground">
                       Baserat på {business.review_count} omdömen från Google
                     </p>
-                    {business.website && (
+                    {business.gbp_id && (
                       <a
                         href={`https://search.google.com/local/reviews?placeid=${business.gbp_id}`}
                         target="_blank"
@@ -325,35 +389,58 @@ export default function BusinessProfilePage() {
 
           {/* Right column - Sidebar */}
           <div className="space-y-6">
+            {/* Lead Form - Primary CTA */}
+            <Card className="border-accent/20 bg-gradient-to-b from-accent/5 to-background">
+              <CardHeader>
+                <CardTitle className="text-lg">
+                  Få offerter från {serviceName?.toLowerCase()} i {cityName}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Fyll i formuläret så kontaktar vi dig med prisuppgifter
+                </p>
+              </CardHeader>
+              <CardContent>
+                <LeadForm
+                  cityId={business.city_id || undefined}
+                  serviceId={service?.id}
+                  sourceUrl={window.location.href}
+                  compact
+                />
+              </CardContent>
+            </Card>
+
             {/* Opening hours */}
-            {openingHours && Object.keys(openingHours).length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    Öppettider
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <dl className="space-y-2">
-                    {weekDayKeys.map((day, index) => {
-                      const hours = openingHours[day];
-                      return (
-                        <div
-                          key={day}
-                          className="flex justify-between text-sm"
-                        >
-                          <dt className="font-medium">{weekDays[index]}</dt>
-                          <dd className="text-muted-foreground">
-                            {hours || 'Stängt'}
-                          </dd>
-                        </div>
-                      );
-                    })}
-                  </dl>
-                </CardContent>
-              </Card>
-            )}
+            {(() => {
+              const parsedHours = parseOpeningHours(business.opening_hours);
+              return parsedHours ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Öppettider
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <dl className="space-y-2">
+                      {orderedWeekDays.map((day) => {
+                        const hours = parsedHours[day];
+                        return (
+                          <div
+                            key={day}
+                            className="flex justify-between text-sm"
+                          >
+                            <dt className="font-medium">{day}</dt>
+                            <dd className="text-muted-foreground">
+                              {hours || 'Stängt'}
+                            </dd>
+                          </div>
+                        );
+                      })}
+                    </dl>
+                  </CardContent>
+                </Card>
+              ) : null;
+            })()}
 
             {/* Location */}
             {business.address && (
