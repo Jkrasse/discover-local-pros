@@ -78,22 +78,49 @@ serve(async (req) => {
     // Send request to Outscraper API
     // NOTE: We intentionally skip enrichment for better raw result volume.
     // Enrichment can be done in a second pass if needed.
-    const response = await fetch("https://api.app.outscraper.com/maps/search-v3", {
-      method: "POST",
-      headers: {
-        "X-API-KEY": OUTSCRAPER_API_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: queries,
-        limit: effectiveLimit,
-        language: "sv",
-        region: "SE",
-        async: true,
-        // Removed enrichment to maximize result count. We can enrich later if needed.
-        // enrichment: ["domains_service", "company_insights_service", "emails_validator_service"],
-      }),
+    
+    // Try multiple API endpoints (DNS issues can affect different hosts)
+    const apiUrls = [
+      "https://api.outscraper.cloud/maps/search-v3",
+      "https://api.app.outscraper.com/maps/search-v3",
+    ];
+    
+    const requestBody = JSON.stringify({
+      query: queries,
+      limit: effectiveLimit,
+      language: "sv",
+      region: "SE",
+      async: true,
     });
+    
+    let response: Response | null = null;
+    let lastError: Error | null = null;
+    
+    for (const url of apiUrls) {
+      try {
+        console.log(`Trying Outscraper API at: ${url}`);
+        response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "X-API-KEY": OUTSCRAPER_API_KEY,
+            "Content-Type": "application/json",
+          },
+          body: requestBody,
+        });
+        if (response.ok) {
+          console.log(`Successfully connected to: ${url}`);
+          break;
+        }
+      } catch (err) {
+        console.error(`Failed to connect to ${url}:`, err);
+        lastError = err instanceof Error ? err : new Error(String(err));
+        response = null;
+      }
+    }
+    
+    if (!response) {
+      throw lastError || new Error("Failed to connect to Outscraper API");
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
