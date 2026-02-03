@@ -87,7 +87,44 @@ function normalizeCity(cityName: string): string {
     .replace(/[ö]/g, "o");
 }
 
+// Stockholm area suburbs and districts
+const stockholmArea = new Set([
+  "hägersten", "sundbyberg", "solna", "bromma", "kista", "spånga", "hässelby",
+  "vällingby", "enskede", "farsta", "skärholmen", "södermalm", "östermalm",
+  "vasastan", "norrmalm", "kungsholmen", "lidingö", "nacka", "huddinge",
+  "tyresö", "täby", "danderyd", "järfälla", "upplands väsby", "vallentuna",
+  "norrtälje", "haninge", "botkyrka", "södertälje", "sigtuna", "sollentuna",
+  "åkersberga", "gustavsberg", "älvsjö", "bandhagen", "liljeholmen", "telefonplan",
+  "hornstull", "mariatorget", "medborgarplatsen", "skanstull", "gullmarsplan",
+  "johanneshov", "hammarby sjöstad", "hammarby", "bagarmossen", "skarpnäck",
+  "björkhagen", "hammarbyhöjden", "midsommarkransen", "aspudden", "gröndal",
+  "hägersten-liljeholmen", "årsta", "globen", "enskededalen", "stureby",
+  "hägerstensåsen", "fruängen", "västertorp", "mälarhöjden", "axelsberg"
+]);
+
+// Göteborg area suburbs and districts
+const goteborgArea = new Set([
+  "hisingen", "hisings backa", "angered", "bergsjön", "kortedala", "gamlestaden",
+  "örgryte", "härlanda", "majorna", "linné", "linnéstaden", "masthugget",
+  "kungsladugård", "frölunda", "västra frölunda", "högsbo", "sisjön",
+  "mölndal", "partille", "kungsbacka", "kungälv", "ale", "lerum",
+  "torslanda", "lundby", "backa", "brunnsbo", "biskopsgården", "tolered",
+  "kyrkbyn", "brämaregården", "rambergsstaden", "eriksberg", "lindholmen",
+  "lundbyvassen", "olskroken", "redbergslid", "bagaregården", "utby",
+  "kålltorp", "lunden", "olofstorp", "agnesberg", "surte", "bohus"
+]);
+
+// Malmö area suburbs and districts
+const malmoArea = new Set([
+  "limhamn", "bunkeflo", "hyllie", "fosie", "oxie", "husie", "kirseberg",
+  "rosengård", "västra hamnen", "ribersborg", "möllevången", "sofielund",
+  "södervärn", "triangeln", "davidshall", "rörsjöstaden", "slottsstaden",
+  "värnhem", "burlöv", "lomma", "staffanstorp", "svedala", "vellinge",
+  "arlöv", "åkarp", "bjärred", "bunkeflostrand", "tygelsjö", "oxie"
+]);
+
 // Match city against the allowed cities list (cities from scrape input)
+// Businesses from suburbs/nearby areas are assigned to the main city in the list
 function matchAllowedCity(
   cityName: string,
   allowedCityMap: Map<string, { id: string; name: string }>
@@ -98,26 +135,46 @@ function matchAllowedCity(
 
   // Try exact match first
   let matchedCity = allowedCityMap.get(normalizedName);
-
-  // Try partial match if exact match fails - but only if the allowed city is contained in the business city
-  // This handles cases like "Hisings Backa" which should NOT match "Göteborg"
-  // But "Stockholm" business city should match "Stockholm" in allowed list
-  if (!matchedCity) {
-    for (const [key, value] of allowedCityMap.entries()) {
-      // Only match if the normalized names are very similar
-      if (normalizedName === key || normalizedName.startsWith(key + " ") || key.startsWith(normalizedName + " ")) {
-        matchedCity = value;
-        break;
-      }
-    }
-  }
-
   if (matchedCity) {
     return matchedCity;
   }
 
-  // City not in allowed list - skip it
-  console.log(`City not in allowed list, skipping: "${cityName}"`);
+  // Try partial match - check if business city contains or is contained in an allowed city
+  for (const [key, value] of allowedCityMap.entries()) {
+    if (normalizedName.includes(key) || key.includes(normalizedName)) {
+      return value;
+    }
+  }
+
+  // Check if this is a suburb/district of a major city in the allowed list
+  // Stockholm suburbs
+  if (stockholmArea.has(normalizedName) && allowedCityMap.has("stockholm")) {
+    console.log(`Mapping suburb "${cityName}" to Stockholm`);
+    return allowedCityMap.get("stockholm")!;
+  }
+
+  // Göteborg suburbs
+  if (goteborgArea.has(normalizedName) && allowedCityMap.has("goteborg")) {
+    console.log(`Mapping suburb "${cityName}" to Göteborg`);
+    return allowedCityMap.get("goteborg")!;
+  }
+
+  // Malmö suburbs
+  if (malmoArea.has(normalizedName) && allowedCityMap.has("malmo")) {
+    console.log(`Mapping suburb "${cityName}" to Malmö`);
+    return allowedCityMap.get("malmo")!;
+  }
+
+  // If we have exactly one city in the allowed list, map all businesses to it
+  // This is useful for scraping a single city where businesses might report nearby locations
+  if (allowedCityMap.size === 1) {
+    const singleCity = Array.from(allowedCityMap.values())[0];
+    console.log(`Mapping unmatched city "${cityName}" to single allowed city: ${singleCity.name}`);
+    return singleCity;
+  }
+
+  // City not in allowed list and not a known suburb - skip it
+  console.log(`City "${cityName}" not in allowed list and not a known suburb, skipping`);
   return null;
 }
 
