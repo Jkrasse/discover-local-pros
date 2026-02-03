@@ -99,9 +99,9 @@ export function useFeaturedBusiness(citySlug: string, serviceSlug: string) {
       // Use parent service ID if this is a sub-service
       const effectiveServiceId = service.parent_service_id || service.id;
 
-      // Get active featured slot
+      // Get active featured slot from public view (excludes sensitive customer data)
       const { data: featuredSlot, error: slotError } = await supabase
-        .from('featured_slots')
+        .from('featured_slots_public' as 'featured_slots')
         .select('business_id')
         .eq('city_id', city.id)
         .eq('service_id', effectiveServiceId)
