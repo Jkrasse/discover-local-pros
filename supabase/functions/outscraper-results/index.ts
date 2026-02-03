@@ -87,11 +87,11 @@ function normalizeCity(cityName: string): string {
     .replace(/[ö]/g, "o");
 }
 
-async function getOrCreateCity(
-  supabase: any,
+// Match city from existing cities only - NO auto-creation of new cities
+function matchExistingCity(
   cityName: string,
   cityMap: Map<string, { id: string; name: string }>
-): Promise<{ id: string; name: string; isNew: boolean } | null> {
+): { id: string; name: string } | null {
   if (!cityName) return null;
 
   const normalizedName = normalizeCity(cityName);
@@ -110,32 +110,12 @@ async function getOrCreateCity(
   }
 
   if (matchedCity) {
-    return { ...matchedCity, isNew: false };
+    return matchedCity;
   }
 
-  // City not found - create it
-  const slug = generateSlug(cityName);
-
-  const { data: newCity, error } = await supabase
-    .from("cities")
-    .insert({
-      name: cityName.trim(),
-      slug: slug,
-      region: null,
-      population: null,
-    })
-    .select("id, name")
-    .single();
-
-  if (error) {
-    console.error("Failed to create city:", cityName, error);
-    return null;
-  }
-
-  cityMap.set(normalizedName, { id: newCity.id, name: newCity.name });
-  console.log("Created new city:", newCity.name);
-
-  return { id: newCity.id, name: newCity.name, isNew: true };
+  // City not found in existing cities - return null (don't create new ones)
+  console.log(`City not found in existing cities, skipping: "${cityName}"`);
+  return null;
 }
 
 serve(async (req) => {
@@ -232,7 +212,7 @@ serve(async (req) => {
 
     const results: ImportResult[] = [];
     const affectedCities = new Set<string>();
-    let newCitiesCreated = 0;
+    
 
     // Outscraper returns an array of arrays (one per query)
     const allData = statusResult.data || [];
@@ -323,22 +303,18 @@ serve(async (req) => {
         }
         seenGbpIds.add(gbpId);
 
-        // Match or create city
-        const matchedCity = await getOrCreateCity(supabase, business.city || "", cityMap);
+        // Match city from existing cities only (no auto-creation)
+        const matchedCity = matchExistingCity(business.city || "", cityMap);
 
         if (!matchedCity) {
           skipReason.noCity++;
           results.push({
             name: business.name,
             status: "skipped",
-            message: `Could not match or create city: ${business.city}`,
+            message: `City not in database: ${business.city}`,
             city: business.city,
           });
           continue;
-        }
-
-        if (matchedCity.isNew) {
-          newCitiesCreated++;
         }
 
         affectedCities.add(matchedCity.id);
@@ -565,7 +541,7 @@ serve(async (req) => {
       skipped: results.filter((r) => r.status === "skipped").length,
       errors: results.filter((r) => r.status === "error").length,
       citiesAffected: affectedCities.size,
-      newCitiesCreated,
+      skippedNoCityInDb: skipReason.noCity,
       rawItemsFromOutscraper: totalRawResults,
       duplicatesFiltered: skipReason.duplicateInBatch,
     };
