@@ -1,12 +1,19 @@
 import { Link } from 'react-router-dom';
-import { Home } from 'lucide-react';
+import { Briefcase } from 'lucide-react';
 import { useCities } from '@/hooks/useCity';
 import { useServices } from '@/hooks/useService';
+import { useSiteSettings, getPrimaryServiceName } from '@/hooks/useSiteSettings';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { data: cities } = useCities();
   const { data: services } = useServices();
+  const { data: settings } = useSiteSettings();
+
+  const siteName = settings?.site_name || 'Katalog';
+  const siteDescription = settings?.site_description || 'Hitta de bästa företagen';
+  const primaryCategory = settings?.primary_service_category || 'other';
+  const primaryServiceTerm = getPrimaryServiceName(primaryCategory);
 
   const topLevelServices = (services || []).filter((s) => !s.parent_service_id).slice(0, 4);
   const topCities = (cities || []).slice(0, 4);
@@ -20,14 +27,14 @@ export default function Footer() {
           <div className="col-span-2 lg:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <Home className="h-5 w-5 text-white" />
+                <Briefcase className="h-5 w-5 text-white" />
               </div>
               <span className="text-xl font-bold text-white">
-                FlyttGuide
+                {siteName}
               </span>
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed">
-              Sveriges ledande jämförelsetjänst för flyttfirmor. Vi hjälper dig hitta rätt företag för din flytt.
+              {siteDescription}. Vi hjälper dig hitta rätt {primaryServiceTerm}.
             </p>
           </div>
 
@@ -70,7 +77,7 @@ export default function Footer() {
             <h3 className="font-semibold mb-4 text-white">Om oss</h3>
             <ul className="space-y-2">
               {[
-                { name: 'Om FlyttGuide', href: '/om-oss' },
+                { name: `Om ${siteName}`, href: '/om-oss' },
                 { name: 'Så rankar vi', href: '/hur-vi-rankar' },
                 { name: 'Kontakta oss', href: '/kontakt' },
                 { name: 'För företag', href: '/kontakt' },
@@ -93,7 +100,7 @@ export default function Footer() {
       <div className="border-t border-gray-700">
         <div className="container py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-            <p>© {currentYear} FlyttGuide. Alla rättigheter förbehållna.</p>
+            <p>© {currentYear} {siteName}. Alla rättigheter förbehållna.</p>
             <div className="flex items-center gap-6">
               <Link to="/integritetspolicy" className="hover:text-white transition-colors">
                 Integritetspolicy

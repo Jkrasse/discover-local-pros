@@ -3,6 +3,7 @@ import { SEOHead } from '@/components/seo/SEOHead';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { Card } from '@/components/ui/card';
 import { Users, Target, Shield, Award } from 'lucide-react';
+import { useSiteSettings, getPrimaryServiceName } from '@/hooks/useSiteSettings';
 
 const breadcrumbs = [
   { label: 'Hem', href: '/' },
@@ -33,11 +34,19 @@ const values = [
 ];
 
 export default function AboutPage() {
+  const { data: settings } = useSiteSettings();
+  
+  const siteName = settings?.site_name || 'Katalog';
+  const contactEmail = settings?.contact_email || 'info@example.com';
+  const companyName = settings?.company_name || 'Företaget AB';
+  const primaryCategory = settings?.primary_service_category || 'other';
+  const primaryServiceTerm = getPrimaryServiceName(primaryCategory);
+
   return (
     <Layout>
       <SEOHead
-        title="Om FlyttGuide | Vår historia & Mission"
-        description="FlyttGuide hjälper svenskar hitta pålitliga flyttfirmor sedan 2020. Läs om vår mission, värderingar och hur vi arbetar för att göra flytten enklare."
+        title={`Om ${siteName} | Vår historia & Mission`}
+        description={`${siteName} hjälper svenskar hitta pålitliga ${primaryServiceTerm}. Läs om vår mission, värderingar och hur vi arbetar.`}
         canonical="/om-oss"
       />
 
@@ -47,10 +56,10 @@ export default function AboutPage() {
           
           <div className="mt-6 max-w-3xl">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6">
-              Om FlyttGuide
+              Om {siteName}
             </h1>
             <p className="text-lg text-muted-foreground">
-              Vi gör det enkelt att hitta pålitliga flyttfirmor i hela Sverige. 
+              Vi gör det enkelt att hitta pålitliga {primaryServiceTerm} i hela Sverige. 
               Genom att samla och strukturera information hjälper vi tusentals svenskar 
               att göra informerade val varje månad.
             </p>
@@ -64,12 +73,12 @@ export default function AboutPage() {
             <h2 className="text-2xl font-bold mb-6">Vår historia</h2>
             <div className="prose prose-lg text-muted-foreground">
               <p>
-                FlyttGuide grundades med en enkel idé: att göra det lättare för svenskar att 
-                hitta rätt flyttfirma. Vi såg hur många som kämpade med att jämföra alternativ, 
+                {siteName} grundades med en enkel idé: att göra det lättare för svenskar att 
+                hitta rätt företag. Vi såg hur många som kämpade med att jämföra alternativ, 
                 och bestämde oss för att skapa en plattform där all information samlas på ett ställe.
               </p>
               <p>
-                Idag listar vi hundratals flyttfirmor i Sveriges största städer. Vår data hämtas 
+                Idag listar vi hundratals företag i Sveriges största städer. Vår data hämtas 
                 från Google Business Profile och uppdateras regelbundet för att ge dig aktuell 
                 och relevant information.
               </p>
@@ -108,14 +117,14 @@ export default function AboutPage() {
             <Card className="p-6">
               <div className="prose prose-lg text-muted-foreground">
                 <p>
-                  FlyttGuide drivs av FlyttGuide AB med säte i Stockholm. 
+                  {siteName} drivs av {companyName}. 
                   Vi är registrerade hos Bolagsverket och följer svensk lag och god sed 
                   för jämförelsetjänster.
                 </p>
                 <p className="mb-0">
                   <strong>Kontakt:</strong><br />
-                  E-post: hej@flyttguide.se<br />
-                  Adress: Stockholm, Sverige
+                  E-post: {contactEmail}<br />
+                  {settings?.company_address && <>Adress: {settings.company_address}</>}
                 </p>
               </div>
             </Card>

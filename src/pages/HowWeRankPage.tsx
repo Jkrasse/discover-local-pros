@@ -3,6 +3,7 @@ import { SEOHead } from '@/components/seo/SEOHead';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { Card } from '@/components/ui/card';
 import { Star, MapPin, Clock, MessageCircle, BadgeCheck, TrendingUp } from 'lucide-react';
+import { useSiteSettings, getPrimaryServiceName } from '@/hooks/useSiteSettings';
 
 const breadcrumbs = [
   { label: 'Hem', href: '/' },
@@ -43,11 +44,18 @@ const factors = [
 ];
 
 export default function HowWeRankPage() {
+  const { data: settings } = useSiteSettings();
+  
+  const siteName = settings?.site_name || 'Katalog';
+  const contactEmail = settings?.contact_email || 'info@example.com';
+  const primaryCategory = settings?.primary_service_category || 'other';
+  const primaryServiceTerm = getPrimaryServiceName(primaryCategory);
+
   return (
     <Layout>
       <SEOHead
-        title="Hur vi rankar | FlyttGuide Metodik & Transparens"
-        description="Läs om hur FlyttGuide rankar och listar flyttfirmor. Vi förklarar vår metodik, datakällor och hur 'Rekommenderad partner' fungerar."
+        title={`Hur vi rankar | ${siteName} Metodik & Transparens`}
+        description={`Läs om hur ${siteName} rankar och listar ${primaryServiceTerm}. Vi förklarar vår metodik, datakällor och hur 'Rekommenderad partner' fungerar.`}
         canonical="/hur-vi-rankar"
       />
 
@@ -61,7 +69,7 @@ export default function HowWeRankPage() {
             </h1>
             <p className="text-lg text-muted-foreground">
               Transparens är kärnan i allt vi gör. Här förklarar vi exakt hur vi väljer ut 
-              och rankar de företag som visas på FlyttGuide.
+              och rankar de företag som visas på {siteName}.
             </p>
           </div>
         </div>
@@ -74,7 +82,7 @@ export default function HowWeRankPage() {
             <h2 className="text-2xl font-bold mb-6">Våra datakällor</h2>
             <div className="prose prose-lg text-muted-foreground mb-8">
               <p>
-                All företagsdata på FlyttGuide hämtas primärt från <strong>Google Business Profile</strong> 
+                All företagsdata på {siteName} hämtas primärt från <strong>Google Business Profile</strong> 
                 (tidigare Google My Business). Detta inkluderar:
               </p>
               <ul>
@@ -171,10 +179,10 @@ export default function HowWeRankPage() {
               Vi välkomnar feedback och frågor om hur vi arbetar. Kontakta oss gärna!
             </p>
             <a 
-              href="mailto:hej@flyttguide.se" 
+              href={`mailto:${contactEmail}`} 
               className="inline-flex items-center gap-2 text-accent hover:underline"
             >
-              hej@flyttguide.se
+              {contactEmail}
             </a>
           </div>
         </div>

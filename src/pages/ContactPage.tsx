@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Mail, MapPin, Clock, Building2 } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 const breadcrumbs = [
   { label: 'Hem', href: '/' },
@@ -18,6 +19,13 @@ const breadcrumbs = [
 export default function ContactPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: settings } = useSiteSettings();
+
+  const siteName = settings?.site_name || 'Katalog';
+  const contactEmail = settings?.contact_email || 'info@example.com';
+  const partnerEmail = settings?.partner_email || 'partner@example.com';
+  const companyName = settings?.company_name || 'Företaget AB';
+  const companyAddress = settings?.company_address || 'Adress, Stad';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -38,8 +46,8 @@ export default function ContactPage() {
   return (
     <Layout>
       <SEOHead
-        title="Kontakta oss | FlyttGuide"
-        description="Kontakta FlyttGuide för frågor, feedback eller företagssamarbeten. Vi svarar vanligtvis inom 24 timmar."
+        title={`Kontakta oss | ${siteName}`}
+        description={`Kontakta ${siteName} för frågor, feedback eller företagssamarbeten. Vi svarar vanligtvis inom 24 timmar.`}
         canonical="/kontakt"
       />
 
@@ -72,10 +80,10 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold mb-1">E-post</h3>
                     <a 
-                      href="mailto:hej@flyttguide.se" 
+                      href={`mailto:${contactEmail}`} 
                       className="text-muted-foreground hover:text-accent transition-colors"
                     >
-                      hej@flyttguide.se
+                      {contactEmail}
                     </a>
                   </div>
                 </div>
@@ -89,9 +97,10 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold mb-1">Adress</h3>
                     <p className="text-muted-foreground">
-                      J.Krasse Marketing AB<br />
-                      Ätrastigen 5 A<br />
-                      311 38 Falkenberg
+                      {companyName}<br />
+                      {companyAddress.split(',').map((line, i) => (
+                        <span key={i}>{line.trim()}<br /></span>
+                      ))}
                     </p>
                   </div>
                 </div>
@@ -122,10 +131,10 @@ export default function ContactPage() {
                       Vill du bli Rekommenderad partner?
                     </p>
                     <a 
-                      href="mailto:partner@flyttguide.se" 
+                      href={`mailto:${partnerEmail}`} 
                       className="text-accent hover:underline text-sm"
                     >
-                      partner@flyttguide.se
+                      {partnerEmail}
                     </a>
                   </div>
                 </div>

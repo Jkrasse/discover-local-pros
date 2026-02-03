@@ -5,7 +5,6 @@ import { CTASection } from '@/components/sections/CTASection';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { Button } from '@/components/ui/button';
 import { 
-  Truck, 
   MapPin, 
   Star, 
   Shield, 
@@ -16,53 +15,53 @@ import {
   Building2,
   Clock,
   ThumbsUp,
-  Package,
-  ArrowLeftRight
+  Briefcase
 } from 'lucide-react';
 import { useCities } from '@/hooks/useCity';
 import { useServices } from '@/hooks/useService';
-
-const faqs = [
-  {
-    question: 'Hur väljer ni vilka företag som visas?',
-    answer: 'Vi listar företag baserat på omdömen, lokal närvaro och relevans. Vår data hämtas från Google Business Profile och uppdateras regelbundet för att ge dig aktuell information.',
-  },
-  {
-    question: 'Kostar det något att få offert?',
-    answer: 'Nej, det är helt gratis att skicka en offertförfrågan. Du förbinder dig inte till något genom att begära offert.',
-  },
-  {
-    question: 'Vad betyder "Rekommenderad partner"?',
-    answer: 'Rekommenderad partner är ett företag som vi lyfter fram baserat på en kombination av goda omdömen och ett kommersiellt samarbete. Vi är alltid transparenta med vilka företag som är sponsrade.',
-  },
-  {
-    question: 'Hur snabbt får jag svar på min offertförfrågan?',
-    answer: 'De flesta företag återkommer inom 24 timmar. Vid högsäsong kan det ta något längre tid.',
-  },
-];
+import { useSiteSettings, getGenericServiceTerm } from '@/hooks/useSiteSettings';
 
 export default function Index() {
   const { data: cities } = useCities();
   const { data: services } = useServices();
+  const { data: settings } = useSiteSettings();
+
+  const siteName = settings?.site_name || 'Katalog';
+  const siteDescription = settings?.site_description || 'Hitta de bästa företagen';
+  const heroHeadline = settings?.hero_headline || 'Hitta rätt företag';
+  const heroHighlight = settings?.hero_highlight || 'för dig';
+  const primaryCategory = settings?.primary_service_category || 'other';
+  const genericTerm = getGenericServiceTerm(primaryCategory);
 
   // Get top-level services and limit cities
   const topServices = services?.filter(s => !s.parent_service_id)?.slice(0, 3) || [];
   const popularCities = cities?.slice(0, 6) || [];
   const primaryService = topServices[0];
 
-  const serviceIcons: Record<string, typeof Truck> = {
-    'flyttfirmor': Truck,
-    'flyttbil': ArrowLeftRight,
-    'flytthjalp': Users,
-    'magasinering': Building2,
-    'packning': Package,
-  };
+  const faqs = [
+    {
+      question: 'Hur väljer ni vilka företag som visas?',
+      answer: 'Vi listar företag baserat på omdömen, lokal närvaro och relevans. Vår data hämtas från Google Business Profile och uppdateras regelbundet för att ge dig aktuell information.',
+    },
+    {
+      question: 'Kostar det något att få offert?',
+      answer: 'Nej, det är helt gratis att skicka en offertförfrågan. Du förbinder dig inte till något genom att begära offert.',
+    },
+    {
+      question: 'Vad betyder "Rekommenderad partner"?',
+      answer: 'Rekommenderad partner är ett företag som vi lyfter fram baserat på en kombination av goda omdömen och ett kommersiellt samarbete. Vi är alltid transparenta med vilka företag som är sponsrade.',
+    },
+    {
+      question: 'Hur snabbt får jag svar på min offertförfrågan?',
+      answer: 'De flesta företag återkommer inom 24 timmar. Vid högsäsong kan det ta något längre tid.',
+    },
+  ];
 
   return (
     <Layout>
       <SEOHead
-        title="Hitta & Jämför Tjänster | Få Gratis Offert"
-        description="Hitta pålitliga företag i hela Sverige. Jämför omdömen, priser och få gratis offerter. ✓ Gratis ✓ Opartisk ✓ Kvalitetsgranskade företag."
+        title={`${siteName} | Hitta & Jämför Tjänster | Få Gratis Offert`}
+        description={`${siteDescription}. Jämför omdömen, priser och få gratis offerter. ✓ Gratis ✓ Opartisk ✓ Kvalitetsgranskade företag.`}
         canonical="/"
       />
 
@@ -89,8 +88,8 @@ export default function Index() {
 
             {/* Main headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-[68px] font-extrabold tracking-tight leading-[1.1] mb-6 animate-fade-in-up animate-delay-100">
-              Hitta rätt företag för{' '}
-              <span className="title-highlight">din flytt</span>
+              {heroHeadline}{' '}
+              <span className="title-highlight">{heroHighlight}</span>
             </h1>
 
             {/* Subtitle */}
@@ -170,36 +169,33 @@ export default function Index() {
               Vad behöver du hjälp med?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Oavsett om du behöver fullservice-flytt eller bara en flyttbil – vi hjälper dig hitta rätt.
+              Oavsett vad du behöver hjälp med – vi hjälper dig hitta rätt företag.
             </p>
           </div>
 
           {/* Service cards grid */}
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {topServices.map((service, i) => {
-              const IconComponent = serviceIcons[service.slug] || Truck;
-              return (
-                <Link key={service.id} to={`/${service.slug}`} className="block">
-                  <div className="service-card h-full">
-                    <div className="relative z-10">
-                      <div className="service-icon">
-                        <IconComponent className="h-8 w-8 text-primary transition-colors duration-500" />
-                      </div>
-                      <h3 className="text-xl lg:text-[22px] font-bold mb-3">
-                        {service.name}
-                      </h3>
-                      <p className="text-muted-foreground text-[15px] leading-relaxed mb-5">
-                        {service.description || 'Hitta de bästa företagen i din stad och få gratis offerter.'}
-                      </p>
-                      <span className="service-link">
-                        Läs mer
-                        <ArrowRight className="h-[18px] w-[18px]" />
-                      </span>
+            {topServices.map((service) => (
+              <Link key={service.id} to={`/${service.slug}`} className="block">
+                <div className="service-card h-full">
+                  <div className="relative z-10">
+                    <div className="service-icon">
+                      <Briefcase className="h-8 w-8 text-primary transition-colors duration-500" />
                     </div>
+                    <h3 className="text-xl lg:text-[22px] font-bold mb-3">
+                      {service.name}
+                    </h3>
+                    <p className="text-muted-foreground text-[15px] leading-relaxed mb-5">
+                      {service.description || 'Hitta de bästa företagen i din stad och få gratis offerter.'}
+                    </p>
+                    <span className="service-link">
+                      Läs mer
+                      <ArrowRight className="h-[18px] w-[18px]" />
+                    </span>
                   </div>
-                </Link>
-              );
-            })}
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
