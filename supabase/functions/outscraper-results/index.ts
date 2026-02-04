@@ -25,8 +25,16 @@ interface OutscraperBusiness {
   phone?: string;
   site?: string;
   website?: string;
+  // Address fields - Outscraper uses different field names in different contexts
   full_address?: string;
+  address?: string;
+  street?: string;
+  street_address?: string;
+  postal_code?: string;
+  zip?: string;
   city?: string;
+  state?: string;
+  country?: string;
   rating?: number;
   reviews?: number;
   reviews_data?: OutscraperReview[];
@@ -356,6 +364,17 @@ function processBusiness(
     business.industry || 
     null;
 
+  // Extract address from various possible field names
+  // Outscraper uses different field names: full_address, address, street, street_address
+  const extractedAddress = 
+    business.full_address || 
+    business.address ||
+    business.street_address ||
+    (business.street && business.city 
+      ? `${business.street}, ${business.postal_code || business.zip || ''} ${business.city}`.trim().replace(/,\s*$/, '')
+      : null) ||
+    null;
+
   // Prepare business data
   const businessData = {
     gbp_id: gbpId,
@@ -363,7 +382,7 @@ function processBusiness(
     slug: generateSlug(business.name),
     phone: business.phone || null,
     website: business.website || business.site || null,
-    address: business.full_address || null,
+    address: extractedAddress,
     city_id: matchedCity.id,
     rating: business.rating || null,
     review_count: business.reviews || 0,
@@ -544,6 +563,22 @@ serve(async (req) => {
       }
 
       console.log(`Query ${queryIdx}: Processing ${queryResults.length} items`);
+
+      // Log the first business in each query to debug field names
+      if (queryIdx === 0 && queryResults.length > 0) {
+        const sampleBusiness = queryResults[0] as OutscraperBusiness;
+        console.log(`=== SAMPLE BUSINESS DATA (first item from query 0) ===`);
+        console.log(`Name: ${sampleBusiness.name}`);
+        console.log(`full_address: ${sampleBusiness.full_address}`);
+        console.log(`address: ${sampleBusiness.address}`);
+        console.log(`street: ${sampleBusiness.street}`);
+        console.log(`street_address: ${sampleBusiness.street_address}`);
+        console.log(`city: ${sampleBusiness.city}`);
+        console.log(`postal_code: ${sampleBusiness.postal_code}`);
+        console.log(`phone: ${sampleBusiness.phone}`);
+        console.log(`All keys: ${Object.keys(sampleBusiness).join(', ')}`);
+        console.log(`=======================================================`);
+      }
 
       for (const business of queryResults as OutscraperBusiness[]) {
         const processed = processBusiness(business, allowedCityMap, seenGbpIds, skipReason);
