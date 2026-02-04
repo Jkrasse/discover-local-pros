@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { LeadForm } from '@/components/forms/LeadForm';
+import { generateQuoteFormTitle } from '@/lib/serviceContentHelpers';
 
 interface QuoteFormSectionProps {
   serviceName: string;
@@ -14,6 +15,8 @@ export function QuoteFormSection({
   cityId, 
   serviceId 
 }: QuoteFormSectionProps) {
+  const title = generateQuoteFormTitle(serviceName, cityName);
+
   return (
     <section id="lead-form" className="py-16 lg:py-20 bg-secondary/50">
       <div className="container">
@@ -21,7 +24,7 @@ export function QuoteFormSection({
           {/* Left content */}
           <div>
             <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4 tracking-tight">
-              Få offert från {serviceName.toLowerCase()} i {cityName}
+              {title}
             </h2>
             <p className="text-lg text-muted-foreground mb-10 leading-relaxed">
               Fyll i formuläret så kontaktar vår rekommenderade partner dig med en offert. 
@@ -32,9 +35,9 @@ export function QuoteFormSection({
               <div className="quote-step">
                 <div className="step-num">1</div>
                 <div className="step-text">
-                  <h4 className="font-heading font-bold text-foreground mb-1">Beskriv din flytt</h4>
+                  <h4 className="font-heading font-bold text-foreground mb-1">Beskriv ditt ärende</h4>
                   <p className="text-sm text-muted-foreground">
-                    Berätta var du ska flytta och vilken typ av bostad det gäller
+                    Berätta vad du behöver hjälp med och när du vill ha det utfört
                   </p>
                 </div>
               </div>
@@ -52,7 +55,7 @@ export function QuoteFormSection({
               <div className="quote-step">
                 <div className="step-num">3</div>
                 <div className="step-text">
-                  <h4 className="font-heading font-bold text-foreground mb-1">Boka din flytt</h4>
+                  <h4 className="font-heading font-bold text-foreground mb-1">Boka tjänsten</h4>
                   <p className="text-sm text-muted-foreground">
                     Acceptera offerten och boka ett datum som passar dig
                   </p>

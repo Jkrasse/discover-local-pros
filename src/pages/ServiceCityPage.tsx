@@ -280,6 +280,7 @@ export default function ServiceCityPage() {
           serviceSlug={serviceSlug}
           citySlug={citySlug}
           cityName={city?.name || ''}
+          serviceName={service?.name}
         />
       )}
 

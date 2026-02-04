@@ -2,6 +2,7 @@ import { useEffect, useRef, useMemo } from 'react';
 import L from 'leaflet';
 import { Star, Phone, Globe, ExternalLink } from 'lucide-react';
 import type { Business } from '@/types/database';
+import { generateMapTitle, generateMapSubtitle } from '@/lib/serviceContentHelpers';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in Leaflet with bundlers
@@ -168,15 +169,18 @@ export function BusinessMap({
     return null;
   }
 
+  const mapTitle = generateMapTitle(serviceName, cityName);
+  const mapSubtitle = generateMapSubtitle(serviceName, businessesWithCoords.length);
+
   return (
     <section className="py-12 lg:py-16 bg-muted/30">
       <div className="container">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl font-bold mb-2">
-            Karta över {serviceName} i {cityName}
+            {mapTitle}
           </h2>
           <p className="text-muted-foreground mb-6">
-            Se var alla {businessesWithCoords.length} {serviceName} finns på kartan
+            {mapSubtitle}
           </p>
 
           <div 

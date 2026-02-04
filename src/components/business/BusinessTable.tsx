@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Star, MapPin, Phone, Award } from 'lucide-react';
 import type { Business } from '@/types/database';
+import { generateBusinessListTitle } from '@/lib/serviceContentHelpers';
 
 interface BusinessTableProps {
   businesses: Business[];
@@ -8,6 +9,7 @@ interface BusinessTableProps {
   serviceSlug: string;
   citySlug: string;
   cityName: string;
+  serviceName?: string;
 }
 
 export function BusinessTable({
@@ -16,6 +18,7 @@ export function BusinessTable({
   serviceSlug,
   citySlug,
   cityName,
+  serviceName,
 }: BusinessTableProps) {
   // Combine featured business at the top with other businesses
   const allBusinesses = featuredBusiness 
@@ -26,16 +29,20 @@ export function BusinessTable({
     return null;
   }
 
+  const title = serviceName 
+    ? generateBusinessListTitle(serviceName, cityName)
+    : `Alla företag i ${cityName}`;
+
   return (
     <section className="py-16 lg:py-20 bg-secondary/30">
       <div className="container">
         <div className="max-w-5xl mx-auto">
           <div className="mb-8">
             <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-2 tracking-tight">
-              Alla {serviceSlug === 'flyttfirmor' ? 'flyttfirmor' : 'företag'} i {cityName}
+              {title}
             </h2>
             <p className="text-muted-foreground">
-              Jämför {allBusinesses.length} {serviceSlug === 'flyttfirmor' ? 'flyttfirmor' : 'företag'} i {cityName} baserat på omdömen och betyg.
+              Jämför {allBusinesses.length} företag i {cityName} baserat på omdömen och betyg.
             </p>
           </div>
 

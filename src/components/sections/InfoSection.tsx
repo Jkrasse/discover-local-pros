@@ -1,4 +1,5 @@
 import { Check, Lightbulb, ClipboardList, Shield, Clock, BadgeCheck } from 'lucide-react';
+import { generateInfoSectionTitle } from '@/lib/serviceContentHelpers';
 
 interface FeatureCard {
   title: string;
@@ -16,24 +17,24 @@ interface InfoSectionProps {
 const defaultTips = [
   'Kontrollera att företaget har F-skatt och ansvarsförsäkring',
   'Läs omdömen och be om referenser från tidigare kunder',
-  'Fråga om det finns dolda avgifter (trappor, långa bärvägar, etc.)',
-  'Boka i god tid - särskilt vid månadsskiften och under sommaren',
-  'Ta bilder på värdefulla föremål innan flytten',
+  'Fråga om det finns dolda avgifter',
+  'Boka i god tid - särskilt vid högsäsong',
+  'Ta bilder på värdefulla föremål innan tjänsten utförs',
 ];
 
 const defaultChecklist = [
-  'Packa saker du inte behöver i förväg',
-  'Märk alla kartonger med innehåll och rum',
-  'Ta bilder på elektronik innan du kopplar bort',
-  'Ordna parkering för flyttbilen',
-  'Meddela adressändring till Skatteverket',
-  'Säg upp eller flytta elavtal, internet och försäkringar',
+  'Förbered det som ska hanteras',
+  'Dokumentera nuvarande skick',
+  'Ordna tillgång och parkering',
+  'Säkerställ försäkringsskydd',
+  'Bekräfta datum och tid',
+  'Spara kontaktuppgifter',
 ];
 
 const defaultFeatureCards: FeatureCard[] = [
-  { title: 'Försäkrad flytt', description: 'Alla våra rekommenderade företag har fullgod ansvarsförsäkring' },
+  { title: 'Försäkrad tjänst', description: 'Alla våra rekommenderade företag har fullgod ansvarsförsäkring' },
   { title: 'Snabbt svar', description: 'Få svar på din förfrågan inom 24 timmar' },
-  { title: 'Professionell hantering', description: 'Erfarenhet av alla typer av flyttar' },
+  { title: 'Professionell hantering', description: 'Erfarenhet av alla typer av uppdrag' },
 ];
 
 export function InfoSection({
@@ -43,6 +44,9 @@ export function InfoSection({
   checklist = defaultChecklist,
   featureCards = defaultFeatureCards,
 }: InfoSectionProps) {
+  const title = generateInfoSectionTitle(serviceName, cityName);
+  const lowerName = serviceName.toLowerCase();
+
   return (
     <section className="py-16 lg:py-20">
       <div className="container">
@@ -50,11 +54,11 @@ export function InfoSection({
           {/* Header */}
           <div className="text-center mb-12">
             <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4 tracking-tight">
-              Allt du behöver veta om {serviceName.toLowerCase()} i {cityName}
+              {title}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Att flytta kan vara stressigt, men med rätt förberedelser och en pålitlig partner 
-              blir det betydligt enklare. Här är våra bästa tips.
+              Med rätt förberedelser och en pålitlig partner blir det betydligt enklare.
+              Här är våra bästa tips för {lowerName}.
             </p>
           </div>
 
@@ -85,7 +89,7 @@ export function InfoSection({
                 <div className="card-header-icon">
                   <Lightbulb />
                 </div>
-                <h3 className="font-heading text-xl font-bold text-foreground">Tips inför flytten</h3>
+                <h3 className="font-heading text-xl font-bold text-foreground">Tips för att välja rätt</h3>
               </div>
               
               <div className="space-y-4">
@@ -104,7 +108,7 @@ export function InfoSection({
                 <div className="card-header-icon">
                   <ClipboardList />
                 </div>
-                <h3 className="font-heading text-xl font-bold text-foreground">Checklista inför flytten</h3>
+                <h3 className="font-heading text-xl font-bold text-foreground">Checklista inför bokning</h3>
               </div>
               
               <div className="space-y-3">
