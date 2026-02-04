@@ -117,18 +117,21 @@ export default function ServiceCityPage() {
 
   const currentYear = new Date().getFullYear();
   
+  // Get parent service name for proper Swedish grammar in titles
+  const parentServiceName = service?.parent_service?.name;
+  
   // Use dynamic content or fallback to defaults
   const faqs = serviceContent?.faqs?.length 
     ? serviceContent.faqs 
     : (cityFAQs[citySlug] || defaultFAQs);
   
-  // Generate dynamic title and intro
+  // Generate dynamic title and intro with parent service context
   const dynamicTitle = service && city 
-    ? generateServiceTitle(service.name, city.name, currentYear)
+    ? generateServiceTitle(service.name, city.name, currentYear, parentServiceName)
     : '';
   
   const dynamicIntro = serviceContent?.intro_text 
-    || (service && city ? generateDefaultIntroText(service.name, city.name) : '');
+    || (service && city ? generateDefaultIntroText(service.name, city.name, parentServiceName) : '');
   const totalReviews = businesses?.reduce((sum, b) => sum + (b.review_count || 0), 0) || 0;
 
   // Get other businesses (not featured)
@@ -251,6 +254,7 @@ export default function ServiceCityPage() {
         cityName={city?.name || ''}
         cityId={city?.id}
         serviceId={service?.id}
+        parentServiceName={parentServiceName}
       />
 
       {/* Info Section */}
@@ -260,6 +264,7 @@ export default function ServiceCityPage() {
         tips={serviceContent?.tips}
         checklist={serviceContent?.checklist}
         featureCards={serviceContent?.feature_cards}
+        parentServiceName={parentServiceName}
       />
 
       {/* Sub-services Section */}
@@ -281,6 +286,7 @@ export default function ServiceCityPage() {
           citySlug={citySlug}
           cityName={city?.name || ''}
           serviceName={service?.name}
+          parentServiceName={parentServiceName}
         />
       )}
 
@@ -289,12 +295,13 @@ export default function ServiceCityPage() {
         <BusinessMap
           businesses={businesses}
           featuredBusinessId={featuredBusiness?.id}
-          serviceName={service?.name?.toLowerCase() || 'företag'}
+          serviceName={service?.name || 'företag'}
           cityName={city?.name || ''}
           cityLat={city?.lat}
           cityLng={city?.lng}
           serviceSlug={serviceSlug}
           citySlug={citySlug}
+          parentServiceName={parentServiceName}
         />
       )}
 

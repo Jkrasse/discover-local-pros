@@ -10,6 +10,7 @@ interface BusinessTableProps {
   citySlug: string;
   cityName: string;
   serviceName?: string;
+  parentServiceName?: string;
 }
 
 export function BusinessTable({
@@ -19,6 +20,7 @@ export function BusinessTable({
   citySlug,
   cityName,
   serviceName,
+  parentServiceName,
 }: BusinessTableProps) {
   // Combine featured business at the top with other businesses
   const allBusinesses = featuredBusiness 
@@ -30,7 +32,7 @@ export function BusinessTable({
   }
 
   const title = serviceName 
-    ? generateBusinessListTitle(serviceName, cityName)
+    ? generateBusinessListTitle(serviceName, cityName, parentServiceName)
     : `Alla företag i ${cityName}`;
 
   return (

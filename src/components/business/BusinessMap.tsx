@@ -41,6 +41,7 @@ interface BusinessMapProps {
   cityLng?: number | null;
   serviceSlug: string;
   citySlug: string;
+  parentServiceName?: string;
 }
 
 function createPopupContent(
@@ -92,6 +93,7 @@ export function BusinessMap({
   cityLng,
   serviceSlug,
   citySlug,
+  parentServiceName,
 }: BusinessMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -169,8 +171,8 @@ export function BusinessMap({
     return null;
   }
 
-  const mapTitle = generateMapTitle(serviceName, cityName);
-  const mapSubtitle = generateMapSubtitle(serviceName, businessesWithCoords.length);
+  const mapTitle = generateMapTitle(serviceName, cityName, parentServiceName);
+  const mapSubtitle = generateMapSubtitle(serviceName, businessesWithCoords.length, parentServiceName);
 
   return (
     <section className="py-12 lg:py-16 bg-muted/30">

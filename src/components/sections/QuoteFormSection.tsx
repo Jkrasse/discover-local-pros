@@ -7,15 +7,17 @@ interface QuoteFormSectionProps {
   cityName: string;
   cityId?: string;
   serviceId?: string;
+  parentServiceName?: string;
 }
 
 export function QuoteFormSection({ 
   serviceName, 
   cityName, 
   cityId, 
-  serviceId 
+  serviceId,
+  parentServiceName,
 }: QuoteFormSectionProps) {
-  const title = generateQuoteFormTitle(serviceName, cityName);
+  const title = generateQuoteFormTitle(serviceName, cityName, parentServiceName);
 
   return (
     <section id="lead-form" className="py-16 lg:py-20 bg-secondary/50">
