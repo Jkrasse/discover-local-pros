@@ -72,15 +72,9 @@ serve(async (req) => {
       language: "sv",
       region: "SE",
       async: true,
-      // Request additional data fields
-      extractContacts: true, // Get emails, social media
-      reviewsLimit: 5, // Get up to 5 reviews per business (for display)
-      fields: [
-        "name", "place_id", "full_address", "street", "city", "postal_code",
-        "latitude", "longitude", "phone", "site", "rating", "reviews",
-        "working_hours", "category", "subtypes", "description", "about",
-        "photos", "reviews_data"
-      ],
+      // NOTE: maps/search-v3 automatically includes full_address, phone, rating, reviews count, etc.
+      // To get reviews_data, we'd need to use the separate reviews endpoint or add reviews_query parameter
+      // For now, we rely on the default response which includes all business details including address
     });
     
     // Helper function for delay
