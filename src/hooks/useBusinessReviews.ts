@@ -10,60 +10,49 @@ interface Review {
   likes?: number;
 }
 
-interface ReviewsResponse {
-  success: boolean;
-  reviews: Review[];
-  totalFound: number;
-  cached?: boolean;
-}
-
+/**
+ * Fetches cached reviews from the database.
+ * Reviews are imported during the scraping process, not fetched on page load.
+ */
 export function useBusinessReviews(
   businessId: string,
-  businessName: string, 
-  cityName?: string, 
+  _businessName?: string, // Kept for backwards compatibility, not used
+  _cityName?: string, // Kept for backwards compatibility, not used
   enabled = true,
-  gbpId?: string | null // Google Business Profile ID for more accurate matching
+  _gbpId?: string | null // Kept for backwards compatibility, not used
 ) {
   return useQuery({
     queryKey: ['business-reviews', businessId],
     queryFn: async (): Promise<Review[]> => {
-      // Build request body
-      const body: { 
-        businessId: string;
-        placeId?: string; 
-        query?: string; 
-        limit: number; 
-        sort: string;
-      } = {
-        businessId,
-        limit: 5,
-        sort: 'highest_rating'
-      };
-
-      if (gbpId) {
-        // Use place_id for exact matching
-        body.placeId = gbpId;
-      } else {
-        // Fallback to search query with business name and city
-        body.query = cityName 
-          ? `${businessName} ${cityName}, Sweden` 
-          : `${businessName}, Sweden`;
-      }
-
-      const { data, error } = await supabase.functions.invoke<ReviewsResponse>('fetch-reviews', {
-        body,
-      });
+      // Read directly from cached reviews in database
+      const { data: cachedReviews, error } = await supabase
+        .from('business_reviews')
+        .select('*')
+        .eq('business_id', businessId)
+        .order('rating', { ascending: false })
+        .limit(5);
 
       if (error) {
-        console.error('Error fetching reviews:', error);
+        console.error('Error fetching cached reviews:', error);
         throw error;
       }
 
-      return data?.reviews || [];
+      if (!cachedReviews || cachedReviews.length === 0) {
+        return [];
+      }
+
+      // Transform to Review format
+      return cachedReviews.map((r) => ({
+        author_name: r.author_name,
+        author_image: r.author_image || undefined,
+        rating: r.rating,
+        text: r.review_text || '',
+        time: r.review_time || '',
+        likes: r.likes || 0,
+      }));
     },
-    enabled: enabled && !!businessId && !!(gbpId || businessName),
-    staleTime: 1000 * 60 * 60 * 24, // Cache for 24 hours in React Query
-    gcTime: 1000 * 60 * 60 * 24 * 7, // Keep in cache for 7 days
-    retry: 1, // Only retry once on failure
+    enabled: enabled && !!businessId,
+    staleTime: 1000 * 60 * 60, // Cache for 1 hour in React Query
+    gcTime: 1000 * 60 * 60 * 24, // Keep in cache for 1 day
   });
 }
