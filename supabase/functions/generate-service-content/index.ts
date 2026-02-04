@@ -59,13 +59,12 @@ Deno.serve(async (req) => {
     const cityContext = resolvedCityName ? ` i ${resolvedCityName}` : "";
     
     const parentContext = isSubService ? ` (undertjänst till "${parentServiceName}")` : "";
-    const introMustStartWith = resolvedCityName
-      ? `"${serviceName} i ${resolvedCityName}"`
-      : `"${serviceName}"`;
-
+    
     const introNoCityRule = resolvedCityName
       ? ""
       : "- Eftersom detta är en generell mall (utan stad): nämn INTE någon stad eller uttryck som \"i staden\"\n";
+
+    const serviceNameLower = serviceName.toLowerCase();
 
     const prompt = `Du är en erfaren svensk copywriter och språkgranskare som skapar innehåll för en katalog över lokala tjänster.
 
@@ -82,10 +81,10 @@ Skapa unikt, informativt innehåll för tjänsten "${serviceName}"${cityContext}
 
 Generera följande i JSON-format:
 
-1. "intro_text": En kort introduktionstext (2-3 meningar). KRAV:
-   - BÖRJA med ${introMustStartWith} - inte med "Letar du" eller liknande
-   - Beskriv kort vad tjänsten innebär och varför det är viktigt att välja rätt partner
-   - Nämn att vi har samlat kvalitetsgranskade företag för att underlätta valet
+1. "intro_text": En kort introduktionstext (3-4 meningar). KRAV:
+   - BÖRJA ALLTID med frågan: "Letar du efter ${isSubService ? `ett företag som utför ${serviceNameLower}` : serviceNameLower}${resolvedCityName ? ` i ${resolvedCityName}` : ''}?"
+   - Förklara sedan kort vad tjänsten innebär och vad kunden kan förvänta sig
+   - Avsluta med att nämna att vi har samlat de bästa och mest pålitliga företagen för att hjälpa dem hitta rätt partner
    ${resolvedCityName ? `- Skriv ut "${resolvedCityName}" direkt - använd ALDRIG [stad] eller liknande platshållare` : "- Nämn ingen stad"}
 
 2. "tips": En array med 5 konkreta tips för att välja rätt företag för ${serviceName.toLowerCase()}${cityContext}. Varje tips ska vara en tydlig, grammatiskt korrekt mening.
