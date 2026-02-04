@@ -8,7 +8,7 @@ const corsHeaders = {
 interface SearchRequest {
   searchTerm: string;
   cities: string[];
-  limit: number;
+  limit: number; // This is now the TOTAL limit per city
   serviceId: string;
 }
 
@@ -24,7 +24,7 @@ serve(async (req) => {
       throw new Error("OUTSCRAPER_API_KEY is not configured");
     }
 
-    const { searchTerm, cities, limit = 25, serviceId }: SearchRequest = await req.json();
+    const { searchTerm, cities, limit = 20, serviceId }: SearchRequest = await req.json();
 
     if (!searchTerm || !cities || cities.length === 0) {
       return new Response(
@@ -40,46 +40,27 @@ serve(async (req) => {
       );
     }
 
-    // Max limit capped at 25 per user preference (relevance matters more than volume)
-    const effectiveLimit = Math.min(Math.max(10, Number.isFinite(limit) ? limit : 25), 25);
+    // CRITICAL FIX: Use ONLY ONE query per city to minimize credit usage
+    // The limit parameter is now the total businesses we want PER CITY
+    const effectiveLimit = Math.min(Math.max(5, Number.isFinite(limit) ? limit : 20), 50);
 
-    // Build many query variants per city to maximize recall.
-    // Google Maps is sensitive to phrasing so we use several Swedish + English patterns.
-    const buildCityQueries = (cityRaw: string) => {
-      const city = cityRaw.trim();
-      if (!city) return [] as string[];
+    // Build ONE simple query per city - this is the most credit-efficient approach
+    const queries = cities
+      .map(city => city.trim())
+      .filter(city => city.length > 0)
+      .map(city => `${searchTerm} ${city}, Sweden`);
 
-      // Various query patterns optimized for Swedish local search
-      // These mimic how users actually search for local services on Google Maps
-      return [
-        // Core Swedish patterns (most likely to match local listings)
-        `${searchTerm} ${city}`,
-        `${searchTerm} i ${city}`,
-        `${searchTerm} ${city} Sverige`,
-        
-        // English variants (sometimes yields different results from Google)
-        `${searchTerm} ${city}, Sweden`,
-        `${searchTerm} in ${city} Sweden`,
-        
-        // Broader category patterns
-        `${searchTerm} nära ${city}`,
-        `Bästa ${searchTerm} ${city}`,
-        
-        // Direct location format (Maps sometimes prefers this)
-        `${city} ${searchTerm}`,
-      ];
-    };
-
-    const queries = cities.flatMap(buildCityQueries);
-
-    console.log(`Starting Outscraper search with ${queries.length} queries (${queries.length / cities.length} variants per city). Effective limit per query: ${effectiveLimit}.`);
-    console.log("Query list:", JSON.stringify(queries, null, 2));
+    console.log(`=== OUTSCRAPER SEARCH ===`);
+    console.log(`Search term: ${searchTerm}`);
+    console.log(`Cities: ${cities.length}`);
+    console.log(`Limit per city: ${effectiveLimit}`);
+    console.log(`Total queries: ${queries.length} (1 per city)`);
+    console.log(`Estimated max results: ${queries.length * effectiveLimit}`);
+    console.log(`Queries:`, queries);
+    console.log(`=========================`);
 
     // Send request to Outscraper API
-    // NOTE: We intentionally skip enrichment for better raw result volume.
-    // Enrichment can be done in a second pass if needed.
-    
-    // Try multiple API endpoints with retry logic for transient DNS issues
+    // Using limit per query = effectiveLimit (which is the user's requested limit per city)
     const apiUrls = [
       "https://api.outscraper.cloud/maps/search-v3",
       "https://api.app.outscraper.com/maps/search-v3",
@@ -87,7 +68,7 @@ serve(async (req) => {
     
     const requestBody = JSON.stringify({
       query: queries,
-      limit: effectiveLimit,
+      limit: effectiveLimit, // Now this is the actual limit per city since we have 1 query per city
       language: "sv",
       region: "SE",
       async: true,
@@ -163,7 +144,8 @@ serve(async (req) => {
         requestId: result.id,
         queriesCount: queries.length,
         queries: queries,
-        message: `Scraping started for ${queries.length} queries (${cities.length} cities × ${queries.length / cities.length} variants). Use the request ID to check status.`,
+        estimatedCredits: queries.length * effectiveLimit, // More accurate estimate
+        message: `Scraping started for ${queries.length} cities with limit ${effectiveLimit} per city. Use the request ID to check status.`,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
