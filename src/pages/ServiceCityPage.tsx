@@ -9,6 +9,7 @@ import { FAQSection } from '@/components/sections/FAQSection';
 import { InfoSection } from '@/components/sections/InfoSection';
 import { SubServicesSection } from '@/components/sections/SubServicesSection';
 import { QuoteFormSection } from '@/components/sections/QuoteFormSection';
+import { QuickContactCTA } from '@/components/sections/QuickContactCTA';
 import { CityGrid } from '@/components/sections/CityGrid';
 import { useCity } from '@/hooks/useCity';
 import { useService } from '@/hooks/useService';
@@ -295,6 +296,13 @@ export default function ServiceCityPage() {
           citySlug={citySlug}
         />
       )}
+
+      {/* Quick Contact CTA */}
+      <QuickContactCTA
+        business={featuredBusiness}
+        serviceName={service?.name}
+        cityName={city?.name}
+      />
 
       {/* FAQ Section */}
       <FAQSection 
