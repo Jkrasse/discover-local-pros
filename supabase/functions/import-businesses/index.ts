@@ -291,25 +291,41 @@ Deno.serve(async (req) => {
           .maybeSingle()
 
         if (!existingSlot) {
-          // Get a random business from this city/service
-          const { data: randomBusiness } = await supabase
-            .from('business_service_coverage')
-            .select('business_id')
+          // Get a random business from THIS CITY specifically
+          // Join with businesses table to ensure we only get businesses with matching city_id
+          const { data: cityBusinesses } = await supabase
+            .from('businesses')
+            .select('id')
             .eq('city_id', cityId)
-            .eq('service_id', serviceId)
-            .limit(1)
-            .maybeSingle()
+            .eq('is_active', true)
+            .limit(10)
 
-          if (randomBusiness) {
-            await supabase
-              .from('featured_slots')
-              .insert({
-                city_id: cityId,
-                service_id: serviceId,
-                business_id: randomBusiness.business_id,
-                status: 'active',
-                is_placeholder: true
-              })
+          if (cityBusinesses && cityBusinesses.length > 0) {
+            // Pick a random business from the city
+            const randomIndex = Math.floor(Math.random() * cityBusinesses.length)
+            const selectedBusiness = cityBusinesses[randomIndex]
+
+            // Verify this business has coverage for this service
+            const { data: hasCoverage } = await supabase
+              .from('business_service_coverage')
+              .select('id')
+              .eq('business_id', selectedBusiness.id)
+              .eq('service_id', serviceId)
+              .maybeSingle()
+
+            if (hasCoverage) {
+              await supabase
+                .from('featured_slots')
+                .insert({
+                  city_id: cityId,
+                  service_id: serviceId,
+                  business_id: selectedBusiness.id,
+                  status: 'active',
+                  is_placeholder: true
+                })
+              
+              console.log(`Created featured slot for city ${cityId} with business ${selectedBusiness.id}`)
+            }
           }
         }
       }
