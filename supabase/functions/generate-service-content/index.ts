@@ -40,33 +40,38 @@ Deno.serve(async (req) => {
     
     // Build the prompt for generating service-specific content
     const parentContext = isSubService ? ` (undertjänst till "${parentServiceName}")` : "";
-    const prompt = `Du är en svensk copywriter och SEO-expert som skapar innehåll för en katalog över lokala tjänster.
+    const prompt = `Du är en erfaren svensk copywriter och språkgranskare som skapar innehåll för en katalog över lokala tjänster.
 
-VIKTIGT: 
-- All text ska vara grammatiskt korrekt på svenska
-- Använd naturligt, professionellt språk
-- Granska varje mening för stavfel och grammatik innan du svarar
-- Undvik onödiga upprepningar
+KRITISKA GRAMMATIKREGLER:
+- Granska VARJE mening för korrekt svenska innan du svarar
+- Kontrollera särskilt: ordföljd, bestämd/obestämd form, prepositioner, verbböjning
+- Undvik anglicismer och konstlad svenska
+- Skriv naturligt och professionellt
+- INGEN text får innehålla platshållare som [stad], [tjänst] etc.
+- Alla meningar ska vara fullständiga och grammatiskt korrekta
 
 Skapa unikt, informativt innehåll för tjänsten "${serviceName}"${cityContext}${parentContext}.
 
 Generera följande i JSON-format:
 
-1. "intro_text": En kort introduktionstext (2-3 meningar) som hjälper besökaren hitta rätt företag för ${serviceName.toLowerCase()}${cityContext}. VIKTIGT:
-   - BÖRJA meningen med tjänstens namn och staden direkt, t.ex. "${serviceName} i ${cityName || 'staden'} kräver..."
-   - Använd ALDRIG platshållare som [stad] - skriv alltid ut "${cityName || 'staden'}" direkt
-   - Fokusera på att hjälpa besökaren hitta en pålitlig partner
-   - Nämn att vi listar kvalitetsgranskade företag
+1. "intro_text": En kort introduktionstext (2-3 meningar). KRAV:
+   - BÖRJA med "${serviceName} i ${cityName || 'staden'}" - inte med "Letar du" eller liknande
+   - Beskriv kort vad tjänsten innebär och varför det är viktigt att välja rätt partner
+   - Nämn att vi har samlat kvalitetsgranskade företag för att underlätta valet
+   - Skriv ut "${cityName || 'staden'}" direkt - använd ALDRIG [stad] eller liknande platshållare
 
-2. "tips": En array med 5 konkreta tips för att välja rätt företag för ${serviceName.toLowerCase()}${cityContext}. Varje tips ska vara en tydlig mening.
+2. "tips": En array med 5 konkreta tips för att välja rätt företag för ${serviceName.toLowerCase()}${cityContext}. Varje tips ska vara en tydlig, grammatiskt korrekt mening.
 
-3. "checklist": En array med 6 punkter - en praktisk checklista för kunden inför ${serviceName.toLowerCase()}${cityContext}.
+3. "checklist": En array med 6 punkter - en praktisk checklista för kunden inför ${serviceName.toLowerCase()}${cityContext}. Varje punkt ska vara en kort imperativ mening.
 
-4. "faqs": En array med 4-5 FAQ-objekt, varje med "question" och "answer". Frågorna ska vara vanliga frågor som kunder har om ${serviceName.toLowerCase()}${cityContext}.
+4. "faqs": En array med 4-5 FAQ-objekt, varje med "question" och "answer". 
+   - Frågorna ska vara vanliga frågor om ${serviceName.toLowerCase()}${cityContext}
+   - Svaren ska vara informativa och hjälpsamma (2-4 meningar)
+   - Kontrollera att frågor slutar med frågetecken
 
-5. "feature_cards": En array med 3 objekt, varje med "title" (kort rubrik, 2-3 ord) och "description" (en mening) som beskriver fördelar med att anlita professionella för ${serviceName.toLowerCase()}.
+5. "feature_cards": En array med 3 objekt, varje med "title" (2-3 ord) och "description" (en mening) som beskriver fördelar med professionella tjänster.
 
-Granska ALL text för grammatisk korrekthet innan du svarar.
+INNAN DU SVARAR: Läs igenom ALL genererad text och korrigera eventuella grammatiska fel.
 Svara ENDAST med giltig JSON utan markdown-formatering.`;
 
     // Call Lovable AI Gateway
