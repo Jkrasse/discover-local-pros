@@ -517,7 +517,8 @@ serve(async (req) => {
     };
 
     // PHASE 1: Process all businesses and collect them for batch operations
-    const processedBusinesses: ProcessedBusiness[] = [];
+    // First collect all businesses, then apply per-city limit
+    const allProcessedBusinesses: ProcessedBusiness[] = [];
 
     for (let queryIdx = 0; queryIdx < allData.length; queryIdx++) {
       const queryResults = allData[queryIdx];
@@ -531,13 +532,32 @@ serve(async (req) => {
       for (const business of queryResults as OutscraperBusiness[]) {
         const processed = processBusiness(business, allowedCityMap, seenGbpIds, skipReason);
         if (processed) {
-          processedBusinesses.push(processed);
-          affectedCities.add(processed.cityId);
+          allProcessedBusinesses.push(processed);
         }
       }
     }
 
-    console.log(`Processed ${processedBusinesses.length} unique businesses`);
+    console.log(`Total deduplicated businesses before city limit: ${allProcessedBusinesses.length}`);
+
+    // PHASE 1.5: Apply per-city limit of 20 businesses max
+    const MAX_BUSINESSES_PER_CITY = 20;
+    const businessCountPerCity = new Map<string, number>();
+    const processedBusinesses: ProcessedBusiness[] = [];
+    let skippedDueToLimit = 0;
+
+    for (const processed of allProcessedBusinesses) {
+      const currentCount = businessCountPerCity.get(processed.cityId) || 0;
+      
+      if (currentCount < MAX_BUSINESSES_PER_CITY) {
+        processedBusinesses.push(processed);
+        businessCountPerCity.set(processed.cityId, currentCount + 1);
+        affectedCities.add(processed.cityId);
+      } else {
+        skippedDueToLimit++;
+      }
+    }
+
+    console.log(`Applied per-city limit (max ${MAX_BUSINESSES_PER_CITY}): kept ${processedBusinesses.length}, skipped ${skippedDueToLimit}`);
 
     // PHASE 2: Batch lookup existing businesses by gbp_id
     const gbpIds = processedBusinesses.map(b => b.gbpId);
