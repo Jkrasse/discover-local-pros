@@ -39,23 +39,33 @@ Deno.serve(async (req) => {
     const cityContext = cityName ? ` i ${cityName}` : "";
     
     // Build the prompt for generating service-specific content
-    const prompt = `Du är en SEO-expert som skapar innehåll för en svensk katalog över lokala tjänster.
+    const prompt = `Du är en svensk copywriter och SEO-expert som skapar innehåll för en katalog över lokala tjänster.
+
+VIKTIGT: 
+- All text ska vara grammatiskt korrekt på svenska
+- Använd naturligt, professionellt språk
+- Granska varje mening för stavfel och grammatik innan du svarar
+- Undvik onödiga upprepningar
 
 Skapa unikt, informativt innehåll för tjänsten "${serviceName}"${cityContext}.
 ${isSubService ? `Detta är en undertjänst till "${parentServiceName}".` : ""}
 
 Generera följande i JSON-format:
 
-1. "intro_text": En kort introduktionstext (2-3 meningar) som förklarar vad ${serviceName.toLowerCase()} innebär och hur besökaren kan hitta en pålitlig partner för detta${cityContext}.
+1. "intro_text": En kort introduktionstext (2-3 meningar) som hjälper besökaren hitta rätt ${serviceName.toLowerCase()}${cityContext}. Fokusera på:
+   - Vad besökaren letar efter (att hitta en pålitlig partner)
+   - Hur vår katalog kan hjälpa dem jämföra och välja rätt företag
+   - Nämn gärna att vi listar kvalitetsgranskade företag
 
-2. "tips": En array med 5 specifika tips för att välja rätt ${serviceName.toLowerCase()}${cityContext}. Varje tips ska vara en mening.
+2. "tips": En array med 5 konkreta tips för att välja rätt ${serviceName.toLowerCase()}${cityContext}. Varje tips ska vara en tydlig mening.
 
-3. "checklist": En array med 6 punkter - en checklista för kunden inför ${serviceName.toLowerCase()}${cityContext}.
+3. "checklist": En array med 6 punkter - en praktisk checklista för kunden inför ${serviceName.toLowerCase()}${cityContext}.
 
-4. "faqs": En array med 4-5 FAQ-objekt, varje med "question" och "answer". Frågorna ska vara relevanta för ${serviceName.toLowerCase()}${cityContext}.
+4. "faqs": En array med 4-5 FAQ-objekt, varje med "question" och "answer". Frågorna ska vara vanliga frågor som kunder har om ${serviceName.toLowerCase()}${cityContext}.
 
 5. "feature_cards": En array med 3 objekt, varje med "title" (kort rubrik, 2-3 ord) och "description" (en mening) som beskriver fördelar med att anlita professionell ${serviceName.toLowerCase()}.
 
+Granska ALL text för grammatisk korrekthet innan du svarar.
 Svara ENDAST med giltig JSON utan markdown-formatering.`;
 
     // Call Lovable AI Gateway
