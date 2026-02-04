@@ -611,8 +611,11 @@ serve(async (req) => {
     console.log(`Applied per-city limit (max ${MAX_BUSINESSES_PER_CITY}): kept ${processedBusinesses.length}, skipped ${skippedDueToLimit}`);
 
     // PHASE 2: Batch lookup existing businesses by gbp_id
-    const gbpIds = processedBusinesses.map(b => b.gbpId);
-    const existingBusinessMap = new Map<string, { id: string; city_id: string }>();
+    const gbpIds = processedBusinesses.map((b) => b.gbpId);
+    const existingBusinessByGbpId = new Map<
+      string,
+      { id: string; city_id: string; slug: string; gbp_id: string | null }
+    >();
 
     // Batch fetch in chunks of 500 (Supabase limit for IN queries)
     const BATCH_SIZE = 500;
@@ -620,28 +623,95 @@ serve(async (req) => {
       const batchIds = gbpIds.slice(i, i + BATCH_SIZE);
       const { data: existingBatch } = await supabase
         .from("businesses")
-        .select("id, gbp_id, city_id")
+        .select("id, gbp_id, city_id, slug")
         .in("gbp_id", batchIds);
 
       for (const biz of existingBatch || []) {
-        existingBusinessMap.set(biz.gbp_id, { id: biz.id, city_id: biz.city_id });
+        if (biz.gbp_id) {
+          existingBusinessByGbpId.set(biz.gbp_id, {
+            id: biz.id,
+            city_id: biz.city_id,
+            slug: biz.slug,
+            gbp_id: biz.gbp_id,
+          });
+        }
       }
     }
 
-    console.log(`Found ${existingBusinessMap.size} existing businesses`);
+    // PHASE 2.25: Also lookup existing businesses by (slug, city_id)
+    // This prevents batch insert failures when gbp_id changes between scrapes (synthetic ids) but slug+city is the same.
+    const slugs = processedBusinesses
+      .map((p) => String((p.businessData as any)?.slug || "").trim())
+      .filter(Boolean);
+    const cityIds = [...new Set(processedBusinesses.map((p) => p.cityId))];
+
+    const existingBusinessBySlugCity = new Map<
+      string,
+      { id: string; city_id: string; slug: string; gbp_id: string | null }
+    >();
+
+    const slugKey = (slug: string, cityId: string) => `${slug}::${cityId}`;
+
+    // Fetch in chunks to avoid URL limits
+    for (let i = 0; i < slugs.length; i += BATCH_SIZE) {
+      const slugBatch = slugs.slice(i, i + BATCH_SIZE);
+      const { data: existingSlugBatch } = await supabase
+        .from("businesses")
+        .select("id, gbp_id, city_id, slug")
+        .in("slug", slugBatch)
+        .in("city_id", cityIds);
+
+      for (const biz of existingSlugBatch || []) {
+        existingBusinessBySlugCity.set(slugKey(biz.slug, biz.city_id), {
+          id: biz.id,
+          city_id: biz.city_id,
+          slug: biz.slug,
+          gbp_id: biz.gbp_id,
+        });
+      }
+    }
+
+    console.log(
+      `Found ${existingBusinessByGbpId.size} existing businesses by gbp_id and ${existingBusinessBySlugCity.size} by (slug, city)`
+    );
 
     // PHASE 3: Separate businesses into inserts and updates
     const toInsert: Array<Record<string, unknown>> = [];
-    const toUpdate: Array<{ gbpId: string; data: Record<string, unknown>; existingId: string }> = [];
+    const toUpdate: Array<{
+      gbpId: string;
+      data: Record<string, unknown>;
+      existingId: string;
+    }> = [];
     const businessToGbpId = new Map<ProcessedBusiness, string>();
 
     for (const processed of processedBusinesses) {
       businessToGbpId.set(processed, processed.gbpId);
-      const existing = existingBusinessMap.get(processed.gbpId);
+      const processedSlug = String((processed.businessData as any)?.slug || "");
+      const existingByGbp = existingBusinessByGbpId.get(processed.gbpId);
+      const existingBySlugCity = existingBusinessBySlugCity.get(
+        slugKey(processedSlug, processed.cityId)
+      );
+      const existing = existingByGbp || existingBySlugCity;
 
       if (existing) {
         // Update existing - don't change city_id
-        const { city_id: _unused, ...updateData } = processed.businessData;
+        const { city_id: _unused, ...updateDataRaw } = processed.businessData as Record<
+          string,
+          unknown
+        >;
+
+        const updateData: Record<string, unknown> = { ...updateDataRaw };
+
+        // Don't overwrite existing gbp_id unless it's missing
+        if (existing.gbp_id) {
+          delete updateData.gbp_id;
+        }
+
+        // Never wipe address with null/undefined
+        if (updateData.address == null) {
+          delete updateData.address;
+        }
+
         toUpdate.push({
           gbpId: processed.gbpId,
           data: updateData,
@@ -738,16 +808,25 @@ serve(async (req) => {
       is_primary: boolean;
     }> = [];
 
+    const resolveExistingId = (processed: ProcessedBusiness) => {
+      const processedSlug = String((processed.businessData as any)?.slug || "");
+      return (
+        existingBusinessByGbpId.get(processed.gbpId)?.id ||
+        existingBusinessBySlugCity.get(slugKey(processedSlug, processed.cityId))?.id ||
+        null
+      );
+    };
+
     for (const processed of processedBusinesses) {
-      const existing = existingBusinessMap.get(processed.gbpId);
-      const businessId = existing?.id || insertedBusinessMap.get(processed.gbpId);
+      const existingId = resolveExistingId(processed);
+      const businessId = existingId || insertedBusinessMap.get(processed.gbpId);
 
       if (businessId) {
         coverageRecords.push({
           business_id: businessId,
           service_id: serviceId,
           city_id: processed.cityId,
-          is_primary: !existing,
+          is_primary: !existingId,
         });
       }
     }
@@ -780,8 +859,8 @@ serve(async (req) => {
     }> = [];
 
     for (const processed of processedBusinesses) {
-      const existing = existingBusinessMap.get(processed.gbpId);
-      const businessId = existing?.id || insertedBusinessMap.get(processed.gbpId);
+      const existingId = resolveExistingId(processed);
+      const businessId = existingId || insertedBusinessMap.get(processed.gbpId);
 
       if (businessId && processed.reviews && processed.reviews.length > 0) {
         // Filter to only include reviews with 4+ stars
@@ -862,8 +941,8 @@ serve(async (req) => {
     // This lets us select a city-local partner without extra DB lookups.
     const businessIdsByCity = new Map<string, string[]>();
     for (const processed of processedBusinesses) {
-      const existing = existingBusinessMap.get(processed.gbpId);
-      const businessId = existing?.id || insertedBusinessMap.get(processed.gbpId);
+      const existingId = resolveExistingId(processed);
+      const businessId = existingId || insertedBusinessMap.get(processed.gbpId);
       if (!businessId) continue;
 
       const list = businessIdsByCity.get(processed.cityId) || [];
@@ -984,8 +1063,8 @@ serve(async (req) => {
       }> = [];
 
       for (const processed of processedBusinesses) {
-        const existing = existingBusinessMap.get(processed.gbpId);
-        const businessId = existing?.id || insertedBusinessMap.get(processed.gbpId);
+        const existingId = resolveExistingId(processed);
+        const businessId = existingId || insertedBusinessMap.get(processed.gbpId);
 
         if (businessId) {
           for (const subService of subServices) {
