@@ -13,6 +13,10 @@ interface ServiceContentRequest {
   parentServiceName?: string;
 }
 
+function escapeRegExp(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -24,8 +28,8 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { serviceId, serviceName, cityId, cityName, parentServiceName } = 
-      await req.json() as ServiceContentRequest;
+    const body = await req.json() as ServiceContentRequest;
+    let { serviceId, serviceName, cityId, cityName, parentServiceName } = body;
 
     if (!serviceId || !serviceName) {
       return new Response(
@@ -34,12 +38,35 @@ Deno.serve(async (req) => {
       );
     }
 
-    const currentYear = new Date().getFullYear();
     const isSubService = !!parentServiceName;
-    const cityContext = cityName ? ` i ${cityName}` : "";
+
+    // If caller provided cityId but forgot cityName (common in bulk tools), resolve it here.
+    if (cityId && !cityName) {
+      const { data: cityRow, error: cityError } = await supabaseClient
+        .from("cities")
+        .select("name")
+        .eq("id", cityId)
+        .maybeSingle();
+
+      if (cityError) {
+        console.error("Failed to resolve city name:", cityError);
+      } else if (cityRow?.name) {
+        cityName = cityRow.name;
+      }
+    }
+
+    const resolvedCityName = cityName?.trim() || undefined;
+    const cityContext = resolvedCityName ? ` i ${resolvedCityName}` : "";
     
-    // Build the prompt for generating service-specific content
     const parentContext = isSubService ? ` (undertjänst till "${parentServiceName}")` : "";
+    const introMustStartWith = resolvedCityName
+      ? `"${serviceName} i ${resolvedCityName}"`
+      : `"${serviceName}"`;
+
+    const introNoCityRule = resolvedCityName
+      ? ""
+      : "- Eftersom detta är en generell mall (utan stad): nämn INTE någon stad eller uttryck som \"i staden\"\n";
+
     const prompt = `Du är en erfaren svensk copywriter och språkgranskare som skapar innehåll för en katalog över lokala tjänster.
 
 KRITISKA GRAMMATIKREGLER:
@@ -49,16 +76,17 @@ KRITISKA GRAMMATIKREGLER:
 - Skriv naturligt och professionellt
 - INGEN text får innehålla platshållare som [stad], [tjänst] etc.
 - Alla meningar ska vara fullständiga och grammatiskt korrekta
+${introNoCityRule}
 
 Skapa unikt, informativt innehåll för tjänsten "${serviceName}"${cityContext}${parentContext}.
 
 Generera följande i JSON-format:
 
 1. "intro_text": En kort introduktionstext (2-3 meningar). KRAV:
-   - BÖRJA med "${serviceName} i ${cityName || 'staden'}" - inte med "Letar du" eller liknande
+   - BÖRJA med ${introMustStartWith} - inte med "Letar du" eller liknande
    - Beskriv kort vad tjänsten innebär och varför det är viktigt att välja rätt partner
    - Nämn att vi har samlat kvalitetsgranskade företag för att underlätta valet
-   - Skriv ut "${cityName || 'staden'}" direkt - använd ALDRIG [stad] eller liknande platshållare
+   ${resolvedCityName ? `- Skriv ut "${resolvedCityName}" direkt - använd ALDRIG [stad] eller liknande platshållare` : "- Nämn ingen stad"}
 
 2. "tips": En array med 5 konkreta tips för att välja rätt företag för ${serviceName.toLowerCase()}${cityContext}. Varje tips ska vara en tydlig, grammatiskt korrekt mening.
 
@@ -123,10 +151,24 @@ Svara ENDAST med giltig JSON utan markdown-formatering.`;
       generatedContent = JSON.parse(cleanedContent);
       
       // Replace any leftover placeholders with actual values
-      if (cityName && generatedContent.intro_text) {
+      if (resolvedCityName && generatedContent.intro_text) {
         generatedContent.intro_text = generatedContent.intro_text
-          .replace(/\[stad\]/gi, cityName)
-          .replace(/\[city\]/gi, cityName);
+          .replace(/\[stad\]/gi, resolvedCityName)
+          .replace(/\[city\]/gi, resolvedCityName);
+
+        // If the model still wrote "i staden" in the intro start, fix it deterministically.
+        const serviceNameEscaped = escapeRegExp(serviceName);
+        generatedContent.intro_text = generatedContent.intro_text.replace(
+          new RegExp(`^(${serviceNameEscaped}\\s+i\\s+)staden\\b`, "i"),
+          `$1${resolvedCityName}`
+        );
+      } else if (!resolvedCityName && generatedContent.intro_text) {
+        // For template content, ensure we don't ship a generic "i staden" phrasing.
+        const serviceNameEscaped = escapeRegExp(serviceName);
+        generatedContent.intro_text = generatedContent.intro_text.replace(
+          new RegExp(`^(${serviceNameEscaped})\\s+i\\s+staden\\b`, "i"),
+          "$1"
+        );
       }
     } catch (parseError) {
       console.error("Failed to parse AI response:", contentText);

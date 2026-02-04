@@ -203,7 +203,7 @@ export default function ContentGeneratorPage() {
                 <label className="text-sm font-medium">Stad (valfritt)</label>
                 <Select value={selectedCity} onValueChange={setSelectedCity}>
                   <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Alla städer..." />
+                    <SelectValue placeholder="Ingen (generell mall)" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Alla städer (bulk)</SelectItem>
@@ -214,6 +214,13 @@ export default function ContentGeneratorPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  {selectedCity === 'all'
+                    ? 'Bulk skapar stadsspecifikt innehåll per stad (så intro blir t.ex. ”… i Jönköping”).'
+                    : selectedCity
+                      ? 'Genererar innehåll för den valda staden.'
+                      : 'Ingen stad vald = generell mall (utan stad).'}
+                </p>
               </div>
 
               <Button
