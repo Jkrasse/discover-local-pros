@@ -72,6 +72,15 @@ serve(async (req) => {
       language: "sv",
       region: "SE",
       async: true,
+      // Request additional data fields
+      extractContacts: true, // Get emails, social media
+      reviewsLimit: 5, // Get up to 5 reviews per business (for display)
+      fields: [
+        "name", "place_id", "full_address", "street", "city", "postal_code",
+        "latitude", "longitude", "phone", "site", "rating", "reviews",
+        "working_hours", "category", "subtypes", "description", "about",
+        "photos", "reviews_data"
+      ],
     });
     
     // Helper function for delay
