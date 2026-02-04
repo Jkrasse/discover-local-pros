@@ -18,6 +18,7 @@ function isSubService(serviceName: string): boolean {
     'trappstädning',
     'byggstädning',
     'kontorsstädning',
+    'kontorsstäd', // Short form
   ];
   
   return subServiceKeywords.some(s => lowerName.includes(s));
@@ -34,8 +35,8 @@ function getParentServiceType(serviceName: string): string {
     return 'flyttfirma';
   }
   
-  // Cleaning-related sub-services
-  if (['fönsterputs', 'hemstädning', 'storstädning', 'trappstädning', 'byggstädning', 'kontorsstädning', 'flyttstädning'].some(s => lowerName.includes(s))) {
+  // Cleaning-related sub-services (includes kontorsstäd)
+  if (['fönsterputs', 'hemstädning', 'storstädning', 'trappstädning', 'byggstädning', 'kontorsstädning', 'kontorsstäd', 'flyttstädning'].some(s => lowerName.includes(s))) {
     return 'städfirma';
   }
   
