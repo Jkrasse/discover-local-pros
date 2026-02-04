@@ -976,6 +976,159 @@ serve(async (req) => {
       }
     }
 
+    // PHASE 8: Fetch reviews for featured partners via Outscraper Reviews API
+    // This ensures recommended partners always have visible reviews
+    console.log("=== PHASE 8: Fetching reviews for featured partners ===");
+    
+    // Collect unique featured partner IDs that were assigned in this run
+    const featuredPartnerIds = new Set<string>();
+    for (const cityId of affectedCities) {
+      const { data: citySlots } = await supabase
+        .from("featured_slots")
+        .select("business_id")
+        .eq("city_id", cityId)
+        .in("service_id", allServiceIds)
+        .eq("status", "active")
+        .not("business_id", "is", null);
+      
+      for (const slot of citySlots || []) {
+        if (slot.business_id) {
+          featuredPartnerIds.add(slot.business_id);
+        }
+      }
+    }
+
+    console.log(`Found ${featuredPartnerIds.size} unique featured partners to fetch reviews for`);
+
+    let partnerReviewsFetched = 0;
+
+    if (featuredPartnerIds.size > 0) {
+      // Fetch business details (gbp_id/place_id and name) for featured partners
+      const { data: featuredBusinesses } = await supabase
+        .from("businesses")
+        .select("id, gbp_id, name")
+        .in("id", Array.from(featuredPartnerIds));
+
+      for (const business of featuredBusinesses || []) {
+        // Check if business already has recent reviews (within 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const { data: existingReviews } = await supabase
+          .from("business_reviews")
+          .select("id")
+          .eq("business_id", business.id)
+          .gte("fetched_at", thirtyDaysAgo.toISOString())
+          .limit(1);
+
+        if (existingReviews && existingReviews.length > 0) {
+          console.log(`Business ${business.name} already has recent reviews, skipping`);
+          continue;
+        }
+
+        // Prepare query for Outscraper Reviews API
+        // Prefer place_id (gbp_id) if it looks like a valid Google place ID
+        const isValidPlaceId = business.gbp_id && 
+          !business.gbp_id.startsWith("synthetic_") && 
+          business.gbp_id.startsWith("ChI");
+        
+        const searchQuery = isValidPlaceId ? business.gbp_id : `${business.name}, Sweden`;
+
+        console.log(`Fetching reviews for featured partner: ${business.name} (query: ${searchQuery})`);
+
+        try {
+          // Call Outscraper Reviews API
+          const reviewParams = new URLSearchParams({
+            query: searchQuery,
+            reviewsLimit: "10", // Fetch 10 to have buffer after filtering
+            sort: "highest_rating",
+            language: "sv",
+            region: "SE",
+            async: "false", // Synchronous for simplicity
+          });
+
+          const reviewsResponse = await fetch(
+            `https://api.app.outscraper.com/maps/reviews-v3?${reviewParams.toString()}`,
+            {
+              method: "GET",
+              headers: {
+                "X-API-KEY": OUTSCRAPER_API_KEY,
+              },
+            }
+          );
+
+          if (!reviewsResponse.ok) {
+            console.error(`Failed to fetch reviews for ${business.name}: ${reviewsResponse.status}`);
+            continue;
+          }
+
+          const reviewsResult = await reviewsResponse.json();
+          const fetchedReviews: OutscraperReview[] = [];
+
+          // Parse reviews from response
+          if (reviewsResult.data && Array.isArray(reviewsResult.data)) {
+            for (const biz of reviewsResult.data) {
+              if (biz.reviews_data && Array.isArray(biz.reviews_data)) {
+                for (const review of biz.reviews_data) {
+                  // Only include 4+ star reviews with text
+                  if (review.review_rating >= 4 && review.review_text) {
+                    fetchedReviews.push(review);
+                  }
+                }
+              }
+            }
+          }
+
+          if (fetchedReviews.length === 0) {
+            console.log(`No 4+ star reviews found for ${business.name}`);
+            continue;
+          }
+
+          // Take top 5 reviews
+          const topReviews = fetchedReviews
+            .sort((a, b) => (b.review_rating || 0) - (a.review_rating || 0))
+            .slice(0, 5);
+
+          // Delete old reviews for this business
+          await supabase
+            .from("business_reviews")
+            .delete()
+            .eq("business_id", business.id);
+
+          // Insert new reviews
+          const reviewInserts = topReviews.map((review) => ({
+            business_id: business.id,
+            author_name: review.author_title || review.autor_name || review.author_name || "Anonym",
+            author_image: review.author_image || review.autor_image || null,
+            rating: review.review_rating || 5,
+            review_text: review.review_text || null,
+            review_time: review.review_datetime_utc || review.review_timestamp || null,
+            likes: review.review_likes || 0,
+            fetched_at: new Date().toISOString(),
+          }));
+
+          const { error: insertError } = await supabase
+            .from("business_reviews")
+            .insert(reviewInserts);
+
+          if (insertError) {
+            console.error(`Error inserting reviews for ${business.name}:`, insertError);
+          } else {
+            partnerReviewsFetched += reviewInserts.length;
+            console.log(`Saved ${reviewInserts.length} reviews for featured partner: ${business.name}`);
+          }
+
+          // Small delay to avoid rate limiting
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+        } catch (err) {
+          console.error(`Error fetching reviews for ${business.name}:`, err);
+        }
+      }
+    }
+
+    console.log(`Total reviews fetched for featured partners: ${partnerReviewsFetched}`);
+
     // Summary
     const summary = {
       total: results.length,
@@ -989,6 +1142,8 @@ serve(async (req) => {
       duplicatesFiltered: skipReason.duplicateInBatch,
       subServicesUpdated: subServices?.length || 0,
       reviewsSaved: totalReviewsSaved,
+      featuredPartnersWithReviews: featuredPartnerIds.size,
+      partnerReviewsFetched,
     };
 
     console.log("=== FINAL SUMMARY ===");
