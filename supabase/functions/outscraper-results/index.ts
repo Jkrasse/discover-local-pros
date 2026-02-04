@@ -70,6 +70,14 @@ interface ImportResult {
   city?: string;
 }
 
+interface ProcessedBusiness {
+  gbpId: string;
+  businessData: Record<string, unknown>;
+  cityId: string;
+  cityName: string;
+  originalName: string;
+}
+
 function generateSlug(name: string): string {
   return name
     .toLowerCase()
@@ -185,45 +193,193 @@ async function ensureCitiesExist(
 ): Promise<Map<string, { id: string; name: string }>> {
   const cityMap = new Map<string, { id: string; name: string }>();
   
+  // Fetch all existing cities in one query
+  const { data: existingCities } = await supabase
+    .from("cities")
+    .select("id, name, slug");
+  
+  const existingByName = new Map<string, { id: string; name: string }>();
+  for (const city of (existingCities || []) as Array<{ id: string; name: string; slug: string }>) {
+    existingByName.set(normalizeCity(city.name), { id: city.id, name: city.name });
+  }
+  
+  const citiesToCreate: Array<{ name: string; slug: string }> = [];
+  
   for (const cityName of cityNames) {
     const trimmedName = cityName.trim();
     if (!trimmedName) continue;
     
     const normalizedName = normalizeCity(trimmedName);
     
-    // Check if city already exists
-    const { data: existing } = await supabase
-      .from("cities")
-      .select("id, name")
-      .ilike("name", trimmedName)
-      .maybeSingle();
-    
-    if (existing) {
-      cityMap.set(normalizedName, { id: existing.id, name: existing.name });
+    if (existingByName.has(normalizedName)) {
+      const existing = existingByName.get(normalizedName)!;
+      cityMap.set(normalizedName, existing);
       console.log(`City already exists: ${existing.name}`);
     } else {
-      // Create the city
-      const { data: newCity, error } = await supabase
-        .from("cities")
-        .insert({
-          name: trimmedName,
-          slug: generateSlug(trimmedName),
-          region: null,
-          population: null,
-        })
-        .select("id, name")
-        .single();
-      
-      if (error) {
-        console.error(`Failed to create city ${trimmedName}:`, error);
-      } else {
-        cityMap.set(normalizedName, { id: newCity.id, name: newCity.name });
-        console.log(`Created new city: ${newCity.name}`);
+      citiesToCreate.push({
+        name: trimmedName,
+        slug: generateSlug(trimmedName),
+      });
+    }
+  }
+  
+  // Batch insert new cities
+  if (citiesToCreate.length > 0) {
+    const { data: newCities, error } = await supabase
+      .from("cities")
+      .insert(citiesToCreate as any)
+      .select("id, name");
+    
+    if (error) {
+      console.error("Failed to batch create cities:", error);
+    } else {
+      for (const city of (newCities || []) as Array<{ id: string; name: string }>) {
+        cityMap.set(normalizeCity(city.name), { id: city.id, name: city.name });
+        console.log(`Created new city: ${city.name}`);
       }
     }
   }
   
   return cityMap;
+}
+
+// Process a single business from Outscraper response
+function processBusiness(
+  business: OutscraperBusiness,
+  allowedCityMap: Map<string, { id: string; name: string }>,
+  seenGbpIds: Set<string>,
+  skipReason: { noName: number; noCity: number; duplicateInBatch: number }
+): ProcessedBusiness | null {
+  // Skip if no name
+  if (!business.name) {
+    skipReason.noName++;
+    return null;
+  }
+
+  // Generate gbp_id - use place_id if available, otherwise create a deterministic synthetic ID
+  let gbpId = business.place_id;
+  if (!gbpId) {
+    const nameSlug = generateSlug(business.name);
+    const citySlug = generateSlug(business.city || "unknown");
+    const phoneHash = (business.phone || "").replace(/\D/g, "").slice(-8) || "";
+    const websiteHash = business.website || business.site
+      ? generateSlug(business.website || business.site || "").slice(0, 12)
+      : "";
+    const addressHash = business.full_address
+      ? generateSlug(business.full_address).slice(0, 12)
+      : "";
+    const coordsHash =
+      typeof business.latitude === "number" && typeof business.longitude === "number"
+        ? `${business.latitude.toFixed(4).replace(/\./g, "")}_${business.longitude.toFixed(4).replace(/\./g, "")}`
+        : "";
+    const identifier = phoneHash || websiteHash || addressHash || coordsHash || "na";
+    gbpId = `synthetic_${nameSlug}_${citySlug}_${identifier}`;
+  }
+
+  // Skip duplicates within this batch (same business from multiple query variants)
+  if (seenGbpIds.has(gbpId)) {
+    skipReason.duplicateInBatch++;
+    return null;
+  }
+  seenGbpIds.add(gbpId);
+
+  // Match city against allowed cities only (from the scrape input list)
+  const matchedCity = matchAllowedCity(business.city || "", allowedCityMap);
+
+  if (!matchedCity) {
+    skipReason.noCity++;
+    return null;
+  }
+
+  // Prepare categories
+  const categories: string[] = [];
+  if (business.category) categories.push(business.category);
+  if (business.subtypes) categories.push(...business.subtypes);
+
+  // Extract enrichment data (may be empty if enrichment was skipped)
+  const enrichedEmails: string[] = [];
+  if (business.email_1) enrichedEmails.push(business.email_1);
+  if (business.email_2) enrichedEmails.push(business.email_2);
+  if (business.email_3) enrichedEmails.push(business.email_3);
+  
+  if (enrichedEmails.length === 0) {
+    if (business.emails_and_contacts?.emails?.length) {
+      enrichedEmails.push(...business.emails_and_contacts.emails);
+    } else if (business.emails?.length) {
+      enrichedEmails.push(...business.emails);
+    } else if (business.email) {
+      enrichedEmails.push(business.email);
+    }
+  }
+  const primaryEmail = enrichedEmails[0] || null;
+  
+  const emailValidated = 
+    business["email_1.emails_validator.status"] === "VALID" ||
+    business.emails_validator?.some(e => e.is_valid) || 
+    false;
+
+  const facebook = business.emails_and_contacts?.facebook || business.facebook || null;
+  const instagram = business.emails_and_contacts?.instagram || business.instagram || null;
+  const linkedin = business.emails_and_contacts?.linkedin || business.linkedin || null;
+  const twitter = business.emails_and_contacts?.twitter || business.twitter || null;
+  const youtube = business.emails_and_contacts?.youtube || business.youtube || null;
+
+  const employeeCount = 
+    (business["company_insights.employees_range"] as string) ||
+    business.company_insights?.employees_range || 
+    business.employees_range || 
+    business.employees || 
+    null;
+  const foundedYear = 
+    (business["company_insights.founded_year"] as number) ||
+    business.company_insights?.founded_year || 
+    business.founded_year || 
+    null;
+  const industry = 
+    (business["company_insights.industry"] as string) ||
+    business.company_insights?.industry || 
+    business.industry || 
+    null;
+
+  // Prepare business data
+  const businessData = {
+    gbp_id: gbpId,
+    name: business.name,
+    slug: generateSlug(business.name),
+    phone: business.phone || null,
+    website: business.website || business.site || null,
+    address: business.full_address || null,
+    city_id: matchedCity.id,
+    rating: business.rating || null,
+    review_count: business.reviews || 0,
+    lat: business.latitude || null,
+    lng: business.longitude || null,
+    opening_hours: business.working_hours || null,
+    categories: categories.length > 0 ? categories : null,
+    description: business.description || business.about || null,
+    images: business.photos?.slice(0, 5) || null,
+    is_active: true,
+    verified: false,
+    email: primaryEmail,
+    emails: enrichedEmails.length > 0 ? enrichedEmails : null,
+    facebook,
+    instagram,
+    linkedin,
+    twitter,
+    youtube,
+    employee_count: employeeCount,
+    founded_year: foundedYear,
+    industry,
+    email_verified: emailValidated,
+  };
+
+  return {
+    gbpId,
+    businessData,
+    cityId: matchedCity.id,
+    cityName: matchedCity.name,
+    originalName: business.name,
+  };
 }
 
 serve(async (req) => {
@@ -256,8 +412,6 @@ serve(async (req) => {
     const allowedCities: string[] = Array.isArray(inputCities) ? inputCities.filter(c => typeof c === 'string' && c.trim()) : [];
 
     // Check status from Outscraper
-    // Outscraper returns `results_location` on the search response (often on api.outscraper.cloud).
-    // Using api.outscraper.cloud first avoids DNS issues seen with api.app.outscraper.com in some runtimes.
     const statusUrls = [
       `https://api.outscraper.cloud/requests/${requestId}`,
       `https://api.app.outscraper.com/requests/${requestId}`,
@@ -313,7 +467,6 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Create cities from the input list (the cities the user specified in the scrape form)
-    // These are the ONLY cities that will have landing pages and businesses
     let allowedCityMap: Map<string, { id: string; name: string }>;
     
     if (allowedCities.length > 0) {
@@ -334,21 +487,18 @@ serve(async (req) => {
 
     const results: ImportResult[] = [];
     const affectedCities = new Set<string>();
-    
 
     // Outscraper returns an array of arrays (one per query)
     const allData = statusResult.data || [];
 
     // === DETAILED LOGGING: Understand what Outscraper returned ===
     const queryArrayCount = Array.isArray(allData) ? allData.length : 0;
-    const perQueryCounts: number[] = [];
     let totalRawResults = 0;
 
     if (Array.isArray(allData)) {
       for (let i = 0; i < allData.length; i++) {
         const queryResults = allData[i];
         const count = Array.isArray(queryResults) ? queryResults.length : 0;
-        perQueryCounts.push(count);
         totalRawResults += count;
       }
     }
@@ -356,16 +506,18 @@ serve(async (req) => {
     console.log("=== OUTSCRAPER DATA ANALYSIS ===");
     console.log(`Total queries returned: ${queryArrayCount}`);
     console.log(`Total raw items: ${totalRawResults}`);
-    console.log(`Per-query counts: ${JSON.stringify(perQueryCounts)}`);
     console.log("================================");
 
     // Track seen business IDs to avoid processing duplicates within this import
     const seenGbpIds = new Set<string>();
-    let skipReason = {
+    const skipReason = {
       noName: 0,
       noCity: 0,
       duplicateInBatch: 0,
     };
+
+    // PHASE 1: Process all businesses and collect them for batch operations
+    const processedBusinesses: ProcessedBusiness[] = [];
 
     for (let queryIdx = 0; queryIdx < allData.length; queryIdx++) {
       const queryResults = allData[queryIdx];
@@ -377,222 +529,167 @@ serve(async (req) => {
       console.log(`Query ${queryIdx}: Processing ${queryResults.length} items`);
 
       for (const business of queryResults as OutscraperBusiness[]) {
-        // Debug: Log first few businesses from each query to see data shape
-        if (results.length < 3) {
-          console.log(`=== SAMPLE BUSINESS (query ${queryIdx}, item ${results.length}) ===`);
-          console.log(JSON.stringify({
-            name: business.name,
-            place_id: business.place_id,
-            city: business.city,
-            full_address: business.full_address,
-            phone: business.phone,
-            website: business.website || business.site,
-            rating: business.rating,
-            reviews: business.reviews,
-          }, null, 2));
+        const processed = processBusiness(business, allowedCityMap, seenGbpIds, skipReason);
+        if (processed) {
+          processedBusinesses.push(processed);
+          affectedCities.add(processed.cityId);
         }
+      }
+    }
 
-        // Skip if no name
-        if (!business.name) {
-          skipReason.noName++;
-          continue;
-        }
+    console.log(`Processed ${processedBusinesses.length} unique businesses`);
 
-        // Generate gbp_id - use place_id if available, otherwise create a deterministic synthetic ID
-        let gbpId = business.place_id;
-        if (!gbpId) {
-          const nameSlug = generateSlug(business.name);
-          const citySlug = generateSlug(business.city || "unknown");
-          const phoneHash = (business.phone || "").replace(/\D/g, "").slice(-8) || "";
-          const websiteHash = business.website || business.site
-            ? generateSlug(business.website || business.site || "").slice(0, 12)
-            : "";
-          const addressHash = business.full_address
-            ? generateSlug(business.full_address).slice(0, 12)
-            : "";
-          const coordsHash =
-            typeof business.latitude === "number" && typeof business.longitude === "number"
-              ? `${business.latitude.toFixed(4).replace(/\./g, "")}_${business.longitude.toFixed(4).replace(/\./g, "")}`
-              : "";
-          const identifier = phoneHash || websiteHash || addressHash || coordsHash || "na";
-          gbpId = `synthetic_${nameSlug}_${citySlug}_${identifier}`;
-        }
+    // PHASE 2: Batch lookup existing businesses by gbp_id
+    const gbpIds = processedBusinesses.map(b => b.gbpId);
+    const existingBusinessMap = new Map<string, { id: string; city_id: string }>();
 
-        // Skip duplicates within this batch (same business from multiple query variants)
-        if (seenGbpIds.has(gbpId)) {
-          skipReason.duplicateInBatch++;
-          continue;
-        }
-        seenGbpIds.add(gbpId);
+    // Batch fetch in chunks of 500 (Supabase limit for IN queries)
+    const BATCH_SIZE = 500;
+    for (let i = 0; i < gbpIds.length; i += BATCH_SIZE) {
+      const batchIds = gbpIds.slice(i, i + BATCH_SIZE);
+      const { data: existingBatch } = await supabase
+        .from("businesses")
+        .select("id, gbp_id, city_id")
+        .in("gbp_id", batchIds);
 
-        // Match city against allowed cities only (from the scrape input list)
-        const matchedCity = matchAllowedCity(business.city || "", allowedCityMap);
+      for (const biz of existingBatch || []) {
+        existingBusinessMap.set(biz.gbp_id, { id: biz.id, city_id: biz.city_id });
+      }
+    }
 
-        if (!matchedCity) {
-          skipReason.noCity++;
-          results.push({
-            name: business.name,
-            status: "skipped",
-            message: `City not in allowed list: ${business.city}`,
-            city: business.city,
-          });
-          continue;
-        }
+    console.log(`Found ${existingBusinessMap.size} existing businesses`);
 
-        affectedCities.add(matchedCity.id);
+    // PHASE 3: Separate businesses into inserts and updates
+    const toInsert: Array<Record<string, unknown>> = [];
+    const toUpdate: Array<{ gbpId: string; data: Record<string, unknown>; existingId: string }> = [];
+    const businessToGbpId = new Map<ProcessedBusiness, string>();
 
-        // Prepare categories
-        const categories: string[] = [];
-        if (business.category) categories.push(business.category);
-        if (business.subtypes) categories.push(...business.subtypes);
+    for (const processed of processedBusinesses) {
+      businessToGbpId.set(processed, processed.gbpId);
+      const existing = existingBusinessMap.get(processed.gbpId);
 
-        // Extract enrichment data (may be empty if enrichment was skipped)
-        const enrichedEmails: string[] = [];
-        if (business.email_1) enrichedEmails.push(business.email_1);
-        if (business.email_2) enrichedEmails.push(business.email_2);
-        if (business.email_3) enrichedEmails.push(business.email_3);
-        
-        if (enrichedEmails.length === 0) {
-          if (business.emails_and_contacts?.emails?.length) {
-            enrichedEmails.push(...business.emails_and_contacts.emails);
-          } else if (business.emails?.length) {
-            enrichedEmails.push(...business.emails);
-          } else if (business.email) {
-            enrichedEmails.push(business.email);
-          }
-        }
-        const primaryEmail = enrichedEmails[0] || null;
-        
-        const emailValidated = 
-          business["email_1.emails_validator.status"] === "VALID" ||
-          business.emails_validator?.some(e => e.is_valid) || 
-          false;
+      if (existing) {
+        // Update existing - don't change city_id
+        const { city_id: _unused, ...updateData } = processed.businessData;
+        toUpdate.push({
+          gbpId: processed.gbpId,
+          data: updateData,
+          existingId: existing.id,
+        });
+        results.push({
+          name: processed.originalName,
+          status: "updated",
+          message: existing.city_id !== processed.cityId 
+            ? `Also added coverage for ${processed.cityName}` 
+            : undefined,
+          city: processed.cityName,
+        });
+      } else {
+        toInsert.push(processed.businessData);
+      }
+    }
 
-        const facebook = business.emails_and_contacts?.facebook || business.facebook || null;
-        const instagram = business.emails_and_contacts?.instagram || business.instagram || null;
-        const linkedin = business.emails_and_contacts?.linkedin || business.linkedin || null;
-        const twitter = business.emails_and_contacts?.twitter || business.twitter || null;
-        const youtube = business.emails_and_contacts?.youtube || business.youtube || null;
+    // PHASE 4: Batch insert new businesses
+    const insertedBusinessMap = new Map<string, string>(); // gbp_id -> id
 
-        const employeeCount = 
-          (business["company_insights.employees_range"] as string) ||
-          business.company_insights?.employees_range || 
-          business.employees_range || 
-          business.employees || 
-          null;
-        const foundedYear = 
-          (business["company_insights.founded_year"] as number) ||
-          business.company_insights?.founded_year || 
-          business.founded_year || 
-          null;
-        const industry = 
-          (business["company_insights.industry"] as string) ||
-          business.company_insights?.industry || 
-          business.industry || 
-          null;
+    if (toInsert.length > 0) {
+      console.log(`Batch inserting ${toInsert.length} new businesses...`);
+      
+      // Insert in batches of 100
+      for (let i = 0; i < toInsert.length; i += 100) {
+        const batch = toInsert.slice(i, i + 100);
+        const { data: inserted, error: insertError } = await supabase
+          .from("businesses")
+          .insert(batch)
+          .select("id, gbp_id");
 
-        // Prepare business data
-        const businessData = {
-          gbp_id: gbpId,
-          name: business.name,
-          slug: generateSlug(business.name),
-          phone: business.phone || null,
-          website: business.website || business.site || null,
-          address: business.full_address || null,
-          city_id: matchedCity.id,
-          rating: business.rating || null,
-          review_count: business.reviews || 0,
-          lat: business.latitude || null,
-          lng: business.longitude || null,
-          opening_hours: business.working_hours || null,
-          categories: categories.length > 0 ? categories : null,
-          description: business.description || business.about || null,
-          images: business.photos?.slice(0, 5) || null,
-          is_active: true,
-          verified: false,
-          email: primaryEmail,
-          emails: enrichedEmails.length > 0 ? enrichedEmails : null,
-          facebook,
-          instagram,
-          linkedin,
-          twitter,
-          youtube,
-          employee_count: employeeCount,
-          founded_year: foundedYear,
-          industry,
-          email_verified: emailValidated,
-        };
-
-        try {
-          // Check if business exists (by gbp_id)
-          const { data: existing } = await supabase
-            .from("businesses")
-            .select("id, city_id")
-            .eq("gbp_id", gbpId)
-            .maybeSingle();
-
-          let businessId: string;
-
-          if (existing) {
-            // Business exists - update non-geographic data only
-            const { city_id: _unusedCityId, ...updateData } = businessData;
-            
-            const { error: updateError } = await supabase
-              .from("businesses")
-              .update(updateData)
-              .eq("id", existing.id);
-
-            if (updateError) throw updateError;
-            businessId = existing.id;
-
-            const isNewCityForBusiness = existing.city_id !== matchedCity.id;
-
+        if (insertError) {
+          console.error("Batch insert error:", insertError);
+          // Mark all in batch as errors
+          for (const biz of batch) {
             results.push({
-              name: business.name,
-              status: "updated",
-              message: isNewCityForBusiness 
-                ? `Also added coverage for ${matchedCity.name}` 
-                : undefined,
-              city: matchedCity.name,
+              name: biz.name as string,
+              status: "error",
+              message: insertError.message,
+              city: processedBusinesses.find(p => p.gbpId === biz.gbp_id)?.cityName,
             });
-          } else {
-            // Insert new business
-            const { data: inserted, error: insertError } = await supabase
-              .from("businesses")
-              .insert(businessData)
-              .select("id")
-              .single();
-
-            if (insertError) throw insertError;
-            businessId = inserted.id;
-
+          }
+        } else {
+          for (const biz of inserted || []) {
+            insertedBusinessMap.set(biz.gbp_id, biz.id);
+            const processed = processedBusinesses.find(p => p.gbpId === biz.gbp_id);
             results.push({
-              name: business.name,
+              name: processed?.originalName || "Unknown",
               status: "created",
-              city: matchedCity.name,
+              city: processed?.cityName,
             });
           }
-
-          // Create service coverage for this city
-          await supabase.from("business_service_coverage").upsert(
-            {
-              business_id: businessId,
-              service_id: serviceId,
-              city_id: matchedCity.id,
-              is_primary: !existing,
-            },
-            { onConflict: "business_id,service_id,city_id" }
-          );
-
-        } catch (err) {
-          console.error("Error importing business:", business.name, err);
-          results.push({
-            name: business.name,
-            status: "error",
-            message: err instanceof Error ? err.message : "Unknown error",
-            city: matchedCity.name,
-          });
         }
+      }
+    }
+
+    // PHASE 5: Batch update existing businesses
+    if (toUpdate.length > 0) {
+      console.log(`Updating ${toUpdate.length} existing businesses...`);
+      
+      // Updates need to be done individually due to different data per record
+      // But we can do them concurrently in small batches
+      const updatePromises = toUpdate.map(async ({ data, existingId }) => {
+        const { error } = await supabase
+          .from("businesses")
+          .update(data)
+          .eq("id", existingId);
+        return { existingId, error };
+      });
+
+      // Execute updates with concurrency limit of 10
+      const updateChunks = [];
+      for (let i = 0; i < updatePromises.length; i += 10) {
+        const chunk = updatePromises.slice(i, i + 10);
+        updateChunks.push(Promise.all(chunk));
+      }
+      
+      for (const chunk of updateChunks) {
+        const chunkResults = await chunk;
+        for (const result of chunkResults) {
+          if (result.error) {
+            console.error(`Update error for ${result.existingId}:`, result.error);
+          }
+        }
+      }
+    }
+
+    // PHASE 6: Create service coverage records in batch
+    const coverageRecords: Array<{
+      business_id: string;
+      service_id: string;
+      city_id: string;
+      is_primary: boolean;
+    }> = [];
+
+    for (const processed of processedBusinesses) {
+      const existing = existingBusinessMap.get(processed.gbpId);
+      const businessId = existing?.id || insertedBusinessMap.get(processed.gbpId);
+
+      if (businessId) {
+        coverageRecords.push({
+          business_id: businessId,
+          service_id: serviceId,
+          city_id: processed.cityId,
+          is_primary: !existing,
+        });
+      }
+    }
+
+    if (coverageRecords.length > 0) {
+      console.log(`Upserting ${coverageRecords.length} coverage records...`);
+      
+      // Batch upsert in chunks of 100
+      for (let i = 0; i < coverageRecords.length; i += 100) {
+        const batch = coverageRecords.slice(i, i + 100);
+        await supabase
+          .from("business_service_coverage")
+          .upsert(batch, { onConflict: "business_id,service_id,city_id" });
       }
     }
 
@@ -603,55 +700,121 @@ serve(async (req) => {
     console.log(`Duplicate in batch: ${skipReason.duplicateInBatch}`);
     console.log("====================");
 
-    // Create featured slots for affected cities
+    // PHASE 7: Handle featured slots - select ONE random partner for ALL cities and sub-services
+    // Fetch all sub-services for this main service
+    const { data: subServices } = await supabase
+      .from("services")
+      .select("id")
+      .eq("parent_service_id", serviceId);
+
+    const allServiceIds = [serviceId, ...(subServices || []).map(s => s.id)];
+    console.log(`Creating featured slots for ${allServiceIds.length} services (main + ${(subServices || []).length} sub-services)`);
+
+    // First, pick ONE random business from all imported businesses to be the featured partner
+    let selectedPartnerId: string | null = null;
+    
+    // Get all business IDs that were imported/updated
+    const allBusinessIds = [
+      ...Array.from(insertedBusinessMap.values()),
+      ...toUpdate.map(u => u.existingId)
+    ];
+
+    if (allBusinessIds.length > 0) {
+      const randomIndex = Math.floor(Math.random() * allBusinessIds.length);
+      selectedPartnerId = allBusinessIds[randomIndex];
+      console.log(`Selected random partner for all slots: ${selectedPartnerId}`);
+    }
+
+    // Check if there's already a featured partner for this service (any city)
+    // If so, use that partner for consistency
+    const { data: existingFeatured } = await supabase
+      .from("featured_slots")
+      .select("business_id")
+      .eq("service_id", serviceId)
+      .eq("status", "active")
+      .not("business_id", "is", null)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingFeatured?.business_id) {
+      selectedPartnerId = existingFeatured.business_id;
+      console.log(`Using existing featured partner: ${selectedPartnerId}`);
+    }
+
+    // Create/update featured slots for ALL affected cities and ALL services (main + sub-services)
     for (const cityId of affectedCities) {
-      const { data: existingSlot } = await supabase
-        .from("featured_slots")
-        .select("id, business_id, status")
-        .eq("city_id", cityId)
-        .eq("service_id", serviceId)
-        .maybeSingle();
-
-      if (!existingSlot) {
-        const { data: coverages } = await supabase
-          .from("business_service_coverage")
-          .select("business_id")
+      for (const svcId of allServiceIds) {
+        const { data: existingSlot } = await supabase
+          .from("featured_slots")
+          .select("id, business_id, status")
           .eq("city_id", cityId)
-          .eq("service_id", serviceId);
+          .eq("service_id", svcId)
+          .maybeSingle();
 
-        let randomBusinessId: string | null = null;
-        if (coverages && coverages.length > 0) {
-          const randomIndex = Math.floor(Math.random() * coverages.length);
-          randomBusinessId = coverages[randomIndex].business_id;
+        if (!existingSlot) {
+          // Create new slot with the selected partner
+          await supabase.from("featured_slots").insert({
+            city_id: cityId,
+            service_id: svcId,
+            business_id: selectedPartnerId,
+            status: selectedPartnerId ? "active" : "pending",
+            is_placeholder: true,
+          });
+          console.log(`Created featured slot for city ${cityId}, service ${svcId}`);
+        } else if (!existingSlot.business_id || existingSlot.status === "pending") {
+          // Update pending slot with the selected partner
+          if (selectedPartnerId) {
+            await supabase
+              .from("featured_slots")
+              .update({
+                business_id: selectedPartnerId,
+                status: "active",
+                is_placeholder: true,
+              })
+              .eq("id", existingSlot.id);
+            console.log(`Updated featured slot ${existingSlot.id} with partner ${selectedPartnerId}`);
+          }
         }
+        // If slot already has a business and is active, leave it unchanged
+      }
+    }
 
-        await supabase.from("featured_slots").insert({
-          city_id: cityId,
-          service_id: serviceId,
-          business_id: randomBusinessId,
-          status: randomBusinessId ? "active" : "pending",
-          is_placeholder: true,
-        });
-      } else if (!existingSlot.business_id || existingSlot.status === "pending") {
-        const { data: coverages } = await supabase
-          .from("business_service_coverage")
-          .select("business_id")
-          .eq("city_id", cityId)
-          .eq("service_id", serviceId);
+    // Also create coverage records for sub-services
+    if (subServices && subServices.length > 0) {
+      console.log(`Creating coverage for ${subServices.length} sub-services...`);
+      
+      const subServiceCoverages: Array<{
+        business_id: string;
+        service_id: string;
+        city_id: string;
+        is_primary: boolean;
+      }> = [];
 
-        if (coverages && coverages.length > 0) {
-          const randomIndex = Math.floor(Math.random() * coverages.length);
-          const randomBusinessId = coverages[randomIndex].business_id;
+      for (const processed of processedBusinesses) {
+        const existing = existingBusinessMap.get(processed.gbpId);
+        const businessId = existing?.id || insertedBusinessMap.get(processed.gbpId);
 
+        if (businessId) {
+          for (const subService of subServices) {
+            subServiceCoverages.push({
+              business_id: businessId,
+              service_id: subService.id,
+              city_id: processed.cityId,
+              is_primary: false,
+            });
+          }
+        }
+      }
+
+      if (subServiceCoverages.length > 0) {
+        // Batch upsert in chunks of 100
+        for (let i = 0; i < subServiceCoverages.length; i += 100) {
+          const batch = subServiceCoverages.slice(i, i + 100);
           await supabase
-            .from("featured_slots")
-            .update({
-              business_id: randomBusinessId,
-              status: "active",
-              is_placeholder: true,
-            })
-            .eq("id", existingSlot.id);
+            .from("business_service_coverage")
+            .upsert(batch, { onConflict: "business_id,service_id,city_id" });
         }
+        console.log(`Upserted ${subServiceCoverages.length} sub-service coverage records`);
       }
     }
 
@@ -666,6 +829,7 @@ serve(async (req) => {
       skippedNoCityInDb: skipReason.noCity,
       rawItemsFromOutscraper: totalRawResults,
       duplicatesFiltered: skipReason.duplicateInBatch,
+      subServicesUpdated: subServices?.length || 0,
     };
 
     console.log("=== FINAL SUMMARY ===");
