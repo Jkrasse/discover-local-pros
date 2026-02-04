@@ -79,7 +79,7 @@ serve(async (req) => {
     // NOTE: We intentionally skip enrichment for better raw result volume.
     // Enrichment can be done in a second pass if needed.
     
-    // Try multiple API endpoints (DNS issues can affect different hosts)
+    // Try multiple API endpoints with retry logic for transient DNS issues
     const apiUrls = [
       "https://api.outscraper.cloud/maps/search-v3",
       "https://api.app.outscraper.com/maps/search-v3",
@@ -93,33 +93,55 @@ serve(async (req) => {
       async: true,
     });
     
+    // Helper function for delay
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    
+    // Retry logic with exponential backoff
+    const MAX_RETRIES = 3;
     let response: Response | null = null;
     let lastError: Error | null = null;
     
-    for (const url of apiUrls) {
-      try {
-        console.log(`Trying Outscraper API at: ${url}`);
-        response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "X-API-KEY": OUTSCRAPER_API_KEY,
-            "Content-Type": "application/json",
-          },
-          body: requestBody,
-        });
-        if (response.ok) {
-          console.log(`Successfully connected to: ${url}`);
-          break;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      for (const url of apiUrls) {
+        try {
+          console.log(`Attempt ${attempt}/${MAX_RETRIES}: Trying Outscraper API at: ${url}`);
+          response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "X-API-KEY": OUTSCRAPER_API_KEY,
+              "Content-Type": "application/json",
+            },
+            body: requestBody,
+          });
+          if (response.ok) {
+            console.log(`Successfully connected to: ${url} on attempt ${attempt}`);
+            break;
+          } else {
+            console.log(`Non-OK response from ${url}: ${response.status}`);
+          }
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          console.error(`Failed to connect to ${url} (attempt ${attempt}):`, errorMsg);
+          lastError = err instanceof Error ? err : new Error(String(err));
+          response = null;
         }
-      } catch (err) {
-        console.error(`Failed to connect to ${url}:`, err);
-        lastError = err instanceof Error ? err : new Error(String(err));
-        response = null;
+      }
+      
+      // If we got a successful response, break out of retry loop
+      if (response?.ok) {
+        break;
+      }
+      
+      // If not the last attempt, wait before retrying (exponential backoff)
+      if (attempt < MAX_RETRIES) {
+        const waitTime = attempt * 2000; // 2s, 4s
+        console.log(`Waiting ${waitTime}ms before retry...`);
+        await delay(waitTime);
       }
     }
     
     if (!response) {
-      throw lastError || new Error("Failed to connect to Outscraper API");
+      throw lastError || new Error("Failed to connect to Outscraper API after multiple retries");
     }
 
     if (!response.ok) {
