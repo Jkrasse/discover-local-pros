@@ -811,7 +811,9 @@ serve(async (req) => {
     console.log("====================");
 
 
-    // PHASE 7: Handle featured slots - select ONE random partner for ALL cities and sub-services
+    // PHASE 7: Handle featured slots
+    // IMPORTANT: Featured partner must be chosen PER CITY (not globally), and must belong to that city.
+    // We reuse the same partner across sub-services within the same city for consistency.
     // Fetch all sub-services for this main service
     const { data: subServices } = await supabase
       .from("services")
@@ -821,72 +823,117 @@ serve(async (req) => {
     const allServiceIds = [serviceId, ...(subServices || []).map(s => s.id)];
     console.log(`Creating featured slots for ${allServiceIds.length} services (main + ${(subServices || []).length} sub-services)`);
 
-    // First, pick ONE random business from all imported businesses to be the featured partner
-    let selectedPartnerId: string | null = null;
-    
-    // Get all business IDs that were imported/updated
-    const allBusinessIds = [
-      ...Array.from(insertedBusinessMap.values()),
-      ...toUpdate.map(u => u.existingId)
-    ];
+    // Build a lookup of business IDs imported/updated in THIS run, grouped per city.
+    // This lets us select a city-local partner without extra DB lookups.
+    const businessIdsByCity = new Map<string, string[]>();
+    for (const processed of processedBusinesses) {
+      const existing = existingBusinessMap.get(processed.gbpId);
+      const businessId = existing?.id || insertedBusinessMap.get(processed.gbpId);
+      if (!businessId) continue;
 
-    if (allBusinessIds.length > 0) {
-      const randomIndex = Math.floor(Math.random() * allBusinessIds.length);
-      selectedPartnerId = allBusinessIds[randomIndex];
-      console.log(`Selected random partner for all slots: ${selectedPartnerId}`);
+      const list = businessIdsByCity.get(processed.cityId) || [];
+      list.push(businessId);
+      businessIdsByCity.set(processed.cityId, list);
     }
-
-    // Check if there's already a featured partner for this service (any city)
-    // If so, use that partner for consistency
-    const { data: existingFeatured } = await supabase
-      .from("featured_slots")
-      .select("business_id")
-      .eq("service_id", serviceId)
-      .eq("status", "active")
-      .not("business_id", "is", null)
-      .limit(1)
-      .maybeSingle();
-
-    if (existingFeatured?.business_id) {
-      selectedPartnerId = existingFeatured.business_id;
-      console.log(`Using existing featured partner: ${selectedPartnerId}`);
+    // Dedupe
+    for (const [cityId, ids] of businessIdsByCity.entries()) {
+      businessIdsByCity.set(cityId, Array.from(new Set(ids)));
     }
 
     // Create/update featured slots for ALL affected cities and ALL services (main + sub-services)
     for (const cityId of affectedCities) {
+      let selectedPartnerIdForCity: string | null = null;
+
+      // 1) Reuse existing city-local featured partner for the MAIN service (if present and correct)
+      //    This avoids churn if the city already has a good featured partner.
+      const { data: existingCityFeatured } = await supabase
+        .from("featured_slots")
+        .select("business_id, is_placeholder, business:businesses(city_id)")
+        .eq("city_id", cityId)
+        .eq("service_id", serviceId)
+        .eq("status", "active")
+        .not("business_id", "is", null)
+        .limit(1)
+        .maybeSingle();
+
+      if (
+        existingCityFeatured?.business_id &&
+        (existingCityFeatured as any).business?.city_id === cityId
+      ) {
+        selectedPartnerIdForCity = existingCityFeatured.business_id;
+        console.log(`Reusing existing city-local featured partner for city ${cityId}: ${selectedPartnerIdForCity}`);
+      }
+
+      // 2) Otherwise pick a random business from this run for THIS city
+      if (!selectedPartnerIdForCity) {
+        const cityBusinessIds = businessIdsByCity.get(cityId) || [];
+        if (cityBusinessIds.length > 0) {
+          selectedPartnerIdForCity = cityBusinessIds[Math.floor(Math.random() * cityBusinessIds.length)];
+          console.log(`Selected run-local partner for city ${cityId}: ${selectedPartnerIdForCity}`);
+        }
+      }
+
+      // 3) Last resort: pick any active business in the city (if available)
+      if (!selectedPartnerIdForCity) {
+        const { data: fallbackBusinesses } = await supabase
+          .from("businesses")
+          .select("id")
+          .eq("city_id", cityId)
+          .eq("is_active", true)
+          .limit(10);
+
+        if (fallbackBusinesses && fallbackBusinesses.length > 0) {
+          selectedPartnerIdForCity = (fallbackBusinesses as Array<{ id: string }>)[
+            Math.floor(Math.random() * fallbackBusinesses.length)
+          ].id;
+          console.log(`Selected fallback city partner for city ${cityId}: ${selectedPartnerIdForCity}`);
+        }
+      }
+
       for (const svcId of allServiceIds) {
         const { data: existingSlot } = await supabase
           .from("featured_slots")
-          .select("id, business_id, status")
+          .select("id, business_id, status, is_placeholder, business:businesses(city_id)")
           .eq("city_id", cityId)
           .eq("service_id", svcId)
           .maybeSingle();
 
         if (!existingSlot) {
-          // Create new slot with the selected partner
           await supabase.from("featured_slots").insert({
             city_id: cityId,
             service_id: svcId,
-            business_id: selectedPartnerId,
-            status: selectedPartnerId ? "active" : "pending",
+            business_id: selectedPartnerIdForCity,
+            status: selectedPartnerIdForCity ? "active" : "pending",
             is_placeholder: true,
           });
           console.log(`Created featured slot for city ${cityId}, service ${svcId}`);
-        } else if (!existingSlot.business_id || existingSlot.status === "pending") {
-          // Update pending slot with the selected partner
-          if (selectedPartnerId) {
-            await supabase
-              .from("featured_slots")
-              .update({
-                business_id: selectedPartnerId,
-                status: "active",
-                is_placeholder: true,
-              })
-              .eq("id", existingSlot.id);
-            console.log(`Updated featured slot ${existingSlot.id} with partner ${selectedPartnerId}`);
-          }
+          continue;
         }
-        // If slot already has a business and is active, leave it unchanged
+
+        // If slot exists and is a placeholder, we may fix it if it's missing a business, pending,
+        // or points to a business in the wrong city.
+        const existingBusinessCityId = (existingSlot as any).business?.city_id as string | undefined;
+        const hasWrongCity = !!(
+          existingSlot.business_id &&
+          existingBusinessCityId &&
+          existingBusinessCityId !== cityId
+        );
+
+        const canUpdatePlaceholder = existingSlot.is_placeholder === true;
+        const needsFix = !existingSlot.business_id || existingSlot.status === "pending" || hasWrongCity;
+
+        if (canUpdatePlaceholder && needsFix && selectedPartnerIdForCity) {
+          await supabase
+            .from("featured_slots")
+            .update({
+              business_id: selectedPartnerIdForCity,
+              status: "active",
+              is_placeholder: true,
+            })
+            .eq("id", existingSlot.id);
+          console.log(`Fixed featured slot ${existingSlot.id} for city ${cityId}, service ${svcId} => ${selectedPartnerIdForCity}`);
+        }
+        // If slot is not a placeholder (paid/manual), or no partner is available, leave it unchanged.
       }
     }
 
