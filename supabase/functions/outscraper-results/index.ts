@@ -6,6 +6,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface OutscraperReview {
+  author_title?: string;
+  autor_name?: string;
+  author_name?: string;
+  author_image?: string;
+  autor_image?: string;
+  review_rating?: number;
+  review_text?: string;
+  review_datetime_utc?: string;
+  review_timestamp?: string;
+  review_likes?: number;
+}
+
 interface OutscraperBusiness {
   place_id?: string;
   name?: string;
@@ -16,6 +29,7 @@ interface OutscraperBusiness {
   city?: string;
   rating?: number;
   reviews?: number;
+  reviews_data?: OutscraperReview[];
   latitude?: number;
   longitude?: number;
   working_hours?: Record<string, string>;
@@ -76,6 +90,7 @@ interface ProcessedBusiness {
   cityId: string;
   cityName: string;
   originalName: string;
+  reviews?: OutscraperReview[];
 }
 
 function generateSlug(name: string): string {
@@ -379,6 +394,7 @@ function processBusiness(
     cityId: matchedCity.id,
     cityName: matchedCity.name,
     originalName: business.name,
+    reviews: business.reviews_data || [],
   };
 }
 
@@ -713,12 +729,87 @@ serve(async (req) => {
       }
     }
 
+    // PHASE 6.5: Save reviews for imported businesses
+    console.log("=== PHASE 6.5: Saving reviews ===");
+    let totalReviewsSaved = 0;
+    
+    const reviewRecords: Array<{
+      business_id: string;
+      author_name: string;
+      author_image: string | null;
+      rating: number;
+      review_text: string | null;
+      review_time: string | null;
+      likes: number;
+      fetched_at: string;
+    }> = [];
+
+    for (const processed of processedBusinesses) {
+      const existing = existingBusinessMap.get(processed.gbpId);
+      const businessId = existing?.id || insertedBusinessMap.get(processed.gbpId);
+
+      if (businessId && processed.reviews && processed.reviews.length > 0) {
+        // Filter to only include reviews with 4+ stars
+        const topReviews = processed.reviews
+          .filter(r => r.review_rating && r.review_rating >= 4 && r.review_text)
+          .slice(0, 5); // Max 5 reviews per business
+
+        for (const review of topReviews) {
+          reviewRecords.push({
+            business_id: businessId,
+            author_name: review.author_title || review.autor_name || review.author_name || "Anonym",
+            author_image: review.author_image || review.autor_image || null,
+            rating: review.review_rating || 5,
+            review_text: review.review_text || null,
+            review_time: review.review_datetime_utc || review.review_timestamp || null,
+            likes: review.review_likes || 0,
+            fetched_at: new Date().toISOString(),
+          });
+        }
+      }
+    }
+
+    if (reviewRecords.length > 0) {
+      console.log(`Saving ${reviewRecords.length} reviews...`);
+      
+      // Get unique business IDs from review records
+      const businessIdsWithReviews = [...new Set(reviewRecords.map(r => r.business_id))];
+      
+      // Delete existing reviews for these businesses (to replace with fresh data)
+      for (let i = 0; i < businessIdsWithReviews.length; i += 100) {
+        const batch = businessIdsWithReviews.slice(i, i + 100);
+        await supabase
+          .from("business_reviews")
+          .delete()
+          .in("business_id", batch);
+      }
+
+      // Insert new reviews in batches
+      for (let i = 0; i < reviewRecords.length; i += 100) {
+        const batch = reviewRecords.slice(i, i + 100);
+        const { error: insertError } = await supabase
+          .from("business_reviews")
+          .insert(batch);
+        
+        if (insertError) {
+          console.error("Error inserting reviews:", insertError);
+        } else {
+          totalReviewsSaved += batch.length;
+        }
+      }
+      
+      console.log(`Successfully saved ${totalReviewsSaved} reviews`);
+    } else {
+      console.log("No reviews to save (reviews may not be included in scrape results)");
+    }
+
     // Log skip reasons
     console.log("=== SKIP REASONS ===");
     console.log(`No name: ${skipReason.noName}`);
     console.log(`No city: ${skipReason.noCity}`);
     console.log(`Duplicate in batch: ${skipReason.duplicateInBatch}`);
     console.log("====================");
+
 
     // PHASE 7: Handle featured slots - select ONE random partner for ALL cities and sub-services
     // Fetch all sub-services for this main service
@@ -850,6 +941,7 @@ serve(async (req) => {
       rawItemsFromOutscraper: totalRawResults,
       duplicatesFiltered: skipReason.duplicateInBatch,
       subServicesUpdated: subServices?.length || 0,
+      reviewsSaved: totalReviewsSaved,
     };
 
     console.log("=== FINAL SUMMARY ===");
