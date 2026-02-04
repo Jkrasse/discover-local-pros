@@ -12,6 +12,7 @@ interface InfoSectionProps {
   tips?: string[];
   checklist?: string[];
   featureCards?: FeatureCard[];
+  parentServiceName?: string;
 }
 
 const defaultTips = [
@@ -43,8 +44,9 @@ export function InfoSection({
   tips = defaultTips,
   checklist = defaultChecklist,
   featureCards = defaultFeatureCards,
+  parentServiceName,
 }: InfoSectionProps) {
-  const title = generateInfoSectionTitle(serviceName, cityName);
+  const title = generateInfoSectionTitle(serviceName, cityName, parentServiceName);
   const lowerName = serviceName.toLowerCase();
 
   return (
