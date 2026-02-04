@@ -53,7 +53,8 @@ Skapa unikt, informativt innehåll för tjänsten "${serviceName}"${cityContext}
 Generera följande i JSON-format:
 
 1. "intro_text": En kort introduktionstext (2-3 meningar) som hjälper besökaren hitta rätt företag för ${serviceName.toLowerCase()}${cityContext}. VIKTIGT:
-   - BÖRJA meningen med tjänstens namn och staden, t.ex. "Fönsterputs i ${cityName || '[stad]'} kräver..."
+   - BÖRJA meningen med tjänstens namn och staden direkt, t.ex. "${serviceName} i ${cityName || 'staden'} kräver..."
+   - Använd ALDRIG platshållare som [stad] - skriv alltid ut "${cityName || 'staden'}" direkt
    - Fokusera på att hjälpa besökaren hitta en pålitlig partner
    - Nämn att vi listar kvalitetsgranskade företag
 
@@ -115,6 +116,13 @@ Svara ENDAST med giltig JSON utan markdown-formatering.`;
         .replace(/```\n?/g, "")
         .trim();
       generatedContent = JSON.parse(cleanedContent);
+      
+      // Replace any leftover placeholders with actual values
+      if (cityName && generatedContent.intro_text) {
+        generatedContent.intro_text = generatedContent.intro_text
+          .replace(/\[stad\]/gi, cityName)
+          .replace(/\[city\]/gi, cityName);
+      }
     } catch (parseError) {
       console.error("Failed to parse AI response:", contentText);
       return new Response(
