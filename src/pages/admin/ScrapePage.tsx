@@ -385,8 +385,16 @@ export default function ScrapePage() {
               {/* Preview state (idle) */}
               {status === "idle" && (
                 <>
-                  {previewQueries.length > 0 && searchTerm ? (
+              {previewQueries.length > 0 && searchTerm ? (
                     <div className="space-y-2 max-h-80 overflow-y-auto">
+                      <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mb-3">
+                        <p className="text-sm font-medium text-primary">
+                          💡 Credit-beräkning
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {parsedCities.length} städer × {limit} resultat = max {parsedCities.length * limit} credits
+                        </p>
+                      </div>
                       {previewQueries.map((query, idx) => (
                         <div
                           key={idx}
@@ -397,7 +405,7 @@ export default function ScrapePage() {
                         </div>
                       ))}
                       <p className="text-xs text-muted-foreground pt-2">
-                        Uppskattad kostnad: ~${((parsedCities.length * limit * 3) / 1000).toFixed(2)}
+                        ⚡ 1 sökning per stad för minimal credit-användning
                       </p>
                     </div>
                   ) : (
