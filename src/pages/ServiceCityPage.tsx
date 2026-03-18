@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
-import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { HeroSectionNew } from '@/components/sections/HeroSectionNew';
 import { RecommendedPartnerCard } from '@/components/business/RecommendedPartnerCard';
 import { BusinessTable } from '@/components/business/BusinessTable';
 import { BusinessMap } from '@/components/business/BusinessMap';
@@ -11,7 +11,6 @@ import { SubServicesSection } from '@/components/sections/SubServicesSection';
 import { QuoteFormSection } from '@/components/sections/QuoteFormSection';
 import { QuickContactCTA } from '@/components/sections/QuickContactCTA';
 import { CityGrid } from '@/components/sections/CityGrid';
-import { Button } from '@/components/ui/button';
 import { useCity } from '@/hooks/useCity';
 import { useService } from '@/hooks/useService';
 import { useBusinesses, useFeaturedBusiness } from '@/hooks/useBusinesses';
@@ -20,7 +19,7 @@ import { generateLocalBusinessSchema, generateFAQSchema, generateBreadcrumbSchem
 import { generateServiceTitle, generateDefaultIntroText } from '@/lib/serviceContentHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 import NotFound from './NotFound';
-import { Award, CheckCircle, Star, Shield, ArrowDown } from 'lucide-react';
+import { Award } from 'lucide-react';
 
 const cityFAQs: Record<string, { question: string; answer: string }[]> = {
   stockholm: [
@@ -180,75 +179,38 @@ export default function ServiceCityPage() {
         jsonLd={jsonLd}
       />
 
-      {/* Hero Section - full width with gradient */}
-      <section className="hero-gradient text-white pt-8 pb-28 lg:pt-12 lg:pb-32">
-        <div className="container">
-          {isLoading ? (
-            <div className="space-y-4 max-w-3xl">
-              <Skeleton className="h-6 w-48 bg-white/20" />
-              <Skeleton className="h-12 w-3/4 bg-white/20" />
-              <Skeleton className="h-6 w-1/2 bg-white/20" />
+      {/* Hero */}
+      {isLoading ? (
+        <section className="bg-gradient-to-b from-primary/5 to-background pt-8 pb-12">
+          <div className="container">
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-12 w-3/4" />
+              <Skeleton className="h-6 w-1/2" />
             </div>
-          ) : (
-            <>
-              <div className="[&_a]:text-white/70 [&_span]:text-white/90 [&_svg]:text-white/50 [&_nav]:mb-0">
-                <Breadcrumbs items={breadcrumbs} />
-              </div>
-              <div className="mt-5 max-w-3xl">
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 leading-tight">
-                  {dynamicTitle}
-                </h1>
-                {dynamicIntro && (
-                  <p className="text-base lg:text-lg text-white/85 mb-6 leading-relaxed max-w-2xl">
-                    {dynamicIntro}
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-3 mb-6">
-                  <Button 
-                    onClick={() => document.getElementById('lead-form')?.scrollIntoView({ behavior: 'smooth' })}
-                    size="lg" 
-                    className="btn-hero"
-                  >
-                    Få gratis offert
-                  </Button>
-                  <Button 
-                    onClick={() => document.getElementById('businesses')?.scrollIntoView({ behavior: 'smooth' })}
-                    variant="outline" 
-                    size="lg"
-                    className="border-white/30 text-white hover:bg-white/10 hover:text-white gap-2"
-                  >
-                    <ArrowDown className="h-4 w-4" />
-                    Se vår rekommendation
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/75">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-featured" />
-                    <span>Gratis offert</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 text-featured" />
-                    <span>Kvalitetsgranskad partner</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-featured" />
-                    <span>{totalReviews}+ verifierade omdömen</span>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      ) : (
+        <HeroSectionNew
+          title={dynamicTitle}
+          subtitle={dynamicIntro}
+          breadcrumbs={breadcrumbs}
+          businessCount={businesses?.length || 0}
+          reviewCount={totalReviews}
+        />
+      )}
 
-      {/* Recommended Partner - overlapping hero */}
-      <section className="-mt-20 lg:-mt-24 pb-10 lg:pb-14 relative z-10" id="businesses">
+      {/* Recommended Partner Section */}
+      <section className="pb-12 lg:pb-16" id="businesses">
         <div className="container">
-          <div className="max-w-4xl mx-auto">
-            <div className="section-label mb-4 text-white/90">
+          <div className="max-w-5xl mx-auto">
+            {/* Section label */}
+            <div className="section-label mb-5">
               <Award className="section-label-icon" />
               <span>Vår rekommenderade partner</span>
             </div>
+
+            {/* Featured Business Card */}
             {isLoading ? (
               <div className="recommended-card">
                 <div className="mt-14 grid md:grid-cols-[auto_1fr_auto] gap-7">

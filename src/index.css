@@ -155,11 +155,6 @@
     background: hsl(168 84% 39% / 0.15);
   }
 
-  /* Hero gradient background */
-  .hero-gradient {
-    background: linear-gradient(135deg, hsl(168 84% 25%) 0%, hsl(168 84% 35%) 50%, hsl(180 60% 30%) 100%);
-  }
-
   /* Primary CTA button with orange gradient */
   .btn-hero {
     @apply inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold rounded-full transition-all duration-300;
