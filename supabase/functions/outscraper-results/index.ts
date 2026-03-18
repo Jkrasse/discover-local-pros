@@ -562,6 +562,15 @@ serve(async (req) => {
     // First collect all businesses, then apply per-city limit
     const allProcessedBusinesses: ProcessedBusiness[] = [];
 
+    // Build an ordered list of allowed cities matching the query order
+    // Each query index corresponds to a city in the allowedCities array
+    const orderedAllowedCities: Array<{ id: string; name: string } | null> = [];
+    for (const cityName of allowedCities) {
+      const normalized = normalizeCity(cityName.trim());
+      const found = allowedCityMap.get(normalized) || null;
+      orderedAllowedCities.push(found);
+    }
+
     for (let queryIdx = 0; queryIdx < allData.length; queryIdx++) {
       const queryResults = allData[queryIdx];
       if (!Array.isArray(queryResults)) {
@@ -571,6 +580,13 @@ serve(async (req) => {
 
       console.log(`Query ${queryIdx}: Processing ${queryResults.length} items`);
 
+      // Determine the city for this query based on the index
+      // Each query corresponds to one city in the input list
+      const queryCityOverride = queryIdx < orderedAllowedCities.length ? orderedAllowedCities[queryIdx] : null;
+      if (queryCityOverride) {
+        console.log(`Query ${queryIdx}: Assigning all results to city "${queryCityOverride.name}"`);
+      }
+
       // Log the first business in each query to debug field names
       if (queryIdx === 0 && queryResults.length > 0) {
         const sampleBusiness = queryResults[0] as OutscraperBusiness;
@@ -578,17 +594,14 @@ serve(async (req) => {
         console.log(`Name: ${sampleBusiness.name}`);
         console.log(`full_address: ${sampleBusiness.full_address}`);
         console.log(`address: ${sampleBusiness.address}`);
-        console.log(`street: ${sampleBusiness.street}`);
-        console.log(`street_address: ${sampleBusiness.street_address}`);
         console.log(`city: ${sampleBusiness.city}`);
-        console.log(`postal_code: ${sampleBusiness.postal_code}`);
         console.log(`phone: ${sampleBusiness.phone}`);
         console.log(`All keys: ${Object.keys(sampleBusiness).join(', ')}`);
         console.log(`=======================================================`);
       }
 
       for (const business of queryResults as OutscraperBusiness[]) {
-        const processed = processBusiness(business, allowedCityMap, seenGbpIds, skipReason);
+        const processed = processBusiness(business, allowedCityMap, seenGbpIds, skipReason, queryCityOverride);
         if (processed) {
           allProcessedBusinesses.push(processed);
         }
