@@ -69,6 +69,10 @@ export default function Index() {
         title={`${siteName} | Hitta Bästa Företagen | Få Gratis Offert`}
         description={`${siteDescription}. Läs omdömen, se priser och få gratis offerter. ✓ Gratis ✓ Opartisk ✓ Kvalitetsgranskade företag.`}
         canonical="/"
+        jsonLd={[
+          generateWebsiteSchema(siteName, 'https://flyttguide.se'),
+          generateOrganizationSchema(siteName, 'https://flyttguide.se'),
+        ]}
       />
 
       {/* Hero Section */}
