@@ -1,9 +1,11 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { CTASection } from '@/components/sections/CTASection';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { 
   MapPin, 
   Star, 
@@ -15,7 +17,8 @@ import {
   Building2,
   Clock,
   ThumbsUp,
-  Briefcase
+  Briefcase,
+  Search
 } from 'lucide-react';
 import { useCities } from '@/hooks/useCity';
 import { useServices } from '@/hooks/useService';
