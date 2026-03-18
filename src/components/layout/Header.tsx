@@ -286,7 +286,7 @@ export function Header() {
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-lg text-foreground">{primaryService.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        Jämför företag i alla städer
+                        Hitta företag i alla städer
                       </div>
                     </div>
                     <ChevronRight className="h-6 w-6 text-muted-foreground shrink-0" />

@@ -33,7 +33,7 @@ export default function CitiesPage() {
             </h1>
             <p className="text-lg text-muted-foreground max-w-3xl">
               Vi listar flyttfirmor i {cities?.length || 0} svenska städer. 
-              Välj din stad nedan för att jämföra lokala företag.
+              Välj din stad nedan för att hitta de bästa lokala företagen.
             </p>
           </div>
         </div>

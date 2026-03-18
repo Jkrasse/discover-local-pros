@@ -44,7 +44,7 @@ export function BusinessTable({
               {title}
             </h2>
             <p className="text-muted-foreground">
-              Jämför {allBusinesses.length} företag i {cityName} baserat på omdömen och betyg.
+              Se {allBusinesses.length} företag i {cityName} baserat på omdömen och betyg.
             </p>
           </div>
 

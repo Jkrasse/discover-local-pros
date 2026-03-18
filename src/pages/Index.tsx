@@ -285,7 +285,7 @@ export default function Index() {
               {
                 step: '03',
                 title: 'Välj & boka',
-                description: 'Jämför offerterna och välj det företag som passar dig bäst.',
+                description: 'Granska offerterna och välj det företag som passar dig bäst.',
               },
             ].map((item, i) => (
               <div key={i} className="step-card group">

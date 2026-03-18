@@ -20,7 +20,7 @@ export function generateCityServiceDescription(
   serviceName: string,
   cityName: string
 ): string {
-  return `Hitta och jämför de bästa ${serviceName.toLowerCase()} i ${cityName}. ✓ Omdömen ✓ Priser ✓ Gratis offertförfrågan. Uppdaterat ${new Date().getFullYear()}.`;
+  return `Hitta de bästa ${serviceName.toLowerCase()} i ${cityName}. ✓ Omdömen ✓ Priser ✓ Gratis offertförfrågan. Uppdaterat ${new Date().getFullYear()}.`;
 }
 
 export function generateBusinessTitle(
