@@ -161,23 +161,26 @@ export default function ScrapePage() {
 
       const { data: coverageData } = await supabase
         .from("business_service_coverage")
-        .select("city_id, service_id")
+        .select("city_id")
         .eq("service_id", selectedService);
 
-      // Build a set of city IDs that already have businesses for this service
-      const citiesWithBusinesses = new Set(
-        (coverageData || []).map((c) => c.city_id)
-      );
+      // Count businesses per city for this service
+      const cityBusinessCount = new Map<string, number>();
+      for (const c of coverageData || []) {
+        cityBusinessCount.set(c.city_id, (cityBusinessCount.get(c.city_id) || 0) + 1);
+      }
 
       // Map city names to their DB records (case-insensitive)
       const cityNameMap = new Map(
         (citiesData || []).map((c) => [c.name.toLowerCase(), c])
       );
 
+      const MIN_BUSINESSES = 5;
       const citiesToScrape = parsedCities.filter((cityName) => {
         const dbCity = cityNameMap.get(cityName.toLowerCase());
         if (!dbCity) return true; // City not in DB yet, include it
-        return !citiesWithBusinesses.has(dbCity.id); // Only include if no businesses
+        const count = cityBusinessCount.get(dbCity.id) || 0;
+        return count < MIN_BUSINESSES; // Include if fewer than 5 businesses
       });
 
       const skippedCount = parsedCities.length - citiesToScrape.length;
