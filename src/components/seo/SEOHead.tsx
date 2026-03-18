@@ -17,6 +17,7 @@ export function SEOHead({
   ogImage = '/og-image.png',
   noindex = false,
   jsonLd,
+  siteName = 'FlyttGuide',
 }: SEOHeadProps) {
   const siteUrl = 'https://flyttguide.se';
   const fullCanonical = canonical
