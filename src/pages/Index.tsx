@@ -274,8 +274,8 @@ export default function Index() {
             {[
               {
                 step: '01',
-                title: 'Jämför företag',
-                description: 'Sök i din stad och jämför företag baserat på omdömen och priser.',
+                title: 'Hitta företag',
+                description: 'Sök i din stad och hitta de bästa företagen baserat på omdömen.',
               },
               {
                 step: '02',
