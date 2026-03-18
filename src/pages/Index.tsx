@@ -94,7 +94,7 @@ export default function Index() {
 
             {/* Subtitle */}
             <p className="text-lg lg:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up animate-delay-200">
-              Jämför lokala företag baserat på omdömen och få gratis offerter. 
+              Hitta de bästa lokala företagen baserat på omdömen och få gratis offerter. 
               Vi hjälper dig hitta pålitliga partners i hela Sverige.
             </p>
 
