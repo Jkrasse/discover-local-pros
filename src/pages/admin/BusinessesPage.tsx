@@ -70,6 +70,33 @@ export default function BusinessesPage() {
     }
   };
 
+  const exportCSV = () => {
+    if (!filteredBusinesses?.length) {
+      toast.error("Inga företag att exportera");
+      return;
+    }
+    const headers = ["Namn", "E-post", "Telefon", "Webbplats", "Stad", "Adress", "Betyg", "Recensioner"];
+    const rows = filteredBusinesses.map((b) => [
+      b.name,
+      b.email || "",
+      b.phone || "",
+      b.website || "",
+      (b.city as any)?.name || "",
+      b.address || "",
+      b.rating ?? "",
+      b.review_count ?? "",
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `foretag-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${filteredBusinesses.length} företag exporterade`);
+  };
+
   const filteredBusinesses = businesses?.filter((b) => {
     const matchesSearch = b.name.toLowerCase().includes(search.toLowerCase());
     const matchesCity = cityFilter === "all" || b.city_id === cityFilter;
