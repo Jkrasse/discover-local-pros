@@ -7,6 +7,7 @@ interface SEOHeadProps {
   ogImage?: string;
   noindex?: boolean;
   jsonLd?: object | object[];
+  siteName?: string;
 }
 
 export function SEOHead({
