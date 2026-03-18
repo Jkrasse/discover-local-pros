@@ -83,7 +83,7 @@ export default function Index() {
               <div className="hero-badge-icon">
                 <Shield className="h-3.5 w-3.5 text-primary" />
               </div>
-              Sveriges ledande jämförelsetjänst
+              Sveriges smartaste sätt att hitta rätt företag
             </div>
 
             {/* Main headline */}
