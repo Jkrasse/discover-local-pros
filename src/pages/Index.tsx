@@ -60,8 +60,8 @@ export default function Index() {
   return (
     <Layout>
       <SEOHead
-        title={`${siteName} | Hitta & Jämför Tjänster | Få Gratis Offert`}
-        description={`${siteDescription}. Jämför omdömen, priser och få gratis offerter. ✓ Gratis ✓ Opartisk ✓ Kvalitetsgranskade företag.`}
+        title={`${siteName} | Hitta Bästa Företagen | Få Gratis Offert`}
+        description={`${siteDescription}. Läs omdömen, se priser och få gratis offerter. ✓ Gratis ✓ Opartisk ✓ Kvalitetsgranskade företag.`}
         canonical="/"
       />
 
