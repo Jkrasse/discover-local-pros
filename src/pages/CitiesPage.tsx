@@ -63,10 +63,6 @@ export default function CitiesPage() {
                         <p className="text-sm text-muted-foreground mb-1">
                           {city.region}
                         </p>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground/70">
-                          <Users className="h-3 w-3" />
-                          <span>{city.population?.toLocaleString('sv-SE')} inv</span>
-                        </div>
                       </div>
                       <ChevronRight className="h-5 w-5 text-muted-foreground/50 shrink-0 mt-1" />
                     </div>
