@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
-import { HeroSectionNew } from '@/components/sections/HeroSectionNew';
+import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { RecommendedPartnerCard } from '@/components/business/RecommendedPartnerCard';
 import { BusinessTable } from '@/components/business/BusinessTable';
 import { BusinessMap } from '@/components/business/BusinessMap';
@@ -11,6 +11,7 @@ import { SubServicesSection } from '@/components/sections/SubServicesSection';
 import { QuoteFormSection } from '@/components/sections/QuoteFormSection';
 import { QuickContactCTA } from '@/components/sections/QuickContactCTA';
 import { CityGrid } from '@/components/sections/CityGrid';
+import { Button } from '@/components/ui/button';
 import { useCity } from '@/hooks/useCity';
 import { useService } from '@/hooks/useService';
 import { useBusinesses, useFeaturedBusiness } from '@/hooks/useBusinesses';
@@ -19,7 +20,7 @@ import { generateLocalBusinessSchema, generateFAQSchema, generateBreadcrumbSchem
 import { generateServiceTitle, generateDefaultIntroText } from '@/lib/serviceContentHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 import NotFound from './NotFound';
-import { Award } from 'lucide-react';
+import { Award, CheckCircle, Star, Shield, ArrowDown } from 'lucide-react';
 
 const cityFAQs: Record<string, { question: string; answer: string }[]> = {
   stockholm: [
