@@ -46,10 +46,12 @@ serve(async (req) => {
     const effectiveLimit = Math.min(Math.max(5, Number.isFinite(limit) ? limit : 20), 50);
 
     // Build ONE simple query per city - this is the most credit-efficient approach
+    // Do NOT append ", Sweden" - the region: "SE" parameter already handles country filtering
+    // Adding ", Sweden" makes Google Maps interpret the query too literally and return fewer results
     const queries = cities
       .map(city => city.trim())
       .filter(city => city.length > 0)
-      .map(city => `${searchTerm} ${city}, Sweden`);
+      .map(city => `${searchTerm} ${city}`);
 
     console.log(`=== OUTSCRAPER SEARCH ===`);
     console.log(`Search term: ${searchTerm}`);
