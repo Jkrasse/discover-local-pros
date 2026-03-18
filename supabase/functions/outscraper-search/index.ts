@@ -141,6 +141,21 @@ serve(async (req) => {
     const result = await response.json();
     console.log("Outscraper response:", result);
 
+    // Save job to database for persistent tracking
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      await supabaseAdmin.from("scrape_jobs").insert({
+        request_id: result.id,
+        service_id: serviceId,
+        search_term: searchTerm,
+        cities: cities,
+        city_limit: effectiveLimit,
+        status: "processing",
+      });
+    }
+
     // Return the request ID for polling
     return new Response(
       JSON.stringify({
@@ -148,7 +163,7 @@ serve(async (req) => {
         requestId: result.id,
         queriesCount: queries.length,
         queries: queries,
-        estimatedCredits: queries.length * effectiveLimit, // More accurate estimate
+        estimatedCredits: queries.length * effectiveLimit,
         message: `Scraping started for ${queries.length} cities with limit ${effectiveLimit} per city. Use the request ID to check status.`,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
