@@ -588,7 +588,25 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Total deduplicated businesses before city limit: ${allProcessedBusinesses.length}`);
+    // PHASE 1.25: Deduplicate by slug+city_id within the batch (different gbp_ids can produce same slug)
+    const seenSlugCity = new Set<string>();
+    const deduplicatedBusinesses: ProcessedBusiness[] = [];
+    let slugCityDuplicates = 0;
+    for (const processed of allProcessedBusinesses) {
+      const key = `${(processed.businessData as any).slug}::${processed.cityId}`;
+      if (seenSlugCity.has(key)) {
+        slugCityDuplicates++;
+        continue;
+      }
+      seenSlugCity.add(key);
+      deduplicatedBusinesses.push(processed);
+    }
+    if (slugCityDuplicates > 0) {
+      console.log(`Deduplicated ${slugCityDuplicates} businesses with same slug+city`);
+    }
+
+    const allProcessedAfterDedup = deduplicatedBusinesses;
+    console.log(`Total deduplicated businesses before city limit: ${allProcessedAfterDedup.length}`);
 
     // PHASE 1.5: Apply per-city limit of 20 businesses max
     const MAX_BUSINESSES_PER_CITY = 20;
