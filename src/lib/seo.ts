@@ -13,7 +13,7 @@ export function generateCityServiceTitle(
   cityName: string,
   year: number = new Date().getFullYear()
 ): string {
-  return `Bästa ${serviceName.toLowerCase()} i ${cityName} (${year}) | Jämför & Få Offert`;
+  return `Bästa ${serviceName.toLowerCase()} i ${cityName} (${year}) | Hitta & Få Offert`;
 }
 
 export function generateCityServiceDescription(
