@@ -120,7 +120,7 @@ export function Header() {
                                   {primaryService?.name || 'Företag'} i {city.name}
                                 </div>
                                 <p className="text-sm text-muted-foreground mt-1">
-                                  Jämför priser och omdömen
+                                  Hitta bästa företagen
                                 </p>
                               </Link>
                             </NavigationMenuLink>
