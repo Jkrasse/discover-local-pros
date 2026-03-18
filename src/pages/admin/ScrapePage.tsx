@@ -154,10 +154,48 @@ export default function ScrapePage() {
     setIsStarting(true);
 
     try {
+      // Filter out cities that already have businesses for this service
+      const { data: citiesData } = await supabase
+        .from("cities")
+        .select("id, name, slug");
+
+      const { data: coverageData } = await supabase
+        .from("business_service_coverage")
+        .select("city_id, service_id")
+        .eq("service_id", selectedService);
+
+      // Build a set of city IDs that already have businesses for this service
+      const citiesWithBusinesses = new Set(
+        (coverageData || []).map((c) => c.city_id)
+      );
+
+      // Map city names to their DB records (case-insensitive)
+      const cityNameMap = new Map(
+        (citiesData || []).map((c) => [c.name.toLowerCase(), c])
+      );
+
+      const citiesToScrape = parsedCities.filter((cityName) => {
+        const dbCity = cityNameMap.get(cityName.toLowerCase());
+        if (!dbCity) return true; // City not in DB yet, include it
+        return !citiesWithBusinesses.has(dbCity.id); // Only include if no businesses
+      });
+
+      const skippedCount = parsedCities.length - citiesToScrape.length;
+
+      if (citiesToScrape.length === 0) {
+        toast.info(`Alla ${parsedCities.length} städer har redan företag för denna tjänst`);
+        setIsStarting(false);
+        return;
+      }
+
+      if (skippedCount > 0) {
+        toast.info(`Hoppar över ${skippedCount} städer som redan har företag. Scrapar ${citiesToScrape.length} städer.`);
+      }
+
       const { data, error } = await supabase.functions.invoke("outscraper-search", {
         body: {
           searchTerm,
-          cities: parsedCities,
+          cities: citiesToScrape,
           limit,
           serviceId: selectedService,
         },
