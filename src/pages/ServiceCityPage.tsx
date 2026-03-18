@@ -180,100 +180,106 @@ export default function ServiceCityPage() {
         jsonLd={jsonLd}
       />
 
-      {/* Hero + Recommended Partner - side by side on desktop */}
-      <section className="bg-gradient-to-b from-primary/5 via-primary/3 to-background pt-8 pb-10 lg:pt-12 lg:pb-14" id="businesses">
+      {/* Hero Section - full width with gradient */}
+      <section className="hero-gradient text-white pt-8 pb-28 lg:pt-12 lg:pb-32">
         <div className="container">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-10 items-start">
-            {/* Left: Hero content */}
-            <div>
-              {isLoading ? (
-                <div className="space-y-4">
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-12 w-3/4" />
-                  <Skeleton className="h-6 w-1/2" />
-                </div>
-              ) : (
-                <>
-                  <Breadcrumbs items={breadcrumbs} />
-                  <div className="mt-5">
-                    <h1 className="text-3xl md:text-4xl lg:text-[2.5rem] font-bold text-foreground mb-3 leading-tight">
-                      {dynamicTitle}
-                    </h1>
-                    {dynamicIntro && (
-                      <p className="text-base lg:text-lg text-muted-foreground mb-5 leading-relaxed">
-                        {dynamicIntro}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-3 mb-6">
-                      <Button 
-                        onClick={() => document.getElementById('lead-form')?.scrollIntoView({ behavior: 'smooth' })}
-                        size="lg" 
-                        className="btn-hero"
-                      >
-                        Få gratis offert
-                      </Button>
-                      <Button 
-                        onClick={() => document.getElementById('businesses')?.scrollIntoView({ behavior: 'smooth' })}
-                        variant="outline" 
-                        size="lg"
-                        className="gap-2"
-                      >
-                        <ArrowDown className="h-4 w-4" />
-                        Se vår rekommendation
-                      </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <CheckCircle className="h-4 w-4 text-success" />
-                        <span>Gratis offert</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Star className="h-4 w-4 text-featured" />
-                        <span>Kvalitetsgranskad partner</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Shield className="h-4 w-4 text-accent" />
-                        <span>{totalReviews}+ verifierade omdömen</span>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
+          {isLoading ? (
+            <div className="space-y-4 max-w-3xl">
+              <Skeleton className="h-6 w-48 bg-white/20" />
+              <Skeleton className="h-12 w-3/4 bg-white/20" />
+              <Skeleton className="h-6 w-1/2 bg-white/20" />
             </div>
-
-            {/* Right: Recommended Partner */}
-            <div>
-              <div className="section-label mb-4">
-                <Award className="section-label-icon" />
-                <span>Vår rekommenderade partner</span>
+          ) : (
+            <>
+              <Breadcrumbs items={breadcrumbs} className="text-white/70 [&_a]:text-white/70 [&_a:hover]:text-white [&_svg]:text-white/50" />
+              <div className="mt-5 max-w-3xl">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 leading-tight">
+                  {dynamicTitle}
+                </h1>
+                {dynamicIntro && (
+                  <p className="text-base lg:text-lg text-white/85 mb-6 leading-relaxed max-w-2xl">
+                    {dynamicIntro}
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-3 mb-6">
+                  <Button 
+                    onClick={() => document.getElementById('lead-form')?.scrollIntoView({ behavior: 'smooth' })}
+                    size="lg" 
+                    className="btn-hero"
+                  >
+                    Få gratis offert
+                  </Button>
+                  <Button 
+                    onClick={() => document.getElementById('businesses')?.scrollIntoView({ behavior: 'smooth' })}
+                    variant="outline" 
+                    size="lg"
+                    className="border-white/30 text-white hover:bg-white/10 hover:text-white gap-2"
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                    Se vår rekommendation
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/75">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-featured" />
+                    <span>Gratis offert</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-featured" />
+                    <span>Kvalitetsgranskad partner</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-featured" />
+                    <span>{totalReviews}+ verifierade omdömen</span>
+                  </div>
+                </div>
               </div>
-              {isLoading ? (
-                <div className="recommended-card">
-                  <div className="mt-14 grid gap-4">
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Recommended Partner - overlapping hero */}
+      <section className="-mt-20 lg:-mt-24 pb-10 lg:pb-14 relative z-10" id="businesses">
+        <div className="container">
+          <div className="max-w-4xl mx-auto">
+            <div className="section-label mb-4 text-white/90">
+              <Award className="section-label-icon" />
+              <span>Vår rekommenderade partner</span>
+            </div>
+            {isLoading ? (
+              <div className="recommended-card">
+                <div className="mt-14 grid md:grid-cols-[auto_1fr_auto] gap-7">
+                  <Skeleton className="w-24 h-24 rounded-2xl" />
+                  <div className="space-y-3">
                     <Skeleton className="h-7 w-48" />
                     <Skeleton className="h-5 w-32" />
-                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full max-w-xl" />
+                  </div>
+                  <div className="space-y-3">
+                    <Skeleton className="h-12 w-40" />
+                    <Skeleton className="h-12 w-40" />
                   </div>
                 </div>
-              ) : featuredBusiness ? (
-                <RecommendedPartnerCard
-                  business={featuredBusiness}
-                  serviceSlug={serviceSlug}
-                  citySlug={citySlug}
-                  serviceName={service?.name?.toLowerCase() || 'flyttfirma'}
-                  cityName={city?.name || ''}
-                  cityId={city?.id}
-                  serviceId={service?.id}
-                />
-              ) : (
-                <div className="recommended-card text-center py-12">
-                  <p className="text-muted-foreground">
-                    Vi letar efter den bästa partnern för dig i {city?.name}. 
-                    Fyll i formuläret nedan så hjälper vi dig hitta rätt.
-                  </p>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : featuredBusiness ? (
+              <RecommendedPartnerCard
+                business={featuredBusiness}
+                serviceSlug={serviceSlug}
+                citySlug={citySlug}
+                serviceName={service?.name?.toLowerCase() || 'flyttfirma'}
+                cityName={city?.name || ''}
+                cityId={city?.id}
+                serviceId={service?.id}
+              />
+            ) : (
+              <div className="recommended-card text-center py-12">
+                <p className="text-muted-foreground">
+                  Vi letar efter den bästa partnern för dig i {city?.name}. 
+                  Fyll i formuläret nedan så hjälper vi dig hitta rätt.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>
