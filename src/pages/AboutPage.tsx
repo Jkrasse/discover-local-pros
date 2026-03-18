@@ -74,7 +74,7 @@ export default function AboutPage() {
             <div className="prose prose-lg text-muted-foreground">
               <p>
                 {siteName} grundades med en enkel idé: att göra det lättare för svenskar att 
-                hitta rätt företag. Vi såg hur många som kämpade med att jämföra alternativ, 
+                hitta rätt företag. Vi såg hur många som kämpade med att hitta pålitliga alternativ, 
                 och bestämde oss för att skapa en plattform där all information samlas på ett ställe.
               </p>
               <p>
