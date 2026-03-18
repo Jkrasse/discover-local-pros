@@ -41,7 +41,7 @@ export default function Index() {
   // Get all services (including sub-services)
   const allServices = services || [];
   const popularCities = cities?.slice(0, 6) || [];
-  const primaryService = allServices[0];
+  const primaryService = allServices.find(s => !s.parent_service_id) || allServices[0];
 
   const faqs = [
     {
