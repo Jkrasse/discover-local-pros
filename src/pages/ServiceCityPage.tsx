@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
-import { HeroSectionNew } from '@/components/sections/HeroSectionNew';
+import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { RecommendedPartnerCard } from '@/components/business/RecommendedPartnerCard';
 import { BusinessTable } from '@/components/business/BusinessTable';
 import { BusinessMap } from '@/components/business/BusinessMap';
@@ -11,6 +11,7 @@ import { SubServicesSection } from '@/components/sections/SubServicesSection';
 import { QuoteFormSection } from '@/components/sections/QuoteFormSection';
 import { QuickContactCTA } from '@/components/sections/QuickContactCTA';
 import { CityGrid } from '@/components/sections/CityGrid';
+import { Button } from '@/components/ui/button';
 import { useCity } from '@/hooks/useCity';
 import { useService } from '@/hooks/useService';
 import { useBusinesses, useFeaturedBusiness } from '@/hooks/useBusinesses';
@@ -19,7 +20,7 @@ import { generateLocalBusinessSchema, generateFAQSchema, generateBreadcrumbSchem
 import { generateServiceTitle, generateDefaultIntroText } from '@/lib/serviceContentHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 import NotFound from './NotFound';
-import { Award } from 'lucide-react';
+import { Award, CheckCircle, Star, Shield, ArrowDown } from 'lucide-react';
 
 const cityFAQs: Record<string, { question: string; answer: string }[]> = {
   stockholm: [
@@ -179,71 +180,100 @@ export default function ServiceCityPage() {
         jsonLd={jsonLd}
       />
 
-      {/* Hero */}
-      {isLoading ? (
-        <section className="bg-gradient-to-b from-primary/5 to-background pt-8 pb-12">
-          <div className="container">
-            <div className="space-y-4">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-12 w-3/4" />
-              <Skeleton className="h-6 w-1/2" />
-            </div>
-          </div>
-        </section>
-      ) : (
-        <HeroSectionNew
-          title={dynamicTitle}
-          subtitle={dynamicIntro}
-          breadcrumbs={breadcrumbs}
-          businessCount={businesses?.length || 0}
-          reviewCount={totalReviews}
-        />
-      )}
-
-      {/* Recommended Partner Section */}
-      <section className="pb-12 lg:pb-16" id="businesses">
+      {/* Hero + Recommended Partner - side by side on desktop */}
+      <section className="bg-gradient-to-b from-primary/5 via-primary/3 to-background pt-8 pb-10 lg:pt-12 lg:pb-14" id="businesses">
         <div className="container">
-          <div className="max-w-5xl mx-auto">
-            {/* Section label */}
-            <div className="section-label mb-5">
-              <Award className="section-label-icon" />
-              <span>Vår rekommenderade partner</span>
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-10 items-start">
+            {/* Left: Hero content */}
+            <div>
+              {isLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-12 w-3/4" />
+                  <Skeleton className="h-6 w-1/2" />
+                </div>
+              ) : (
+                <>
+                  <Breadcrumbs items={breadcrumbs} />
+                  <div className="mt-5">
+                    <h1 className="text-3xl md:text-4xl lg:text-[2.5rem] font-bold text-foreground mb-3 leading-tight">
+                      {dynamicTitle}
+                    </h1>
+                    {dynamicIntro && (
+                      <p className="text-base lg:text-lg text-muted-foreground mb-5 leading-relaxed">
+                        {dynamicIntro}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-3 mb-6">
+                      <Button 
+                        onClick={() => document.getElementById('lead-form')?.scrollIntoView({ behavior: 'smooth' })}
+                        size="lg" 
+                        className="btn-hero"
+                      >
+                        Få gratis offert
+                      </Button>
+                      <Button 
+                        onClick={() => document.getElementById('businesses')?.scrollIntoView({ behavior: 'smooth' })}
+                        variant="outline" 
+                        size="lg"
+                        className="gap-2"
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                        Se vår rekommendation
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <CheckCircle className="h-4 w-4 text-success" />
+                        <span>Gratis offert</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Star className="h-4 w-4 text-featured" />
+                        <span>Kvalitetsgranskad partner</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Shield className="h-4 w-4 text-accent" />
+                        <span>{totalReviews}+ verifierade omdömen</span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Featured Business Card */}
-            {isLoading ? (
-              <div className="recommended-card">
-                <div className="mt-14 grid md:grid-cols-[auto_1fr_auto] gap-7">
-                  <Skeleton className="w-24 h-24 rounded-2xl" />
-                  <div className="space-y-3">
+            {/* Right: Recommended Partner */}
+            <div>
+              <div className="section-label mb-4">
+                <Award className="section-label-icon" />
+                <span>Vår rekommenderade partner</span>
+              </div>
+              {isLoading ? (
+                <div className="recommended-card">
+                  <div className="mt-14 grid gap-4">
                     <Skeleton className="h-7 w-48" />
                     <Skeleton className="h-5 w-32" />
-                    <Skeleton className="h-16 w-full max-w-xl" />
-                  </div>
-                  <div className="space-y-3">
-                    <Skeleton className="h-12 w-40" />
-                    <Skeleton className="h-12 w-40" />
+                    <Skeleton className="h-16 w-full" />
                   </div>
                 </div>
-              </div>
-            ) : featuredBusiness ? (
-              <RecommendedPartnerCard
-                business={featuredBusiness}
-                serviceSlug={serviceSlug}
-                citySlug={citySlug}
-                serviceName={service?.name?.toLowerCase() || 'flyttfirma'}
-                cityName={city?.name || ''}
-                cityId={city?.id}
-                serviceId={service?.id}
-              />
-            ) : (
-              <div className="recommended-card text-center py-12">
-                <p className="text-muted-foreground">
-                  Vi letar efter den bästa partnern för dig i {city?.name}. 
-                  Fyll i formuläret nedan så hjälper vi dig hitta rätt.
-                </p>
-              </div>
-            )}
+              ) : featuredBusiness ? (
+                <RecommendedPartnerCard
+                  business={featuredBusiness}
+                  serviceSlug={serviceSlug}
+                  citySlug={citySlug}
+                  serviceName={service?.name?.toLowerCase() || 'flyttfirma'}
+                  cityName={city?.name || ''}
+                  cityId={city?.id}
+                  serviceId={service?.id}
+                />
+              ) : (
+                <div className="recommended-card text-center py-12">
+                  <p className="text-muted-foreground">
+                    Vi letar efter den bästa partnern för dig i {city?.name}. 
+                    Fyll i formuläret nedan så hjälper vi dig hitta rätt.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
