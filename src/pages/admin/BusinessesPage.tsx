@@ -120,9 +120,15 @@ export default function BusinessesPage() {
               Hantera alla företag i katalogen
             </p>
           </div>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            {businesses?.length || 0} företag
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={exportCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Exportera CSV
+            </Button>
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              {businesses?.length || 0} företag
+            </Badge>
+          </div>
         </div>
 
         <div className="flex gap-4 flex-wrap">
