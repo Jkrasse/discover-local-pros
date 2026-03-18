@@ -5,6 +5,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Download } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -69,6 +70,33 @@ export default function BusinessesPage() {
     }
   };
 
+  const exportCSV = () => {
+    if (!filteredBusinesses?.length) {
+      toast.error("Inga företag att exportera");
+      return;
+    }
+    const headers = ["Namn", "E-post", "Telefon", "Webbplats", "Stad", "Adress", "Betyg", "Recensioner"];
+    const rows = filteredBusinesses.map((b) => [
+      b.name,
+      b.email || "",
+      b.phone || "",
+      b.website || "",
+      (b.city as any)?.name || "",
+      b.address || "",
+      b.rating ?? "",
+      b.review_count ?? "",
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `foretag-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${filteredBusinesses.length} företag exporterade`);
+  };
+
   const filteredBusinesses = businesses?.filter((b) => {
     const matchesSearch = b.name.toLowerCase().includes(search.toLowerCase());
     const matchesCity = cityFilter === "all" || b.city_id === cityFilter;
@@ -92,9 +120,15 @@ export default function BusinessesPage() {
               Hantera alla företag i katalogen
             </p>
           </div>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            {businesses?.length || 0} företag
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={exportCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Exportera CSV
+            </Button>
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              {businesses?.length || 0} företag
+            </Badge>
+          </div>
         </div>
 
         <div className="flex gap-4 flex-wrap">
