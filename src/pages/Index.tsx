@@ -1,9 +1,11 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { CTASection } from '@/components/sections/CTASection';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { 
   MapPin, 
   Star, 
@@ -15,7 +17,8 @@ import {
   Building2,
   Clock,
   ThumbsUp,
-  Briefcase
+  Briefcase,
+  Search
 } from 'lucide-react';
 import { useCities } from '@/hooks/useCity';
 import { useServices } from '@/hooks/useService';
@@ -25,6 +28,8 @@ export default function Index() {
   const { data: cities } = useCities();
   const { data: services } = useServices();
   const { data: settings } = useSiteSettings();
+  const navigate = useNavigate();
+  const [citySearch, setCitySearch] = useState('');
 
   const siteName = settings?.site_name || 'Katalog';
   const siteDescription = settings?.site_description || 'Hitta de bästa företagen';
@@ -98,8 +103,50 @@ export default function Index() {
               Vi hjälper dig hitta pålitliga partners i hela Sverige.
             </p>
 
+            {/* City Search */}
+            <div className="max-w-lg mx-auto mb-8 animate-fade-in-up animate-delay-300">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="text"
+                  placeholder="Sök efter din stad..."
+                  value={citySearch}
+                  onChange={(e) => setCitySearch(e.target.value)}
+                  className="pl-12 h-14 text-base rounded-full border-2 border-border bg-background focus:border-primary transition-colors shadow-soft"
+                />
+              </div>
+              {citySearch.trim().length > 0 && (
+                <div className="mt-2 bg-background border-2 border-border rounded-2xl shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+                  {(cities || [])
+                    .filter((c) => c.name.toLowerCase().includes(citySearch.toLowerCase()))
+                    .slice(0, 8)
+                    .map((city) => (
+                      <button
+                        key={city.id}
+                        onClick={() => {
+                          if (primaryService) {
+                            navigate(`/${primaryService.slug}/${city.slug}`);
+                          } else {
+                            navigate(`/stader`);
+                          }
+                          setCitySearch('');
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-secondary transition-colors"
+                      >
+                        <MapPin className="h-4 w-4 text-primary shrink-0" />
+                        <span className="font-medium">{primaryService?.name || 'Företag'} i {city.name}</span>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground/50 ml-auto shrink-0" />
+                      </button>
+                    ))}
+                  {(cities || []).filter((c) => c.name.toLowerCase().includes(citySearch.toLowerCase())).length === 0 && (
+                    <div className="px-4 py-3 text-muted-foreground text-sm">Ingen stad hittades</div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 animate-fade-in-up animate-delay-300">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 animate-fade-in-up animate-delay-400">
               <a href="#quote" className="btn-hero">
                 Få gratis offert
                 <ArrowRight className="h-5 w-5" />

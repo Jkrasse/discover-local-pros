@@ -11,7 +11,7 @@ import { generateDefaultIntroText } from '@/lib/serviceContentHelpers';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, ChevronRight, Users, Search, ArrowRight, CheckCircle } from 'lucide-react';
+import { MapPin, ChevronRight, Search, ArrowRight, CheckCircle } from 'lucide-react';
 import NotFound from './NotFound';
 
 export default function ServiceIndexPage() {
@@ -181,10 +181,9 @@ export default function ServiceIndexPage() {
                         <h3 className="font-semibold group-hover:text-accent transition-colors truncate">
                           {service?.name} i {city.name}
                         </h3>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Users className="h-3 w-3" />
-                          <span>{city.population?.toLocaleString('sv-SE')} inv</span>
-                        </div>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {city.region || 'Sverige'}
+                        </p>
                       </div>
                       <ChevronRight className="h-5 w-5 text-muted-foreground/50 shrink-0" />
                     </div>
