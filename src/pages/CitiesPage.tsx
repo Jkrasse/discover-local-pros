@@ -3,9 +3,10 @@ import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { useCities } from '@/hooks/useCity';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, Users, ChevronRight } from 'lucide-react';
+import { MapPin, ChevronRight } from 'lucide-react';
 
 const breadcrumbs = [
   { label: 'Hem', href: '/' },
