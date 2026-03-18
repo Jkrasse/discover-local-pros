@@ -71,12 +71,13 @@ serve(async (req) => {
     
     const requestBody = JSON.stringify({
       query: queries,
-      limit: effectiveLimit, // Now this is the actual limit per city since we have 1 query per city
+      limit: effectiveLimit,
       language: "sv",
       region: "SE",
       async: true,
-      // NOTE: maps/search-v3 automatically includes full_address, phone, rating, reviews count, etc.
-      // To get reviews_data, we'd need to use the separate reviews endpoint or add reviews_query parameter
+      enrichment: ["domains_service"],
+      // domains_service enrichment adds email_1, email_2, email_3 + social media links
+      // This costs extra credits but is needed to get contact emails for businesses
       // For now, we rely on the default response which includes all business details including address
     });
     
