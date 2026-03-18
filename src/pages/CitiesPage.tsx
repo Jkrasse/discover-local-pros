@@ -15,6 +15,8 @@ const breadcrumbs = [
 
 export default function CitiesPage() {
   const { data: cities, isLoading } = useCities();
+  const { data: settings } = useSiteSettings();
+  const siteName = settings?.site_name || 'Katalog';
 
   return (
     <Layout>
