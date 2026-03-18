@@ -191,7 +191,9 @@ export default function ServiceCityPage() {
             </div>
           ) : (
             <>
-              <Breadcrumbs items={breadcrumbs} className="text-white/70 [&_a]:text-white/70 [&_a:hover]:text-white [&_svg]:text-white/50" />
+              <div className="[&_a]:text-white/70 [&_span]:text-white/90 [&_svg]:text-white/50 [&_nav]:mb-0">
+                <Breadcrumbs items={breadcrumbs} />
+              </div>
               <div className="mt-5 max-w-3xl">
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 leading-tight">
                   {dynamicTitle}
