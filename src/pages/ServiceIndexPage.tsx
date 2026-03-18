@@ -70,7 +70,7 @@ export default function ServiceIndexPage() {
   const serviceName = service?.name || serviceSlug;
   const isSubService = !!service?.parent_service_id;
   
-  const title = `${serviceName} i Sverige ${currentYear} | Hitta & Jämför`;
+  const title = `${serviceName} i Sverige ${currentYear} | Hitta de Bästa`;
   const description = serviceContent?.intro_text 
     || `Hitta ${serviceName.toLowerCase()} i hela Sverige. Välj din stad och hitta pålitliga företag.`;
 
