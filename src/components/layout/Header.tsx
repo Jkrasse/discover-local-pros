@@ -126,6 +126,21 @@ export function Header() {
                             </NavigationMenuLink>
                           </li>
                         ))}
+                        <li className="col-span-2 border-t mt-1 pt-1">
+                          <NavigationMenuLink asChild>
+                            <Link
+                              to="/stader"
+                              className={cn(
+                                'block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors text-center',
+                                'hover:bg-accent/10 hover:text-accent focus:bg-accent/10'
+                              )}
+                            >
+                              <div className="text-sm font-medium text-accent">
+                                Visa alla städer →
+                              </div>
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
                       </ul>
                     </NavigationMenuContent>
                   </NavigationMenuItem>
