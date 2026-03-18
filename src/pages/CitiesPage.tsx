@@ -19,7 +19,7 @@ export default function CitiesPage() {
     <Layout>
       <SEOHead
         title="Alla städer | FlyttGuide"
-        description="Hitta flyttfirmor i Sveriges alla städer. Välj din stad och jämför lokala företag baserat på omdömen och priser."
+        description="Hitta flyttfirmor i Sveriges alla städer. Välj din stad och hitta de bästa lokala företagen."
         canonical="/stader"
       />
 
@@ -33,7 +33,7 @@ export default function CitiesPage() {
             </h1>
             <p className="text-lg text-muted-foreground max-w-3xl">
               Vi listar flyttfirmor i {cities?.length || 0} svenska städer. 
-              Välj din stad nedan för att jämföra lokala företag.
+              Välj din stad nedan för att hitta de bästa lokala företagen.
             </p>
           </div>
         </div>

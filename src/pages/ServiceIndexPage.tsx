@@ -70,7 +70,7 @@ export default function ServiceIndexPage() {
   const serviceName = service?.name || serviceSlug;
   const isSubService = !!service?.parent_service_id;
   
-  const title = `${serviceName} i Sverige ${currentYear} | Hitta & Jämför`;
+  const title = `${serviceName} i Sverige ${currentYear} | Hitta de Bästa`;
   const description = serviceContent?.intro_text 
     || `Hitta ${serviceName.toLowerCase()} i hela Sverige. Välj din stad och hitta pålitliga företag.`;
 
@@ -78,7 +78,7 @@ export default function ServiceIndexPage() {
   const introText = serviceContent?.intro_text || (
     isSubService 
       ? `Letar du efter professionell hjälp med ${serviceName.toLowerCase()}? Välj din stad nedan för att hitta vår rekommenderade partner för ${serviceName.toLowerCase()}.`
-      : `Hitta och jämför ${serviceName.toLowerCase()} i din stad. Vi hjälper dig hitta pålitliga företag baserat på kvalitet och kundbetyg.`
+      : `Hitta de bästa ${serviceName.toLowerCase()} i din stad. Vi hjälper dig hitta pålitliga företag baserat på kvalitet och kundbetyg.`
   );
 
   return (

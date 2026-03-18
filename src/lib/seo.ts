@@ -13,14 +13,14 @@ export function generateCityServiceTitle(
   cityName: string,
   year: number = new Date().getFullYear()
 ): string {
-  return `Bästa ${serviceName.toLowerCase()} i ${cityName} (${year}) | Jämför & Få Offert`;
+  return `Bästa ${serviceName.toLowerCase()} i ${cityName} (${year}) | Hitta & Få Offert`;
 }
 
 export function generateCityServiceDescription(
   serviceName: string,
   cityName: string
 ): string {
-  return `Hitta och jämför de bästa ${serviceName.toLowerCase()} i ${cityName}. ✓ Omdömen ✓ Priser ✓ Gratis offertförfrågan. Uppdaterat ${new Date().getFullYear()}.`;
+  return `Hitta de bästa ${serviceName.toLowerCase()} i ${cityName}. ✓ Omdömen ✓ Priser ✓ Gratis offertförfrågan. Uppdaterat ${new Date().getFullYear()}.`;
 }
 
 export function generateBusinessTitle(

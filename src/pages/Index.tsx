@@ -60,8 +60,8 @@ export default function Index() {
   return (
     <Layout>
       <SEOHead
-        title={`${siteName} | Hitta & Jämför Tjänster | Få Gratis Offert`}
-        description={`${siteDescription}. Jämför omdömen, priser och få gratis offerter. ✓ Gratis ✓ Opartisk ✓ Kvalitetsgranskade företag.`}
+        title={`${siteName} | Hitta Bästa Företagen | Få Gratis Offert`}
+        description={`${siteDescription}. Läs omdömen, se priser och få gratis offerter. ✓ Gratis ✓ Opartisk ✓ Kvalitetsgranskade företag.`}
         canonical="/"
       />
 
@@ -83,7 +83,7 @@ export default function Index() {
               <div className="hero-badge-icon">
                 <Shield className="h-3.5 w-3.5 text-primary" />
               </div>
-              Sveriges ledande jämförelsetjänst
+              Sveriges smartaste sätt att hitta rätt företag
             </div>
 
             {/* Main headline */}
@@ -94,7 +94,7 @@ export default function Index() {
 
             {/* Subtitle */}
             <p className="text-lg lg:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up animate-delay-200">
-              Jämför lokala företag baserat på omdömen och få gratis offerter. 
+              Hitta de bästa lokala företagen baserat på omdömen och få gratis offerter. 
               Vi hjälper dig hitta pålitliga partners i hela Sverige.
             </p>
 
@@ -274,8 +274,8 @@ export default function Index() {
             {[
               {
                 step: '01',
-                title: 'Jämför företag',
-                description: 'Sök i din stad och jämför företag baserat på omdömen och priser.',
+                title: 'Hitta företag',
+                description: 'Sök i din stad och hitta de bästa företagen baserat på omdömen.',
               },
               {
                 step: '02',
@@ -285,7 +285,7 @@ export default function Index() {
               {
                 step: '03',
                 title: 'Välj & boka',
-                description: 'Jämför offerterna och välj det företag som passar dig bäst.',
+                description: 'Granska offerterna och välj det företag som passar dig bäst.',
               },
             ].map((item, i) => (
               <div key={i} className="step-card group">

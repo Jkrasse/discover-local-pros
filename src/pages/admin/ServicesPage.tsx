@@ -330,7 +330,7 @@ export default function ServicesPage() {
           id="service-seo-title"
           value={form.seo_title_template}
           onChange={(e) => setForm({ ...form, seo_title_template: e.target.value })}
-          placeholder="Bästa {service} i {city} | Jämför & Hitta"
+          placeholder="Bästa {service} i {city} | Hitta & Få Offert"
         />
         <p className="text-xs text-muted-foreground mt-1">
           Använd {"{city}"} och {"{service}"} som variabler
@@ -342,7 +342,7 @@ export default function ServicesPage() {
           id="service-seo-desc"
           value={form.seo_description_template}
           onChange={(e) => setForm({ ...form, seo_description_template: e.target.value })}
-          placeholder="Hitta och jämför {service} i {city}. Läs omdömen..."
+          placeholder="Hitta de bästa {service} i {city}. Läs omdömen..."
           rows={2}
         />
       </div>
