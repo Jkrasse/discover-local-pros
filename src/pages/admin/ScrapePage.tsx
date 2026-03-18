@@ -142,7 +142,7 @@ export default function ScrapePage() {
     .filter((city) => city.length > 0);
 
   const previewQueries = parsedCities.map(
-    (city) => `${searchTerm} ${city}, Sweden`
+    (city) => `${searchTerm} ${city}`
   );
 
   const startScraping = async () => {
