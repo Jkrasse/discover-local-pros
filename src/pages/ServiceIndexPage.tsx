@@ -11,7 +11,7 @@ import { generateDefaultIntroText } from '@/lib/serviceContentHelpers';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, ChevronRight, Users, Search, ArrowRight, CheckCircle } from 'lucide-react';
+import { MapPin, ChevronRight, Search, ArrowRight, CheckCircle } from 'lucide-react';
 import NotFound from './NotFound';
 
 export default function ServiceIndexPage() {
