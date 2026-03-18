@@ -342,7 +342,7 @@ export default function ServicesPage() {
           id="service-seo-desc"
           value={form.seo_description_template}
           onChange={(e) => setForm({ ...form, seo_description_template: e.target.value })}
-          placeholder="Hitta och jämför {service} i {city}. Läs omdömen..."
+          placeholder="Hitta de bästa {service} i {city}. Läs omdömen..."
           rows={2}
         />
       </div>
