@@ -7,6 +7,7 @@ interface SEOHeadProps {
   ogImage?: string;
   noindex?: boolean;
   jsonLd?: object | object[];
+  siteName?: string;
 }
 
 export function SEOHead({
@@ -16,6 +17,7 @@ export function SEOHead({
   ogImage = '/og-image.png',
   noindex = false,
   jsonLd,
+  siteName = 'FlyttGuide',
 }: SEOHeadProps) {
   const siteUrl = 'https://flyttguide.se';
   const fullCanonical = canonical
@@ -39,7 +41,7 @@ export function SEOHead({
       <meta property="og:type" content="website" />
       <meta property="og:image" content={`${siteUrl}${ogImage}`} />
       <meta property="og:locale" content="sv_SE" />
-      <meta property="og:site_name" content="FlyttGuide" />
+      <meta property="og:site_name" content={siteName} />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />

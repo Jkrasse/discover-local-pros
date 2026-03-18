@@ -2,6 +2,7 @@ import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { Button } from '@/components/ui/button';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 const breadcrumbs = [
   { label: 'Hem', href: '/' },
@@ -9,8 +10,13 @@ const breadcrumbs = [
 ];
 
 export default function CookiePolicyPage() {
+  const { data: settings } = useSiteSettings();
+  const siteName = settings?.site_name || 'Katalog';
+  const companyName = settings?.company_name || 'Företaget AB';
+  const companyAddress = settings?.company_address || 'Adress, Stad';
+  const contactEmail = settings?.contact_email || 'info@example.com';
+
   const handleOpenCookieSettings = () => {
-    // Clear consent to trigger banner again
     localStorage.removeItem('cookie-consent');
     window.location.reload();
   };
@@ -18,8 +24,8 @@ export default function CookiePolicyPage() {
   return (
     <Layout>
       <SEOHead
-        title="Cookiepolicy | FlyttGuide"
-        description="Information om hur FlyttGuide använder cookies och liknande tekniker. Läs om vilka cookies vi använder och hur du kan hantera dem."
+        title={`Cookiepolicy | ${siteName}`}
+        description={`Information om hur ${siteName} använder cookies och liknande tekniker. Läs om vilka cookies vi använder och hur du kan hantera dem.`}
         canonical="/cookies"
       />
 
@@ -51,7 +57,7 @@ export default function CookiePolicyPage() {
 
             <h2>2. Hur vi använder cookies</h2>
             <p>
-              FlyttGuide använder cookies för följande ändamål:
+              {siteName} använder cookies för följande ändamål:
             </p>
             <ul>
               <li><strong>Nödvändiga cookies:</strong> Krävs för att webbplatsen ska fungera tekniskt</li>
@@ -203,10 +209,11 @@ export default function CookiePolicyPage() {
               Vid frågor om vår användning av cookies, kontakta oss:
             </p>
             <p>
-              <strong>J.Krasse Marketing AB</strong><br />
-              Ätrastigen 5 A<br />
-              311 38 Falkenberg<br />
-              E-post: privacy@flyttguide.se
+              <strong>{companyName}</strong><br />
+              {companyAddress.split(',').map((line, i) => (
+                <span key={i}>{line.trim()}<br /></span>
+              ))}
+              E-post: {contactEmail}
             </p>
           </div>
         </div>

@@ -3,9 +3,10 @@ import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { useCities } from '@/hooks/useCity';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, Users, ChevronRight } from 'lucide-react';
+import { MapPin, ChevronRight } from 'lucide-react';
 
 const breadcrumbs = [
   { label: 'Hem', href: '/' },
@@ -14,11 +15,13 @@ const breadcrumbs = [
 
 export default function CitiesPage() {
   const { data: cities, isLoading } = useCities();
+  const { data: settings } = useSiteSettings();
+  const siteName = settings?.site_name || 'Katalog';
 
   return (
     <Layout>
       <SEOHead
-        title="Alla städer | FlyttGuide"
+        title={`Alla städer | ${siteName}`}
         description="Hitta flyttfirmor i Sveriges alla städer. Välj din stad och hitta de bästa lokala företagen."
         canonical="/stader"
       />

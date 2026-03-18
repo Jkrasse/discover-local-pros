@@ -23,6 +23,7 @@ import {
 import { useCities } from '@/hooks/useCity';
 import { useServices } from '@/hooks/useService';
 import { useSiteSettings, getGenericServiceTerm } from '@/hooks/useSiteSettings';
+import { generateWebsiteSchema, generateOrganizationSchema } from '@/lib/seo';
 
 export default function Index() {
   const { data: cities } = useCities();
@@ -68,6 +69,10 @@ export default function Index() {
         title={`${siteName} | Hitta Bästa Företagen | Få Gratis Offert`}
         description={`${siteDescription}. Läs omdömen, se priser och få gratis offerter. ✓ Gratis ✓ Opartisk ✓ Kvalitetsgranskade företag.`}
         canonical="/"
+        jsonLd={[
+          generateWebsiteSchema(siteName, 'https://flyttguide.se'),
+          generateOrganizationSchema(siteName, 'https://flyttguide.se'),
+        ]}
       />
 
       {/* Hero Section */}

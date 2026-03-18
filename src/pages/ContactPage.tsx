@@ -10,6 +10,7 @@ import { Mail, MapPin, Clock, Building2 } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { supabase } from '@/integrations/supabase/client';
 
 const breadcrumbs = [
   { label: 'Hem', href: '/' },
@@ -31,16 +32,29 @@ export default function ContactPage() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    toast({
-      title: 'Meddelande skickat',
-      description: 'Vi återkommer till dig så snart som möjligt.',
+    const formData = new FormData(e.currentTarget);
+    const { error } = await supabase.from('contact_messages').insert({
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      subject: (formData.get('subject') as string) || null,
+      message: formData.get('message') as string,
     });
+
+    if (error) {
+      toast({
+        title: 'Något gick fel',
+        description: 'Försök igen senare.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Meddelande skickat',
+        description: 'Vi återkommer till dig så snart som möjligt.',
+      });
+      (e.target as HTMLFormElement).reset();
+    }
     
     setIsSubmitting(false);
-    (e.target as HTMLFormElement).reset();
   };
 
   return (
