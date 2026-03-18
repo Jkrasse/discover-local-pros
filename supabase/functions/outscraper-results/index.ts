@@ -626,7 +626,14 @@ serve(async (req) => {
     }
     console.log(`Total deduplicated businesses before city limit: ${allProcessedAfterDedup.length}`);
 
-    // PHASE 1.5: Apply per-city limit of 20 businesses max
+    // PHASE 1.5: Sort by review count (descending) so we keep the most reviewed businesses
+    // Then apply per-city limit of 20 businesses max
+    allProcessedAfterDedup.sort((a, b) => {
+      const reviewsA = (a.businessData as any).review_count || 0;
+      const reviewsB = (b.businessData as any).review_count || 0;
+      return reviewsB - reviewsA;
+    });
+
     const MAX_BUSINESSES_PER_CITY = 20;
     const businessCountPerCity = new Map<string, number>();
     const processedBusinesses: ProcessedBusiness[] = [];
