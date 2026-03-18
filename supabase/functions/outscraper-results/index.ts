@@ -764,14 +764,48 @@ serve(async (req) => {
 
         if (insertError) {
           console.error("Batch insert error:", insertError);
-          // Mark all in batch as errors
+          console.log("Falling back to individual inserts for this batch...");
+          
+          // Fall back to individual inserts
           for (const biz of batch) {
-            results.push({
-              name: biz.name as string,
-              status: "error",
-              message: insertError.message,
-              city: processedBusinesses.find(p => p.gbpId === biz.gbp_id)?.cityName,
-            });
+            const { data: singleInserted, error: singleError } = await supabase
+              .from("businesses")
+              .insert(biz)
+              .select("id, gbp_id");
+
+            if (singleError) {
+              // Try upsert by slug+city_id as last resort
+              const { data: upserted, error: upsertError } = await supabase
+                .from("businesses")
+                .upsert(biz, { onConflict: "slug,city_id" })
+                .select("id, gbp_id");
+
+              if (upsertError) {
+                console.error(`Individual insert failed for ${biz.name}:`, upsertError.message);
+                results.push({
+                  name: biz.name as string,
+                  status: "error",
+                  message: upsertError.message,
+                  city: processedBusinesses.find(p => p.gbpId === biz.gbp_id)?.cityName,
+                });
+              } else if (upserted?.[0]) {
+                insertedBusinessMap.set(upserted[0].gbp_id, upserted[0].id);
+                const processed = processedBusinesses.find(p => p.gbpId === biz.gbp_id);
+                results.push({
+                  name: processed?.originalName || biz.name as string,
+                  status: "updated",
+                  city: processed?.cityName,
+                });
+              }
+            } else if (singleInserted?.[0]) {
+              insertedBusinessMap.set(singleInserted[0].gbp_id, singleInserted[0].id);
+              const processed = processedBusinesses.find(p => p.gbpId === biz.gbp_id);
+              results.push({
+                name: processed?.originalName || biz.name as string,
+                status: "created",
+                city: processed?.cityName,
+              });
+            }
           }
         } else {
           for (const biz of inserted || []) {
