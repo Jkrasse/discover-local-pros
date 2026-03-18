@@ -592,7 +592,7 @@ serve(async (req) => {
     const seenSlugCity = new Set<string>();
     const deduplicatedBusinesses: ProcessedBusiness[] = [];
     let slugCityDuplicates = 0;
-    for (const processed of allProcessedBusinesses) {
+    for (const processed of allProcessedAfterDedup) {
       const key = `${(processed.businessData as any).slug}::${processed.cityId}`;
       if (seenSlugCity.has(key)) {
         slugCityDuplicates++;
