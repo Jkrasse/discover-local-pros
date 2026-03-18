@@ -474,6 +474,59 @@ export type Database = {
         }
         Relationships: []
       }
+      scrape_jobs: {
+        Row: {
+          cities: string[]
+          city_limit: number
+          created_at: string
+          error_message: string | null
+          id: string
+          request_id: string
+          results: Json | null
+          search_term: string
+          service_id: string | null
+          status: string
+          summary: Json | null
+          updated_at: string
+        }
+        Insert: {
+          cities?: string[]
+          city_limit?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          request_id: string
+          results?: Json | null
+          search_term: string
+          service_id?: string | null
+          status?: string
+          summary?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          cities?: string[]
+          city_limit?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          request_id?: string
+          results?: Json | null
+          search_term?: string
+          service_id?: string | null
+          status?: string
+          summary?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scrape_jobs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_content: {
         Row: {
           checklist: Json | null

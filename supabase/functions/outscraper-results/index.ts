@@ -1264,6 +1264,17 @@ serve(async (req) => {
     console.log(JSON.stringify(summary, null, 2));
     console.log("=====================");
 
+    // Update scrape_jobs table with completed status
+    await supabase
+      .from("scrape_jobs")
+      .update({
+        status: "completed",
+        summary,
+        results: results.slice(0, 200), // cap stored results
+        updated_at: new Date().toISOString(),
+      })
+      .eq("request_id", requestId);
+
     return new Response(
       JSON.stringify({
         status: "completed",
@@ -1275,6 +1286,25 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Error in outscraper-results:", error);
+
+    // Try to update job status to error
+    try {
+      const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+      const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+        const { requestId } = await req.clone().json().catch(() => ({ requestId: null }));
+        if (requestId) {
+          const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+          const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+          await sb.from("scrape_jobs").update({
+            status: "error",
+            error_message: error instanceof Error ? error.message : "Unknown error",
+            updated_at: new Date().toISOString(),
+          }).eq("request_id", requestId);
+        }
+      }
+    } catch (_) { /* best effort */ }
+
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
