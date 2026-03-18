@@ -28,6 +28,8 @@ export default function Index() {
   const { data: cities } = useCities();
   const { data: services } = useServices();
   const { data: settings } = useSiteSettings();
+  const navigate = useNavigate();
+  const [citySearch, setCitySearch] = useState('');
 
   const siteName = settings?.site_name || 'Katalog';
   const siteDescription = settings?.site_description || 'Hitta de bästa företagen';
