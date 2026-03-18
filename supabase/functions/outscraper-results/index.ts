@@ -271,7 +271,8 @@ function processBusiness(
   business: OutscraperBusiness,
   allowedCityMap: Map<string, { id: string; name: string }>,
   seenGbpIds: Set<string>,
-  skipReason: { noName: number; noCity: number; duplicateInBatch: number }
+  skipReason: { noName: number; noCity: number; duplicateInBatch: number },
+  queryCityOverride?: { id: string; name: string } | null
 ): ProcessedBusiness | null {
   // Skip if no name
   if (!business.name) {
@@ -306,8 +307,14 @@ function processBusiness(
   }
   seenGbpIds.add(gbpId);
 
-  // Match city against allowed cities only (from the scrape input list)
-  const matchedCity = matchAllowedCity(business.city || "", allowedCityMap);
+  // First try: use the query city override (the city from the search query that produced this result)
+  // This ensures businesses from nearby areas (e.g. Kalmar when searching Öland) are assigned to the searched city
+  let matchedCity = queryCityOverride || null;
+  
+  // Second try: match the business's self-reported city against allowed cities
+  if (!matchedCity) {
+    matchedCity = matchAllowedCity(business.city || "", allowedCityMap);
+  }
 
   if (!matchedCity) {
     skipReason.noCity++;
