@@ -10,6 +10,7 @@ import { Mail, MapPin, Clock, Building2 } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { supabase } from '@/integrations/supabase/client';
 
 const breadcrumbs = [
   { label: 'Hem', href: '/' },
