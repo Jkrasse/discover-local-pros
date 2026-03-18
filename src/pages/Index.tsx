@@ -23,6 +23,7 @@ import {
 import { useCities } from '@/hooks/useCity';
 import { useServices } from '@/hooks/useService';
 import { useSiteSettings, getGenericServiceTerm } from '@/hooks/useSiteSettings';
+import { generateWebsiteSchema, generateOrganizationSchema } from '@/lib/seo';
 
 export default function Index() {
   const { data: cities } = useCities();
