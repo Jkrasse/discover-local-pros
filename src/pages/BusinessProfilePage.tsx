@@ -151,6 +151,7 @@ export default function BusinessProfilePage() {
       <SEOHead
         title={`${business.name} - ${serviceName} i ${cityName}`}
         description={isValidDescription(business.description) ? business.description! : `${business.name} erbjuder ${serviceName?.toLowerCase()} i ${cityName}. Läs omdömen och kontakta oss idag.`}
+        canonical={`/${serviceSlug}/${citySlug}/${businessSlug}`}
       />
 
       <section className="bg-gradient-to-b from-secondary/50 to-background py-6 lg:py-8">

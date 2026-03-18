@@ -1,6 +1,7 @@
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 const breadcrumbs = [
   { label: 'Hem', href: '/' },
@@ -8,11 +9,17 @@ const breadcrumbs = [
 ];
 
 export default function PrivacyPolicyPage() {
+  const { data: settings } = useSiteSettings();
+  const siteName = settings?.site_name || 'Katalog';
+  const companyName = settings?.company_name || 'Företaget AB';
+  const companyAddress = settings?.company_address || 'Adress, Stad';
+  const contactEmail = settings?.contact_email || 'info@example.com';
+
   return (
     <Layout>
       <SEOHead
-        title="Integritetspolicy | FlyttGuide"
-        description="Läs om hur FlyttGuide hanterar personuppgifter i enlighet med GDPR. Vi värnar om din integritet och är transparenta med hur vi behandlar dina uppgifter."
+        title={`Integritetspolicy | ${siteName}`}
+        description={`Läs om hur ${siteName} hanterar personuppgifter i enlighet med GDPR. Vi värnar om din integritet och är transparenta med hur vi behandlar dina uppgifter.`}
         canonical="/integritetspolicy"
       />
 
@@ -37,23 +44,23 @@ export default function PrivacyPolicyPage() {
             
             <h2>1. Inledning</h2>
             <p>
-              J.Krasse Marketing AB, org.nr 559XXX-XXXX ("FlyttGuide", "vi", "oss", "vår"), är 
+              {companyName} ("{siteName}", "vi", "oss", "vår") är 
               personuppgiftsansvarig för behandlingen av dina personuppgifter på denna webbplats. 
               Vi värnar om din personliga integritet och strävar efter att alltid skydda dina 
               personuppgifter på bästa sätt.
             </p>
             <p>
               Denna integritetspolicy förklarar hur vi samlar in, använder, lagrar och skyddar 
-              dina personuppgifter när du använder vår webbplats flyttguide.se och våra tjänster.
+              dina personuppgifter när du använder vår webbplats och våra tjänster.
             </p>
 
             <h2>2. Personuppgiftsansvarig</h2>
             <p>
-              <strong>J.Krasse Marketing AB</strong><br />
-              Ätrastigen 5 A<br />
-              311 38 Falkenberg<br />
-              Sverige<br />
-              E-post: privacy@flyttguide.se
+              <strong>{companyName}</strong><br />
+              {companyAddress.split(',').map((line, i) => (
+                <span key={i}>{line.trim()}<br /></span>
+              ))}
+              E-post: {contactEmail}
             </p>
 
             <h2>3. Vilka personuppgifter samlar vi in?</h2>
@@ -61,7 +68,7 @@ export default function PrivacyPolicyPage() {
             <h3>3.1 Uppgifter du lämnar aktivt till oss</h3>
             <ul>
               <li><strong>Kontaktformulär:</strong> Namn, e-postadress, telefonnummer och meddelande</li>
-              <li><strong>Offertförfrågningar:</strong> Namn, kontaktuppgifter, flyttdatum, från- och tilladress, bostadstyp och övriga uppgifter om flytten</li>
+              <li><strong>Offertförfrågningar:</strong> Namn, kontaktuppgifter, datum, adressinformation, bostadstyp och övriga uppgifter</li>
               <li><strong>Nyhetsbrev:</strong> E-postadress</li>
               <li><strong>Företagsregistrering:</strong> Företagsnamn, organisationsnummer, kontaktperson och kontaktuppgifter</li>
             </ul>
@@ -85,7 +92,7 @@ export default function PrivacyPolicyPage() {
               </thead>
               <tbody>
                 <tr>
-                  <td className="p-2 border-b">Förmedla offertförfrågningar till flyttfirmor</td>
+                  <td className="p-2 border-b">Förmedla offertförfrågningar till företag</td>
                   <td className="p-2 border-b">Avtal</td>
                   <td className="p-2 border-b">24 månader</td>
                 </tr>
@@ -115,7 +122,7 @@ export default function PrivacyPolicyPage() {
             <h2>5. Delning av personuppgifter</h2>
             <p>Vi kan komma att dela dina personuppgifter med följande kategorier av mottagare:</p>
             <ul>
-              <li><strong>Flyttfirmor:</strong> När du skickar en offertförfrågan delar vi dina kontaktuppgifter och flyttinformation med relevanta företag</li>
+              <li><strong>Företag:</strong> När du skickar en offertförfrågan delar vi dina kontaktuppgifter och information med relevanta företag</li>
               <li><strong>IT-leverantörer:</strong> Hosting, e-post och andra tekniska tjänster</li>
               <li><strong>Analysverktyg:</strong> Google Analytics och liknande för att förstå hur webbplatsen används</li>
               <li><strong>Myndigheter:</strong> Om det krävs enligt lag</li>
@@ -146,7 +153,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Rätt att återkalla samtycke:</strong> Återkalla tidigare lämnat samtycke när som helst</li>
             </ul>
             <p>
-              För att utöva dina rättigheter, kontakta oss på privacy@flyttguide.se. Vi svarar 
+              För att utöva dina rättigheter, kontakta oss på {contactEmail}. Vi svarar 
               inom 30 dagar. Du har även rätt att lämna klagomål till Integritetsskyddsmyndigheten (IMY).
             </p>
 
@@ -182,10 +189,11 @@ export default function PrivacyPolicyPage() {
               rättigheter, kontakta oss:
             </p>
             <p>
-              <strong>J.Krasse Marketing AB</strong><br />
-              Ätrastigen 5 A<br />
-              311 38 Falkenberg<br />
-              E-post: privacy@flyttguide.se
+              <strong>{companyName}</strong><br />
+              {companyAddress.split(',').map((line, i) => (
+                <span key={i}>{line.trim()}<br /></span>
+              ))}
+              E-post: {contactEmail}
             </p>
           </div>
         </div>

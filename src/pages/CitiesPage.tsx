@@ -21,7 +21,7 @@ export default function CitiesPage() {
   return (
     <Layout>
       <SEOHead
-        title="Alla städer | FlyttGuide"
+        title={`Alla städer | ${siteName}`}
         description="Hitta flyttfirmor i Sveriges alla städer. Välj din stad och hitta de bästa lokala företagen."
         canonical="/stader"
       />

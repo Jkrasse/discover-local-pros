@@ -175,7 +175,7 @@ export default function SettingsPage() {
                 <Textarea
                   value={settings.site_description}
                   onChange={(e) => handleChange("site_description", e.target.value)}
-                  placeholder="Jämför och hitta de bästa flyttfirmorna i Sverige"
+                  placeholder="Hitta de bästa företagen i Sverige"
                   rows={2}
                 />
                 <p className="text-xs text-muted-foreground mt-1">

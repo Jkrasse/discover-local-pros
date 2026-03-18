@@ -119,7 +119,7 @@ export default function AboutPage() {
                 <p>
                   {siteName} drivs av {companyName}. 
                   Vi är registrerade hos Bolagsverket och följer svensk lag och god sed 
-                  för jämförelsetjänster.
+                  för informationstjänster.
                 </p>
                 <p className="mb-0">
                   <strong>Kontakt:</strong><br />

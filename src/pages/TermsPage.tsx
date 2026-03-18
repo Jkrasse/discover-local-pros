@@ -1,6 +1,7 @@
 import { Layout } from '@/components/layout/Layout';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 const breadcrumbs = [
   { label: 'Hem', href: '/' },
@@ -8,11 +9,17 @@ const breadcrumbs = [
 ];
 
 export default function TermsPage() {
+  const { data: settings } = useSiteSettings();
+  const siteName = settings?.site_name || 'Katalog';
+  const contactEmail = settings?.contact_email || 'info@example.com';
+  const companyName = settings?.company_name || 'Företaget AB';
+  const companyAddress = settings?.company_address || 'Adress, Stad';
+
   return (
     <Layout>
       <SEOHead
-        title="Användarvillkor | FlyttGuide"
-        description="Läs våra användarvillkor för FlyttGuide.se. Här förklarar vi villkoren för att använda vår jämförelsetjänst för flyttfirmor."
+        title={`Användarvillkor | ${siteName}`}
+        description={`Läs våra användarvillkor för ${siteName}. Här förklarar vi villkoren för att använda vår tjänst.`}
         canonical="/anvandarvillkor"
       />
 
@@ -38,8 +45,7 @@ export default function TermsPage() {
             <h2>1. Inledning och godkännande</h2>
             <p>
               Dessa användarvillkor ("Villkoren") gäller för din användning av webbplatsen 
-              flyttguide.se ("Webbplatsen") som drivs av J.Krasse Marketing AB, org.nr 559XXX-XXXX 
-              ("FlyttGuide", "vi", "oss", "vår").
+              som drivs av {companyName} ("{siteName}", "vi", "oss", "vår").
             </p>
             <p>
               Genom att använda Webbplatsen godkänner du dessa Villkor. Om du inte godkänner 
@@ -48,19 +54,19 @@ export default function TermsPage() {
 
             <h2>2. Tjänstebeskrivning</h2>
             <p>
-              FlyttGuide är en jämförelsetjänst som hjälper konsumenter att hitta och jämföra 
-              flyttfirmor i Sverige. Våra tjänster inkluderar:
+              {siteName} är en informationstjänst som hjälper konsumenter att hitta och utvärdera 
+              företag i Sverige. Våra tjänster inkluderar:
             </p>
             <ul>
-              <li>Listning och jämförelse av flyttfirmor baserat på omdömen och annan information</li>
+              <li>Listning och presentation av företag baserat på omdömen och annan information</li>
               <li>Möjlighet att skicka offertförfrågningar till flera företag samtidigt</li>
-              <li>Information och guider om flytt</li>
+              <li>Information och guider</li>
               <li>Presentation av "Rekommenderade partners" – företag vi har kommersiella samarbeten med</li>
             </ul>
 
             <h2>3. Kommersiella samarbeten och transparens</h2>
             <p>
-              FlyttGuide har kommersiella samarbeten med vissa företag som listas på Webbplatsen. 
+              {siteName} har kommersiella samarbeten med vissa företag som listas på Webbplatsen. 
               Dessa företag kan visas som "Rekommenderade partners" och markeras tydligt.
             </p>
             <p>
@@ -71,8 +77,8 @@ export default function TermsPage() {
 
             <h2>4. Ingen avtalspart</h2>
             <p>
-              <strong>Viktigt:</strong> FlyttGuide är inte part i något avtal mellan dig och 
-              flyttfirman. Vi förmedlar endast kontakt och information. Eventuella avtal, 
+              <strong>Viktigt:</strong> {siteName} är inte part i något avtal mellan dig och 
+              företaget. Vi förmedlar endast kontakt och information. Eventuella avtal, 
               betalningar eller tvister hanteras direkt mellan dig och det valda företaget.
             </p>
             <p>
@@ -81,7 +87,7 @@ export default function TermsPage() {
             <ul>
               <li>Kvaliteten på tjänster som utförs av listade företag</li>
               <li>Priser eller villkor som företag erbjuder</li>
-              <li>Skador eller förluster som uppstår i samband med flytten</li>
+              <li>Skador eller förluster som uppstår i samband med tjänsten</li>
               <li>Förseningar, avbokningar eller andra problem</li>
             </ul>
 
@@ -90,7 +96,7 @@ export default function TermsPage() {
               När du skickar en offertförfrågan via Webbplatsen:
             </p>
             <ul>
-              <li>Delas dina kontaktuppgifter och flyttinformation med relevanta flyttfirmor</li>
+              <li>Delas dina kontaktuppgifter och information med relevanta företag</li>
               <li>Kan du kontaktas av dessa företag via telefon, e-post eller SMS</li>
               <li>Är du inte bunden att acceptera några offerter</li>
               <li>Ansvarar du för att uppgifterna du lämnar är korrekta</li>
@@ -109,7 +115,7 @@ export default function TermsPage() {
             <h2>7. Immateriella rättigheter</h2>
             <p>
               Allt innehåll på Webbplatsen, inklusive texter, bilder, logotyper, design och 
-              programvara, tillhör FlyttGuide eller våra licensgivare och skyddas av upphovsrätt 
+              programvara, tillhör {siteName} eller våra licensgivare och skyddas av upphovsrätt 
               och andra immateriella rättigheter.
             </p>
             <p>
@@ -160,7 +166,7 @@ export default function TermsPage() {
             <p>
               Dessa Villkor regleras av svensk lag. Tvister som uppstår i anledning av dessa 
               Villkor ska i första hand lösas genom dialog. Om parterna inte kan enas ska 
-              tvisten avgöras av svensk allmän domstol med Varbergs tingsrätt som första instans.
+              tvisten avgöras av svensk allmän domstol.
             </p>
 
             <h2>13. Kontakt</h2>
@@ -168,10 +174,11 @@ export default function TermsPage() {
               Vid frågor om dessa användarvillkor, kontakta oss:
             </p>
             <p>
-              <strong>J.Krasse Marketing AB</strong><br />
-              Ätrastigen 5 A<br />
-              311 38 Falkenberg<br />
-              E-post: hej@flyttguide.se
+              <strong>{companyName}</strong><br />
+              {companyAddress.split(',').map((line, i) => (
+                <span key={i}>{line.trim()}<br /></span>
+              ))}
+              E-post: {contactEmail}
             </p>
           </div>
         </div>
