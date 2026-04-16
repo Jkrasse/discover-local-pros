@@ -24,6 +24,9 @@ export interface Service {
   description: string | null;
   seo_title_template: string | null;
   seo_description_template: string | null;
+  seo_keyword: string | null;
+  seo_plural: string | null;
+  seo_definite: string | null;
   created_at: string;
   updated_at: string;
 }

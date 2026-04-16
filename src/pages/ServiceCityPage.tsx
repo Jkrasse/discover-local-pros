@@ -16,7 +16,9 @@ import { useService } from '@/hooks/useService';
 import { useBusinesses, useFeaturedBusiness } from '@/hooks/useBusinesses';
 import { useServiceContent } from '@/hooks/useServiceContent';
 import { generateLocalBusinessSchema, generateFAQSchema, generateBreadcrumbSchema } from '@/lib/seo';
-import { generateServiceTitle, generateDefaultIntroText } from '@/lib/serviceContentHelpers';
+import { generateServiceTitle, generateDefaultIntroText, generateSeoTitle, generateSeoDescription } from '@/lib/serviceContentHelpers';
+import type { ServiceSEO } from '@/lib/serviceContentHelpers';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { Skeleton } from '@/components/ui/skeleton';
 import NotFound from './NotFound';
 import { Award } from 'lucide-react';
@@ -104,6 +106,7 @@ export default function ServiceCityPage() {
   });
   const { data: featuredBusiness } = useFeaturedBusiness(citySlug || '', serviceSlug || '');
   const { data: serviceContent } = useServiceContent(service?.id, city?.id);
+  const { data: siteSettings } = useSiteSettings();
 
   const isLoading = cityLoading || serviceLoading || businessesLoading;
 
@@ -117,21 +120,31 @@ export default function ServiceCityPage() {
 
   const currentYear = new Date().getFullYear();
   
-  // Get parent service name for proper Swedish grammar in titles
+  // Get parent service name and SEO grammar forms for proper Swedish grammar
   const parentServiceName = service?.parent_service?.name;
-  
+  const serviceSeo: ServiceSEO | null = service ? {
+    seo_keyword: service.seo_keyword,
+    seo_plural: service.seo_plural,
+    seo_definite: service.seo_definite,
+  } : null;
+  const parentSeo: ServiceSEO | null = service?.parent_service ? {
+    seo_keyword: service.parent_service.seo_keyword,
+    seo_plural: service.parent_service.seo_plural,
+    seo_definite: service.parent_service.seo_definite,
+  } : null;
+
   // Use dynamic content or fallback to defaults
-  const faqs = serviceContent?.faqs?.length 
-    ? serviceContent.faqs 
+  const faqs = serviceContent?.faqs?.length
+    ? serviceContent.faqs
     : (cityFAQs[citySlug] || defaultFAQs);
-  
-  // Generate dynamic title and intro with parent service context
-  const dynamicTitle = service && city 
-    ? generateServiceTitle(service.name, city.name, currentYear, parentServiceName)
+
+  // Generate dynamic H1 title and intro with parent service context + DB grammar
+  const dynamicTitle = service && city
+    ? generateServiceTitle(service.name, city.name, currentYear, parentServiceName, serviceSeo, parentSeo)
     : '';
-  
-  const dynamicIntro = serviceContent?.intro_text 
-    || (service && city ? generateDefaultIntroText(service.name, city.name, parentServiceName) : '');
+
+  const dynamicIntro = serviceContent?.intro_text
+    || (service && city ? generateDefaultIntroText(service.name, city.name, parentServiceName, serviceSeo, parentSeo) : '');
   const totalReviews = businesses?.reduce((sum, b) => sum + (b.review_count || 0), 0) || 0;
 
   // Get other businesses (not featured)
@@ -145,8 +158,13 @@ export default function ServiceCityPage() {
     { label: city?.name || citySlug },
   ];
 
-  const title = city?.seo_title || `Bästa ${service?.name?.toLowerCase()} i ${city?.name} ${currentYear}`;
-  const description = city?.seo_description || `Hitta pålitliga ${service?.name?.toLowerCase() || 'flyttfirmor'} i ${city?.name || citySlug}. Få gratis offert från vår rekommenderade partner.`;
+  const siteName = siteSettings?.site_name || 'Katalog';
+  const title = city?.seo_title || (service && city
+    ? generateSeoTitle(service.name, city.name, currentYear, siteName, serviceSeo, service.seo_title_template)
+    : `Bästa ${service?.name?.toLowerCase()} i ${city?.name} ${currentYear}`);
+  const description = city?.seo_description || (service && city
+    ? generateSeoDescription(service.name, city.name, currentYear, serviceSeo, service.seo_description_template)
+    : `Hitta pålitliga ${service?.name?.toLowerCase() || 'företag'} i ${city?.name || citySlug}. Få gratis offert från vår rekommenderade partner.`);
 
   const jsonLd = [];
   
